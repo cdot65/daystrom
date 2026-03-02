@@ -11,7 +11,7 @@ import type {
   LoopEvent,
 } from './types.js';
 import { computeMetrics } from './metrics.js';
-import type { ManagementClient, ScanService, ScanResult } from '../airs/types.js';
+import type { ManagementService, ScanService } from '../airs/types.js';
 
 export interface LlmService {
   generateTopic(
@@ -40,7 +40,7 @@ export interface LlmService {
 
 export interface LoopDependencies {
   llm: LlmService;
-  management: ManagementClient;
+  management: ManagementService;
   scanner: ScanService;
   propagationDelayMs?: number;
 }
@@ -99,25 +99,21 @@ export async function* runLoop(
 
     yield { type: 'generate:complete', topic: currentTopic };
 
-    // Step 2: Apply topic via management API
+    // Step 2: Apply topic via management API (SDK v2)
     if (i === 1) {
       const response = await deps.management.createTopic({
         topic_name: currentTopic.name,
-        topic_description: currentTopic.description,
-        topic_examples: currentTopic.examples,
+        description: currentTopic.description,
+        examples: currentTopic.examples,
+        active: true,
       });
-      topicId = response.topic_id;
-
-      await deps.management.assignTopicToProfile({
-        profileName: input.profileName,
-        topicId: topicId,
-        action: input.intent,
-      });
+      topicId = response.topic_id!;
     } else {
       await deps.management.updateTopic(topicId!, {
         topic_name: currentTopic.name,
-        topic_description: currentTopic.description,
-        topic_examples: currentTopic.examples,
+        description: currentTopic.description,
+        examples: currentTopic.examples,
+        active: true,
       });
     }
 

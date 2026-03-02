@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { runLoop, type LoopDependencies } from '../../../src/core/loop.js';
 import type { CustomTopic, TestCase, AnalysisReport, LoopEvent, UserInput } from '../../../src/core/types.js';
-import { createMockManagementClient, createMockScanService } from '../../helpers/mocks.js';
+import { createMockManagementService, createMockScanService } from '../../helpers/mocks.js';
 
 function createMockLlm() {
   return {
@@ -37,7 +37,7 @@ function createMockLlm() {
 function createDeps(overrides: Partial<LoopDependencies> = {}): LoopDependencies {
   return {
     llm: createMockLlm(),
-    management: createMockManagementClient(),
+    management: createMockManagementService(),
     scanner: createMockScanService(),
     propagationDelayMs: 0,
     ...overrides,
@@ -134,7 +134,7 @@ describe('runLoop', () => {
   });
 
   it('calls management client to create topic', async () => {
-    const management = createMockManagementClient();
+    const management = createMockManagementService();
     const createSpy = vi.spyOn(management, 'createTopic');
     const deps = createDeps({ management });
 
@@ -146,7 +146,7 @@ describe('runLoop', () => {
   });
 
   it('calls management client to update topic on subsequent iterations', async () => {
-    const management = createMockManagementClient();
+    const management = createMockManagementService();
     const updateSpy = vi.spyOn(management, 'updateTopic');
     // Use a scanner that never triggers → coverage stays 0, forcing multiple iterations
     const deps = createDeps({ management, scanner: createMockScanService([]) });

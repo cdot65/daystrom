@@ -3,7 +3,7 @@ import { loadConfig } from '../../config/loader.js';
 import { createLlmProvider } from '../../llm/provider.js';
 import { LangChainLlmService } from '../../llm/service.js';
 import { AirsScanService } from '../../airs/scanner.js';
-import { HttpManagementClient } from '../../airs/management.js';
+import { SdkManagementService } from '../../airs/management.js';
 import { JsonFileStore } from '../../persistence/store.js';
 import { runLoop } from '../../core/loop.js';
 import {
@@ -60,11 +60,12 @@ export function registerResumeCommand(program: Command): void {
 
         const llm = new LangChainLlmService(model);
         const scanner = new AirsScanService(config.airsApiKey!);
-        const management = new HttpManagementClient({
-          baseUrl: 'https://service.api.aisecurity.paloaltonetworks.com',
-          clientId: config.mgmtClientId!,
-          clientSecret: config.mgmtClientSecret!,
-          tsgId: config.mgmtTsgId!,
+        const management = new SdkManagementService({
+          clientId: config.mgmtClientId,
+          clientSecret: config.mgmtClientSecret,
+          tsgId: config.mgmtTsgId,
+          apiEndpoint: config.mgmtEndpoint,
+          tokenEndpoint: config.mgmtTokenEndpoint,
         });
 
         console.log(`  Resuming run ${runId} from iteration ${existingRun.currentIteration}...`);

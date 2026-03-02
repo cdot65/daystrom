@@ -33,10 +33,12 @@ export const ConfigSchema = z.object({
   // AIRS Scanner
   airsApiKey: z.string().optional(),
 
-  // AIRS Management
+  // AIRS Management (SDK v2 — OAuth2 client credentials)
   mgmtClientId: z.string().optional(),
   mgmtClientSecret: z.string().optional(),
   mgmtTsgId: z.string().optional(),
+  mgmtEndpoint: z.string().optional(),
+  mgmtTokenEndpoint: z.string().optional(),
 
   // Tuning
   scanConcurrency: z.coerce.number().int().min(1).max(20).default(5),

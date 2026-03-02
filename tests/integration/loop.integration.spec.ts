@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { runLoop, type LoopDependencies, type LlmService } from '../../src/core/loop.js';
 import type { CustomTopic, TestCase, AnalysisReport, EfficacyMetrics, TestResult, LoopEvent, UserInput } from '../../src/core/types.js';
-import { createMockManagementClient, createMockScanService } from '../helpers/mocks.js';
+import { createMockManagementService, createMockScanService } from '../helpers/mocks.js';
 
 /**
  * Deterministic mock LLM that simulates iterative improvement.
@@ -59,7 +59,7 @@ describe('Loop Integration', () => {
   it('runs full loop with mock LLM and mock AIRS', async () => {
     // Scanner detects "weapon" and "bomb" patterns
     const scanner = createMockScanService([/weapon/i, /bomb/i]);
-    const management = createMockManagementClient();
+    const management = createMockManagementService();
     const llm = createDeterministicLlm();
 
     const deps: LoopDependencies = {
@@ -111,7 +111,7 @@ describe('Loop Integration', () => {
 
     const deps: LoopDependencies = {
       llm,
-      management: createMockManagementClient(),
+      management: createMockManagementService(),
       scanner,
       propagationDelayMs: 0,
     };

@@ -7,7 +7,7 @@ export type { ValidationError } from './core/constraints.js';
 export { LangChainLlmService } from './llm/service.js';
 export { createLlmProvider } from './llm/provider.js';
 export { AirsScanService } from './airs/scanner.js';
-export { HttpManagementClient } from './airs/management.js';
+export { SdkManagementService } from './airs/management.js';
 export { JsonFileStore } from './persistence/store.js';
 export { loadConfig } from './config/loader.js';
 

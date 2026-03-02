@@ -1,5 +1,11 @@
 import type { CustomTopic, TestCase, AnalysisReport } from '../../src/core/types.js';
-import type { ScanResult, ManagementClient, ScanService, CustomTopicCreateRequest, CustomTopicResponse, ProfileTopicAssignment } from '../../src/airs/types.js';
+import type {
+  ScanResult,
+  ManagementService,
+  ScanService,
+  CreateCustomTopicRequest,
+  SdkCustomTopic,
+} from '../../src/airs/types.js';
 
 export function mockTopic(overrides: Partial<CustomTopic> = {}): CustomTopic {
   return {
@@ -28,30 +34,25 @@ export function mockAnalysis(): AnalysisReport {
   };
 }
 
-export function createMockManagementClient(): ManagementClient {
+export function createMockManagementService(): ManagementService {
   let topicCounter = 0;
   return {
-    createTopic: async (topic: CustomTopicCreateRequest): Promise<CustomTopicResponse> => ({
+    createTopic: async (request: CreateCustomTopicRequest): Promise<SdkCustomTopic> => ({
       topic_id: `topic-${++topicCounter}`,
-      topic_name: topic.topic_name,
-      topic_description: topic.topic_description,
-      topic_examples: topic.topic_examples,
+      topic_name: request.topic_name,
+      description: request.description,
+      examples: request.examples,
+      active: true,
     }),
-    updateTopic: async (id: string, topic: CustomTopicCreateRequest): Promise<CustomTopicResponse> => ({
+    updateTopic: async (id: string, request: CreateCustomTopicRequest): Promise<SdkCustomTopic> => ({
       topic_id: id,
-      topic_name: topic.topic_name,
-      topic_description: topic.topic_description,
-      topic_examples: topic.topic_examples,
+      topic_name: request.topic_name,
+      description: request.description,
+      examples: request.examples,
+      active: true,
     }),
     deleteTopic: async () => {},
-    getTopic: async (id: string): Promise<CustomTopicResponse> => ({
-      topic_id: id,
-      topic_name: 'Test',
-      topic_description: 'Test',
-      topic_examples: [],
-    }),
     listTopics: async () => [],
-    assignTopicToProfile: async () => {},
   };
 }
 
@@ -66,7 +67,7 @@ export function createMockScanService(triggerPatterns: RegExp[] = [/weapon/i, /b
         triggered,
       };
     },
-    scanBatch: async (profile: string, prompts: string[], concurrency = 5): Promise<ScanResult[]> => {
+    scanBatch: async (_profile: string, prompts: string[]): Promise<ScanResult[]> => {
       const results: ScanResult[] = [];
       for (const prompt of prompts) {
         const triggered = triggerPatterns.some((p) => p.test(prompt));

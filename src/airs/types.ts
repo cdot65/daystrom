@@ -1,3 +1,10 @@
+import type {
+  CustomTopic as SdkCustomTopic,
+  CreateCustomTopicRequest,
+} from '@cdot65/prisma-airs-sdk';
+
+export type { CreateCustomTopicRequest, SdkCustomTopic };
+
 export interface ScanResult {
   scanId: string;
   reportId: string;
@@ -7,37 +14,18 @@ export interface ScanResult {
   raw?: unknown;
 }
 
-export interface CustomTopicCreateRequest {
-  topic_name: string;
-  topic_description: string;
-  topic_examples: string[];
-}
-
-export interface CustomTopicResponse {
-  topic_id: string;
-  topic_name: string;
-  topic_description: string;
-  topic_examples: string[];
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface ProfileTopicAssignment {
-  profileName: string;
-  topicId: string;
-  action: 'allow' | 'block';
-}
-
 export interface ScanService {
   scan(profileName: string, prompt: string): Promise<ScanResult>;
   scanBatch(profileName: string, prompts: string[], concurrency?: number): Promise<ScanResult[]>;
 }
 
-export interface ManagementClient {
-  createTopic(topic: CustomTopicCreateRequest): Promise<CustomTopicResponse>;
-  updateTopic(topicId: string, topic: CustomTopicCreateRequest): Promise<CustomTopicResponse>;
+/**
+ * Thin interface over the SDK ManagementClient for topic CRUD.
+ * Aligns with SDK v2 TopicsClient method signatures.
+ */
+export interface ManagementService {
+  createTopic(request: CreateCustomTopicRequest): Promise<SdkCustomTopic>;
+  updateTopic(topicId: string, request: CreateCustomTopicRequest): Promise<SdkCustomTopic>;
   deleteTopic(topicId: string): Promise<void>;
-  getTopic(topicId: string): Promise<CustomTopicResponse>;
-  listTopics(): Promise<CustomTopicResponse[]>;
-  assignTopicToProfile(assignment: ProfileTopicAssignment): Promise<void>;
+  listTopics(): Promise<SdkCustomTopic[]>;
 }
