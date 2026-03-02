@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import 'dotenv/config';
 import { Command } from 'commander';
 import { registerGenerateCommand } from './commands/generate.js';
 import { registerResumeCommand } from './commands/resume.js';
