@@ -71,6 +71,7 @@ export async function* runLoop(
 
   let currentTopic: CustomTopic | null = null;
   let topicId: string | null = null;
+  let lockedName: string | null = null;
 
   for (let i = 1; i <= maxIterations; i++) {
     const iterationStart = Date.now();
@@ -85,6 +86,7 @@ export async function* runLoop(
         input.intent,
         input.seedExamples,
       );
+      lockedName = currentTopic.name;
     } else {
       const prevIteration = runState.iterations[runState.iterations.length - 1];
       currentTopic = await deps.llm.improveTopic(
@@ -95,6 +97,8 @@ export async function* runLoop(
         i,
         targetCoverage,
       );
+      // Force the name to stay consistent across iterations
+      currentTopic = { ...currentTopic, name: lockedName! };
     }
 
     yield { type: 'generate:complete', topic: currentTopic };

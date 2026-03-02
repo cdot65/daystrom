@@ -6,12 +6,12 @@ export const improveTopicPrompt = ChatPromptTemplate.fromMessages([
     `You are an expert at refining Prisma AIRS custom topic guardrails. Based on test results and analysis, improve the topic definition to reduce false positives and false negatives.
 
 Constraints (MUST be respected):
-- Name: max 100 characters
+- Name: KEEP THE EXACT SAME NAME as the current definition. Do NOT rename.
 - Description: max 250 characters
 - Examples: 1-5 examples, each max 250 characters
 - Combined total (name + description + all examples): max 1000 characters
 
-Focus on:
+Focus on improving only the description and examples:
 - Making the description more precise to reduce false positives
 - Adding examples that cover missed patterns (false negatives)
 - Removing or replacing examples that cause over-matching
