@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 export const CustomTopicSchema = z.object({
-  name: z.string().min(1).max(100),
-  description: z.string().min(1).max(250),
-  examples: z.array(z.string().min(1).max(250)).min(1).max(5),
+  name: z.string().min(1),
+  description: z.string().min(1),
+  examples: z.array(z.string().min(1)).min(1).max(5),
 });
 
 export const TestCaseSchema = z.object({

@@ -101,13 +101,27 @@ export async function* runLoop(
 
     // Step 2: Apply topic via management API (SDK v2)
     if (i === 1) {
-      const response = await deps.management.createTopic({
-        topic_name: currentTopic.name,
-        description: currentTopic.description,
-        examples: currentTopic.examples,
-        active: true,
-      });
-      topicId = response.topic_id!;
+      // Check if a topic with this name already exists (reuse it)
+      const existing = await deps.management.listTopics();
+      const match = existing.find((t) => t.topic_name === currentTopic.name);
+
+      if (match) {
+        topicId = match.topic_id!;
+        await deps.management.updateTopic(topicId, {
+          topic_name: currentTopic.name,
+          description: currentTopic.description,
+          examples: currentTopic.examples,
+          active: true,
+        });
+      } else {
+        const response = await deps.management.createTopic({
+          topic_name: currentTopic.name,
+          description: currentTopic.description,
+          examples: currentTopic.examples,
+          active: true,
+        });
+        topicId = response.topic_id!;
+      }
 
       // Link topic to the security profile's topic-guardrails
       await deps.management.assignTopicToProfile(

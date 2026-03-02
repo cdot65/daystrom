@@ -6,9 +6,18 @@ import { generateTopicPrompt, buildSeedExamplesSection } from './prompts/generat
 import { generateTestsPrompt } from './prompts/generate-tests.js';
 import { analyzeResultsPrompt } from './prompts/analyze-results.js';
 import { improveTopicPrompt } from './prompts/improve-topic.js';
-import { validateTopic } from '../core/constraints.js';
+import { validateTopic, MAX_NAME_LENGTH, MAX_DESCRIPTION_LENGTH, MAX_EXAMPLE_LENGTH, MAX_EXAMPLES } from '../core/constraints.js';
 
 const MAX_RETRIES = 3;
+
+/** Clamp topic fields to fit Prisma AIRS constraints */
+function clampTopic(topic: CustomTopicOutput): CustomTopicOutput {
+  return {
+    name: topic.name.slice(0, MAX_NAME_LENGTH),
+    description: topic.description.slice(0, MAX_DESCRIPTION_LENGTH),
+    examples: topic.examples.slice(0, MAX_EXAMPLES).map(e => e.slice(0, MAX_EXAMPLE_LENGTH)),
+  };
+}
 
 export class LangChainLlmService implements LlmService {
   constructor(private model: BaseChatModel) {}
@@ -28,7 +37,7 @@ export class LangChainLlmService implements LlmService {
           intent,
           seedExamplesSection: buildSeedExamplesSection(seeds),
         });
-        const result = raw as unknown as CustomTopicOutput;
+        const result = clampTopic(raw as unknown as CustomTopicOutput);
 
         const errors = validateTopic(result);
         if (errors.length === 0) return result;
@@ -38,7 +47,6 @@ export class LangChainLlmService implements LlmService {
         }
       } catch (err) {
         if (attempt === MAX_RETRIES - 1) throw err;
-        // Retry on parsing/validation failures
       }
     }
 
@@ -139,7 +147,7 @@ export class LangChainLlmService implements LlmService {
           specificFNs: fns.map((r) => `- "${r.testCase.prompt}"`).join('\n') || 'None',
           suggestions: analysis.suggestions.join('; '),
         });
-        const result = raw as unknown as CustomTopicOutput;
+        const result = clampTopic(raw as unknown as CustomTopicOutput);
 
         const errors = validateTopic(result);
         if (errors.length === 0) return result;
@@ -149,7 +157,6 @@ export class LangChainLlmService implements LlmService {
         }
       } catch (err) {
         if (attempt === MAX_RETRIES - 1) throw err;
-        // Retry on parsing/validation failures
       }
     }
 

@@ -21,22 +21,22 @@ describe('LLM schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('rejects name over 100 chars', () => {
+    it('accepts name over 100 chars (clamping handled by service)', () => {
       const result = CustomTopicSchema.safeParse({
         name: 'a'.repeat(101),
         description: 'Valid desc',
         examples: ['Valid example'],
       });
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
     });
 
-    it('rejects description over 250 chars', () => {
+    it('accepts description over 250 chars (clamping handled by service)', () => {
       const result = CustomTopicSchema.safeParse({
         name: 'Valid',
         description: 'a'.repeat(251),
         examples: ['Valid example'],
       });
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
     });
 
     it('rejects more than 5 examples', () => {
@@ -57,13 +57,13 @@ describe('LLM schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('rejects example over 250 chars', () => {
+    it('accepts example over 250 chars (clamping handled by service)', () => {
       const result = CustomTopicSchema.safeParse({
         name: 'Valid',
         description: 'Valid desc',
         examples: ['a'.repeat(251)],
       });
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
     });
   });
 

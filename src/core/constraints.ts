@@ -5,11 +5,14 @@ export interface ValidationError {
   message: string;
 }
 
-const MAX_NAME_LENGTH = 100;
-const MAX_DESCRIPTION_LENGTH = 250;
-const MAX_EXAMPLE_LENGTH = 250;
-const MAX_EXAMPLES_COUNT = 5;
-const MAX_COMBINED_LENGTH = 1000;
+export const MAX_NAME_LENGTH = 100;
+export const MAX_DESCRIPTION_LENGTH = 250;
+export const MAX_EXAMPLE_LENGTH = 250;
+export const MAX_EXAMPLES = 5;
+export const MAX_COMBINED_LENGTH = 1000;
+
+/** @deprecated Use MAX_EXAMPLES */
+const MAX_EXAMPLES_COUNT = MAX_EXAMPLES;
 
 export function validateName(name: string): ValidationError[] {
   const errors: ValidationError[] = [];
