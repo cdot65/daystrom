@@ -1,0 +1,109 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { mkdtemp, rm, readdir } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { JsonFileStore } from '../../../src/persistence/store.js';
+import type { RunState } from '../../../src/core/types.js';
+
+function makeRunState(overrides: Partial<RunState> = {}): RunState {
+  return {
+    id: 'run-001',
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
+    userInput: {
+      topicDescription: 'Block discussions about weapons',
+      intent: 'block',
+      profileName: 'test-profile',
+    },
+    iterations: [],
+    currentIteration: 0,
+    bestIteration: 0,
+    bestCoverage: 0,
+    status: 'running',
+    ...overrides,
+  };
+}
+
+describe('JsonFileStore', () => {
+  let dir: string;
+  let store: JsonFileStore;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'guardrail-test-'));
+    store = new JsonFileStore(dir);
+  });
+
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  describe('save + load', () => {
+    it('saves and loads a run state', async () => {
+      const run = makeRunState();
+      await store.save(run);
+      const loaded = await store.load('run-001');
+      expect(loaded).toEqual(run);
+    });
+
+    it('overwrites existing run on save', async () => {
+      const run = makeRunState();
+      await store.save(run);
+      const updated = { ...run, currentIteration: 5, updatedAt: '2026-01-02T00:00:00Z' };
+      await store.save(updated);
+      const loaded = await store.load('run-001');
+      expect(loaded?.currentIteration).toBe(5);
+    });
+
+    it('returns null for non-existent run', async () => {
+      const loaded = await store.load('nonexistent');
+      expect(loaded).toBeNull();
+    });
+  });
+
+  describe('list', () => {
+    it('returns empty array when no runs', async () => {
+      const list = await store.list();
+      expect(list).toEqual([]);
+    });
+
+    it('returns summaries of all runs', async () => {
+      await store.save(makeRunState({ id: 'run-001' }));
+      await store.save(makeRunState({ id: 'run-002', bestCoverage: 0.85 }));
+      const list = await store.list();
+      expect(list).toHaveLength(2);
+      expect(list.map((r) => r.id).sort()).toEqual(['run-001', 'run-002']);
+    });
+
+    it('includes summary fields', async () => {
+      await store.save(makeRunState({ id: 'run-001', bestCoverage: 0.75, currentIteration: 3 }));
+      const [summary] = await store.list();
+      expect(summary.id).toBe('run-001');
+      expect(summary.bestCoverage).toBe(0.75);
+      expect(summary.currentIteration).toBe(3);
+      expect(summary.topicDescription).toBe('Block discussions about weapons');
+    });
+  });
+
+  describe('delete', () => {
+    it('deletes existing run', async () => {
+      await store.save(makeRunState());
+      await store.delete('run-001');
+      const loaded = await store.load('run-001');
+      expect(loaded).toBeNull();
+    });
+
+    it('does not throw when deleting non-existent run', async () => {
+      await expect(store.delete('nonexistent')).resolves.not.toThrow();
+    });
+  });
+
+  describe('atomic writes', () => {
+    it('creates directory if it does not exist', async () => {
+      const nested = join(dir, 'nested', 'deep');
+      const nestedStore = new JsonFileStore(nested);
+      await nestedStore.save(makeRunState());
+      const loaded = await nestedStore.load('run-001');
+      expect(loaded).toEqual(makeRunState());
+    });
+  });
+});
