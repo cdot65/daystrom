@@ -28,4 +28,10 @@ export interface ManagementService {
   updateTopic(topicId: string, request: CreateCustomTopicRequest): Promise<SdkCustomTopic>;
   deleteTopic(topicId: string): Promise<void>;
   listTopics(): Promise<SdkCustomTopic[]>;
+  assignTopicToProfile(
+    profileName: string,
+    topicId: string,
+    topicName: string,
+    action: 'allow' | 'block',
+  ): Promise<void>;
 }

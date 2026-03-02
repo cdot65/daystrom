@@ -22,18 +22,23 @@ export class LangChainLlmService implements LlmService {
     const chain = generateTopicPrompt.pipe(structured);
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      const raw = await chain.invoke({
-        topicDescription: description,
-        intent,
-        seedExamplesSection: buildSeedExamplesSection(seeds),
-      });
-      const result = raw as unknown as CustomTopicOutput;
+      try {
+        const raw = await chain.invoke({
+          topicDescription: description,
+          intent,
+          seedExamplesSection: buildSeedExamplesSection(seeds),
+        });
+        const result = raw as unknown as CustomTopicOutput;
 
-      const errors = validateTopic(result);
-      if (errors.length === 0) return result;
+        const errors = validateTopic(result);
+        if (errors.length === 0) return result;
 
-      if (attempt === MAX_RETRIES - 1) {
-        throw new Error(`LLM output violates constraints after ${MAX_RETRIES} attempts: ${errors.map((e) => e.message).join(', ')}`);
+        if (attempt === MAX_RETRIES - 1) {
+          throw new Error(`LLM output violates constraints after ${MAX_RETRIES} attempts: ${errors.map((e) => e.message).join(', ')}`);
+        }
+      } catch (err) {
+        if (attempt === MAX_RETRIES - 1) throw err;
+        // Retry on parsing/validation failures
       }
     }
 
@@ -47,14 +52,21 @@ export class LangChainLlmService implements LlmService {
     const structured = this.model.withStructuredOutput(TestSuiteSchema);
     const chain = generateTestsPrompt.pipe(structured);
 
-    const raw = await chain.invoke({
-      topicName: topic.name,
-      topicDescription: topic.description,
-      topicExamples: topic.examples.map((e, i) => `${i + 1}. ${e}`).join('\n'),
-      intent,
-    });
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const raw = await chain.invoke({
+          topicName: topic.name,
+          topicDescription: topic.description,
+          topicExamples: topic.examples.map((e, i) => `${i + 1}. ${e}`).join('\n'),
+          intent,
+        });
+        return raw as unknown as TestSuiteOutput;
+      } catch (err) {
+        if (attempt === MAX_RETRIES - 1) throw err;
+      }
+    }
 
-    return raw as unknown as TestSuiteOutput;
+    throw new Error('Unreachable');
   }
 
   async analyzeResults(
@@ -68,23 +80,30 @@ export class LangChainLlmService implements LlmService {
     const fps = results.filter((r) => !r.testCase.expectedTriggered && r.actualTriggered);
     const fns = results.filter((r) => r.testCase.expectedTriggered && !r.actualTriggered);
 
-    const raw = await chain.invoke({
-      topicName: topic.name,
-      topicDescription: topic.description,
-      topicExamples: topic.examples.join(', '),
-      tpr: (metrics.truePositiveRate * 100).toFixed(1) + '%',
-      tnr: (metrics.trueNegativeRate * 100).toFixed(1) + '%',
-      accuracy: (metrics.accuracy * 100).toFixed(1) + '%',
-      coverage: (metrics.coverage * 100).toFixed(1) + '%',
-      falsePositives: fps.length > 0
-        ? fps.map((r) => `- "${r.testCase.prompt}" (${r.testCase.category})`).join('\n')
-        : 'None',
-      falseNegatives: fns.length > 0
-        ? fns.map((r) => `- "${r.testCase.prompt}" (${r.testCase.category})`).join('\n')
-        : 'None',
-    });
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const raw = await chain.invoke({
+          topicName: topic.name,
+          topicDescription: topic.description,
+          topicExamples: topic.examples.join(', '),
+          tpr: (metrics.truePositiveRate * 100).toFixed(1) + '%',
+          tnr: (metrics.trueNegativeRate * 100).toFixed(1) + '%',
+          accuracy: (metrics.accuracy * 100).toFixed(1) + '%',
+          coverage: (metrics.coverage * 100).toFixed(1) + '%',
+          falsePositives: fps.length > 0
+            ? fps.map((r) => `- "${r.testCase.prompt}" (${r.testCase.category})`).join('\n')
+            : 'None',
+          falseNegatives: fns.length > 0
+            ? fns.map((r) => `- "${r.testCase.prompt}" (${r.testCase.category})`).join('\n')
+            : 'None',
+        });
+        return raw as unknown as AnalysisReportOutput;
+      } catch (err) {
+        if (attempt === MAX_RETRIES - 1) throw err;
+      }
+    }
 
-    return raw as unknown as AnalysisReportOutput;
+    throw new Error('Unreachable');
   }
 
   async improveTopic(
@@ -102,29 +121,38 @@ export class LangChainLlmService implements LlmService {
     const fns = results.filter((r) => r.testCase.expectedTriggered && !r.actualTriggered);
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      const raw = await chain.invoke({
-        currentName: topic.name,
-        currentDescription: topic.description,
-        currentExamples: topic.examples.join(', '),
-        iteration,
-        coverage: (metrics.coverage * 100).toFixed(1) + '%',
-        targetCoverage: (targetCoverage * 100).toFixed(1) + '%',
-        tpr: (metrics.truePositiveRate * 100).toFixed(1) + '%',
-        tnr: (metrics.trueNegativeRate * 100).toFixed(1) + '%',
-        accuracy: (metrics.accuracy * 100).toFixed(1) + '%',
-        analysisSummary: analysis.summary,
-        fpPatterns: analysis.falsePositivePatterns.join('; ') || 'None',
-        fnPatterns: analysis.falseNegativePatterns.join('; ') || 'None',
-        specificFPs: fps.map((r) => `- "${r.testCase.prompt}"`).join('\n') || 'None',
-        specificFNs: fns.map((r) => `- "${r.testCase.prompt}"`).join('\n') || 'None',
-        suggestions: analysis.suggestions.join('; '),
-      });
-      const result = raw as unknown as CustomTopicOutput;
+      try {
+        const raw = await chain.invoke({
+          currentName: topic.name,
+          currentDescription: topic.description,
+          currentExamples: topic.examples.join(', '),
+          iteration,
+          coverage: (metrics.coverage * 100).toFixed(1) + '%',
+          targetCoverage: (targetCoverage * 100).toFixed(1) + '%',
+          tpr: (metrics.truePositiveRate * 100).toFixed(1) + '%',
+          tnr: (metrics.trueNegativeRate * 100).toFixed(1) + '%',
+          accuracy: (metrics.accuracy * 100).toFixed(1) + '%',
+          analysisSummary: analysis.summary,
+          fpPatterns: analysis.falsePositivePatterns.join('; ') || 'None',
+          fnPatterns: analysis.falseNegativePatterns.join('; ') || 'None',
+          specificFPs: fps.map((r) => `- "${r.testCase.prompt}"`).join('\n') || 'None',
+          specificFNs: fns.map((r) => `- "${r.testCase.prompt}"`).join('\n') || 'None',
+          suggestions: analysis.suggestions.join('; '),
+        });
+        const result = raw as unknown as CustomTopicOutput;
 
-      const errors = validateTopic(result);
-      if (errors.length === 0) return result;
+        const errors = validateTopic(result);
+        if (errors.length === 0) return result;
+
+        if (attempt === MAX_RETRIES - 1) {
+          throw new Error(`LLM output violates constraints after ${MAX_RETRIES} attempts: ${errors.map((e) => e.message).join(', ')}`);
+        }
+      } catch (err) {
+        if (attempt === MAX_RETRIES - 1) throw err;
+        // Retry on parsing/validation failures
+      }
     }
 
-    throw new Error(`LLM output violates constraints after ${MAX_RETRIES} attempts`);
+    throw new Error('Unreachable');
   }
 }

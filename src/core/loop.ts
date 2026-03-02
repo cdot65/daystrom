@@ -108,6 +108,14 @@ export async function* runLoop(
         active: true,
       });
       topicId = response.topic_id!;
+
+      // Link topic to the security profile's topic-guardrails
+      await deps.management.assignTopicToProfile(
+        input.profileName,
+        topicId,
+        currentTopic.name,
+        input.intent,
+      );
     } else {
       await deps.management.updateTopic(topicId!, {
         topic_name: currentTopic.name,
