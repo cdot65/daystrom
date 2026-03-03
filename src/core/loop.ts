@@ -12,6 +12,7 @@ import type {
 } from './types.js';
 import { computeMetrics } from './metrics.js';
 import type { ManagementService, ScanService } from '../airs/types.js';
+import type { LearningExtractor } from '../memory/extractor.js';
 
 export interface LlmService {
   generateTopic(
@@ -43,6 +44,7 @@ export interface LoopDependencies {
   management: ManagementService;
   scanner: ScanService;
   propagationDelayMs?: number;
+  memory?: { extractor: LearningExtractor };
 }
 
 function delay(ms: number): Promise<void> {
@@ -101,27 +103,28 @@ export async function* runLoop(
       currentTopic = { ...currentTopic, name: lockedName! };
     }
 
-    yield { type: 'generate:complete', topic: currentTopic };
+    const topic = currentTopic!;
+    yield { type: 'generate:complete', topic };
 
     // Step 2: Apply topic via management API (SDK v2)
     if (i === 1) {
       // Check if a topic with this name already exists (reuse it)
       const existing = await deps.management.listTopics();
-      const match = existing.find((t) => t.topic_name === currentTopic.name);
+      const match = existing.find((t) => t.topic_name === topic.name);
 
       if (match) {
         topicId = match.topic_id!;
         await deps.management.updateTopic(topicId, {
-          topic_name: currentTopic.name,
-          description: currentTopic.description,
-          examples: currentTopic.examples,
+          topic_name: topic.name,
+          description: topic.description,
+          examples: topic.examples,
           active: true,
         });
       } else {
         const response = await deps.management.createTopic({
-          topic_name: currentTopic.name,
-          description: currentTopic.description,
-          examples: currentTopic.examples,
+          topic_name: topic.name,
+          description: topic.description,
+          examples: topic.examples,
           active: true,
         });
         topicId = response.topic_id!;
@@ -131,14 +134,14 @@ export async function* runLoop(
       await deps.management.assignTopicToProfile(
         input.profileName,
         topicId,
-        currentTopic.name,
+        topic.name,
         input.intent,
       );
     } else {
       await deps.management.updateTopic(topicId!, {
-        topic_name: currentTopic.name,
-        description: currentTopic.description,
-        examples: currentTopic.examples,
+        topic_name: topic.name,
+        description: topic.description,
+        examples: topic.examples,
         active: true,
       });
     }
@@ -152,15 +155,16 @@ export async function* runLoop(
 
     // Step 3: Generate test cases
     const { positiveTests, negativeTests } = await deps.llm.generateTests(
-      currentTopic,
+      topic,
       input.intent,
     );
     const allTests = [...positiveTests, ...negativeTests];
 
     // Step 4: Run scans
+    const sessionId = `guardrail-gen-${runState.id.slice(0, 7)}-iter${i}`;
     const testResults: TestResult[] = [];
     const prompts = allTests.map((t) => t.prompt);
-    const scanResults = await deps.scanner.scanBatch(input.profileName, prompts);
+    const scanResults = await deps.scanner.scanBatch(input.profileName, prompts, undefined, sessionId);
 
     for (let j = 0; j < allTests.length; j++) {
       const testCase = allTests[j];
@@ -182,14 +186,14 @@ export async function* runLoop(
     yield { type: 'evaluate:complete', metrics };
 
     // Step 6: Analyze
-    const analysis = await deps.llm.analyzeResults(currentTopic, testResults, metrics);
+    const analysis = await deps.llm.analyzeResults(topic, testResults, metrics);
     yield { type: 'analyze:complete', analysis };
 
     // Record iteration
     const iterationResult: IterationResult = {
       iteration: i,
       timestamp: new Date().toISOString(),
-      topic: currentTopic,
+      topic,
       testCases: allTests,
       testResults,
       metrics,
@@ -215,6 +219,12 @@ export async function* runLoop(
   }
 
   runState.status = 'completed';
+
+  // Extract learnings from this run if memory is enabled
+  if (deps.memory?.extractor) {
+    const { learnings } = await deps.memory.extractor.extractAndSave(runState);
+    yield { type: 'memory:extracted', learningCount: learnings.length };
+  }
 
   const bestResult = runState.iterations[runState.bestIteration - 1] ?? runState.iterations[runState.iterations.length - 1];
 

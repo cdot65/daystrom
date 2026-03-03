@@ -59,7 +59,7 @@ export function createMockManagementService(): ManagementService {
 
 export function createMockScanService(triggerPatterns: RegExp[] = [/weapon/i, /bomb/i]): ScanService {
   return {
-    scan: async (_profile: string, prompt: string): Promise<ScanResult> => {
+    scan: async (_profile: string, prompt: string, _sessionId?: string): Promise<ScanResult> => {
       const triggered = triggerPatterns.some((p) => p.test(prompt));
       return {
         scanId: `scan-${Date.now()}`,
@@ -68,7 +68,7 @@ export function createMockScanService(triggerPatterns: RegExp[] = [/weapon/i, /b
         triggered,
       };
     },
-    scanBatch: async (_profile: string, prompts: string[]): Promise<ScanResult[]> => {
+    scanBatch: async (_profile: string, prompts: string[], _concurrency?: number, _sessionId?: string): Promise<ScanResult[]> => {
       const results: ScanResult[] = [];
       for (const prompt of prompts) {
         const triggered = triggerPatterns.some((p) => p.test(prompt));

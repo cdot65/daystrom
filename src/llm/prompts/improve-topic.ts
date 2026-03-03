@@ -15,7 +15,8 @@ Focus on improving only the description and examples:
 - Making the description more precise to reduce false positives
 - Adding examples that cover missed patterns (false negatives)
 - Removing or replacing examples that cause over-matching
-- Using clear, unambiguous language`,
+- Using clear, unambiguous language
+{memorySection}`,
   ],
   [
     'human',

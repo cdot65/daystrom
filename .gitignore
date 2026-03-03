@@ -1,7 +1,25 @@
+# Dependencies
 node_modules/
+
+# Build
 dist/
-coverage/
-.env
 *.tsbuildinfo
+
+# Test
+coverage/
+
+# Secrets
+.env
+
+# OS
 .DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Runtime data
 ~/.prisma-airs-guardrails/

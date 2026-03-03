@@ -79,4 +79,6 @@ export type LoopEvent =
   | { type: 'analyze:complete'; analysis: AnalysisReport }
   | { type: 'iteration:complete'; result: IterationResult }
   | { type: 'loop:complete'; bestResult: IterationResult; runState: RunState }
-  | { type: 'loop:paused'; runState: RunState };
+  | { type: 'loop:paused'; runState: RunState }
+  | { type: 'memory:loaded'; learningCount: number }
+  | { type: 'memory:extracted'; learningCount: number };

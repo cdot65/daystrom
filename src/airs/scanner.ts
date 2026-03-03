@@ -10,12 +10,12 @@ export class AirsScanService implements ScanService {
     this.scanner = new Scanner();
   }
 
-  async scan(profileName: string, prompt: string): Promise<ScanResult> {
+  async scan(profileName: string, prompt: string, sessionId?: string): Promise<ScanResult> {
     const content = new Content({ prompt });
     const response = await this.scanner.syncScan(
       { profile_name: profileName },
       content,
-      undefined,
+      sessionId ? { sessionId } : undefined,
     );
 
     const action = response.action === 'block' ? 'block' : 'allow';
@@ -35,8 +35,9 @@ export class AirsScanService implements ScanService {
     profileName: string,
     prompts: string[],
     concurrency = 5,
+    sessionId?: string,
   ): Promise<ScanResult[]> {
     const limit = pLimit(concurrency);
-    return Promise.all(prompts.map((prompt) => limit(() => this.scan(profileName, prompt))));
+    return Promise.all(prompts.map((prompt) => limit(() => this.scan(profileName, prompt, sessionId))));
   }
 }

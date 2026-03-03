@@ -7,6 +7,9 @@ import { SdkManagementService } from '../../airs/management.js';
 import { JsonFileStore } from '../../persistence/store.js';
 import { runLoop } from '../../core/loop.js';
 import { collectUserInput } from '../prompts.js';
+import { MemoryStore } from '../../memory/store.js';
+import { MemoryInjector } from '../../memory/injector.js';
+import { LearningExtractor } from '../../memory/extractor.js';
 import {
   renderHeader,
   renderIterationStart,
@@ -17,6 +20,8 @@ import {
   renderLoopComplete,
   renderError,
   renderIterationSummary,
+  renderMemoryLoaded,
+  renderMemoryExtracted,
 } from '../renderer.js';
 
 export function registerGenerateCommand(program: Command): void {
@@ -30,6 +35,8 @@ export function registerGenerateCommand(program: Command): void {
     .option('--intent <intent>', 'Intent: block or allow')
     .option('--max-iterations <n>', 'Max iterations', '20')
     .option('--target-coverage <n>', 'Target coverage %', '90')
+    .option('--memory', 'Enable learning memory (default)')
+    .option('--no-memory', 'Disable learning memory')
     .action(async (opts) => {
       try {
         renderHeader();
@@ -37,6 +44,7 @@ export function registerGenerateCommand(program: Command): void {
         const config = await loadConfig({
           llmProvider: opts.provider,
           llmModel: opts.model,
+          memoryEnabled: opts.memory !== undefined ? String(opts.memory) : undefined,
         });
 
         // Collect user input (interactive or from CLI flags)
@@ -64,7 +72,12 @@ export function registerGenerateCommand(program: Command): void {
           awsRegion: config.awsRegion,
         });
 
-        const llm = new LangChainLlmService(model);
+        // Set up memory system
+        const memoryEnabled = config.memoryEnabled;
+        const memoryStore = memoryEnabled ? new MemoryStore(config.memoryDir) : undefined;
+        const memoryInjector = memoryStore ? new MemoryInjector(memoryStore, config.maxMemoryChars) : undefined;
+
+        const llm = new LangChainLlmService(model, memoryInjector);
         const scanner = new AirsScanService(config.airsApiKey!);
         const management = new SdkManagementService({
           clientId: config.mgmtClientId,
@@ -76,12 +89,21 @@ export function registerGenerateCommand(program: Command): void {
 
         const store = new JsonFileStore(config.dataDir);
 
+        // Load memory before loop
+        if (memoryEnabled) {
+          const learningCount = await llm.loadMemory(userInput.topicDescription);
+          renderMemoryLoaded(learningCount);
+        }
+
+        const memoryExtractor = memoryStore ? new LearningExtractor(model, memoryStore) : undefined;
+
         // Run the loop
         for await (const event of runLoop(userInput, {
           llm,
           management,
           scanner,
           propagationDelayMs: config.propagationDelayMs,
+          memory: memoryExtractor ? { extractor: memoryExtractor } : undefined,
         })) {
           switch (event.type) {
             case 'iteration:start':
@@ -101,6 +123,9 @@ export function registerGenerateCommand(program: Command): void {
               break;
             case 'iteration:complete':
               renderIterationSummary(event.result);
+              break;
+            case 'memory:extracted':
+              renderMemoryExtracted(event.learningCount);
               break;
             case 'loop:complete':
               await store.save(event.runState);

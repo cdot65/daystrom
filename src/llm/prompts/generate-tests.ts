@@ -14,7 +14,8 @@ Each test should have:
 - Whether it should trigger (true for positive, false for negative)
 - A category describing the test type (e.g., "direct", "indirect", "coded", "edge-case", "benign", "adjacent")
 
-Generate approximately 20 positive and 20 negative tests for comprehensive coverage.`,
+Generate approximately 20 positive and 20 negative tests for comprehensive coverage.
+{memorySection}`,
   ],
   [
     'human',

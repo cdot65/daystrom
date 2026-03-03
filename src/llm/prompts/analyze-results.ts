@@ -9,7 +9,8 @@ Provide:
 1. A brief summary of overall performance
 2. Patterns in false positives (prompts incorrectly blocked/flagged)
 3. Patterns in false negatives (prompts that should have been caught but weren't)
-4. Specific, actionable suggestions for improving the guardrail definition`,
+4. Specific, actionable suggestions for improving the guardrail definition
+{memorySection}`,
   ],
   [
     'human',

@@ -91,3 +91,15 @@ export function renderIterationSummary(result: IterationResult): void {
   const coverageColor = result.metrics.coverage >= 0.9 ? chalk.green : result.metrics.coverage >= 0.7 ? chalk.yellow : chalk.red;
   console.log(`  ${chalk.dim(`[${result.durationMs}ms]`)} Coverage: ${coverageColor((result.metrics.coverage * 100).toFixed(1) + '%')} | Accuracy: ${(result.metrics.accuracy * 100).toFixed(1)}%`);
 }
+
+export function renderMemoryLoaded(learningCount: number): void {
+  if (learningCount > 0) {
+    console.log(chalk.cyan(`  Memory: loaded ${learningCount} learnings from previous runs`));
+  } else {
+    console.log(chalk.dim('  Memory: no previous learnings found'));
+  }
+}
+
+export function renderMemoryExtracted(learningCount: number): void {
+  console.log(chalk.cyan(`  Memory: extracted ${learningCount} learnings from this run`));
+}

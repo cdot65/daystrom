@@ -11,7 +11,8 @@ Constraints:
 - Examples: 1-5 examples, each max 250 characters
 - Combined total (name + description + all examples) must not exceed 1000 characters
 
-The description should be specific enough to catch relevant content but not so broad that it triggers on unrelated topics. Examples should represent diverse ways users might discuss the topic.`,
+The description should be specific enough to catch relevant content but not so broad that it triggers on unrelated topics. Examples should represent diverse ways users might discuss the topic.
+{memorySection}`,
   ],
   [
     'human',

@@ -67,6 +67,22 @@ describe('AirsScanService', () => {
         undefined,
       );
     });
+
+    it('passes sessionId to syncScan when provided', async () => {
+      mockSyncScan.mockResolvedValue({
+        scan_id: 's1',
+        report_id: 'r1',
+        action: 'allow',
+        prompt_detected: {},
+      });
+
+      await service.scan('prof', 'hello', 'guardrail-gen-abc1234-iter1');
+      expect(mockSyncScan).toHaveBeenCalledWith(
+        expect.objectContaining({ profile_name: 'prof' }),
+        expect.anything(),
+        { sessionId: 'guardrail-gen-abc1234-iter1' },
+      );
+    });
   });
 
   describe('scanBatch', () => {

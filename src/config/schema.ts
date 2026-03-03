@@ -46,6 +46,11 @@ export const ConfigSchema = z.object({
 
   // Persistence
   dataDir: z.string().default('~/.prisma-airs-guardrails/runs'),
+
+  // Memory
+  memoryEnabled: z.coerce.boolean().default(true),
+  memoryDir: z.string().default('~/.prisma-airs-guardrails/memory'),
+  maxMemoryChars: z.coerce.number().int().min(500).max(10000).default(3000),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

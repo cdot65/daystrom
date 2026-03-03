@@ -15,8 +15,8 @@ export interface ScanResult {
 }
 
 export interface ScanService {
-  scan(profileName: string, prompt: string): Promise<ScanResult>;
-  scanBatch(profileName: string, prompts: string[], concurrency?: number): Promise<ScanResult[]>;
+  scan(profileName: string, prompt: string, sessionId?: string): Promise<ScanResult>;
+  scanBatch(profileName: string, prompts: string[], concurrency?: number, sessionId?: string): Promise<ScanResult[]>;
 }
 
 /**

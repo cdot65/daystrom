@@ -6,21 +6,44 @@ import { generateTopicPrompt, buildSeedExamplesSection } from './prompts/generat
 import { generateTestsPrompt } from './prompts/generate-tests.js';
 import { analyzeResultsPrompt } from './prompts/analyze-results.js';
 import { improveTopicPrompt } from './prompts/improve-topic.js';
-import { validateTopic, MAX_NAME_LENGTH, MAX_DESCRIPTION_LENGTH, MAX_EXAMPLE_LENGTH, MAX_EXAMPLES } from '../core/constraints.js';
+import { validateTopic, MAX_NAME_LENGTH, MAX_DESCRIPTION_LENGTH, MAX_EXAMPLE_LENGTH, MAX_EXAMPLES, MAX_COMBINED_LENGTH } from '../core/constraints.js';
+import type { MemoryInjector } from '../memory/injector.js';
 
 const MAX_RETRIES = 3;
 
-/** Clamp topic fields to fit Prisma AIRS constraints */
+/** Clamp topic fields to fit Prisma AIRS constraints (including combined limit) */
 function clampTopic(topic: CustomTopicOutput): CustomTopicOutput {
-  return {
-    name: topic.name.slice(0, MAX_NAME_LENGTH),
-    description: topic.description.slice(0, MAX_DESCRIPTION_LENGTH),
-    examples: topic.examples.slice(0, MAX_EXAMPLES).map(e => e.slice(0, MAX_EXAMPLE_LENGTH)),
-  };
+  const name = topic.name.slice(0, MAX_NAME_LENGTH);
+  let description = topic.description.slice(0, MAX_DESCRIPTION_LENGTH);
+  const examples = topic.examples.slice(0, MAX_EXAMPLES).map(e => e.slice(0, MAX_EXAMPLE_LENGTH));
+
+  // Enforce combined length limit by dropping examples from the end, then trimming description
+  const combined = () => name.length + description.length + examples.reduce((s, e) => s + e.length, 0);
+  while (combined() > MAX_COMBINED_LENGTH && examples.length > 1) {
+    examples.pop();
+  }
+  if (combined() > MAX_COMBINED_LENGTH) {
+    const overflow = combined() - MAX_COMBINED_LENGTH;
+    description = description.slice(0, description.length - overflow);
+  }
+
+  return { name, description, examples };
 }
 
 export class LangChainLlmService implements LlmService {
-  constructor(private model: BaseChatModel) {}
+  private memorySection = '';
+
+  constructor(
+    private model: BaseChatModel,
+    private memoryInjector?: MemoryInjector,
+  ) {}
+
+  async loadMemory(topicDescription: string): Promise<number> {
+    if (!this.memoryInjector) return 0;
+    this.memorySection = await this.memoryInjector.buildMemorySection(topicDescription);
+    // Count lines starting with "- [" as learning count
+    return this.memorySection.split('\n').filter((l) => l.startsWith('- [')).length;
+  }
 
   async generateTopic(
     description: string,
@@ -36,6 +59,7 @@ export class LangChainLlmService implements LlmService {
           topicDescription: description,
           intent,
           seedExamplesSection: buildSeedExamplesSection(seeds),
+          memorySection: this.memorySection,
         });
         const result = clampTopic(raw as unknown as CustomTopicOutput);
 
@@ -67,6 +91,7 @@ export class LangChainLlmService implements LlmService {
           topicDescription: topic.description,
           topicExamples: topic.examples.map((e, i) => `${i + 1}. ${e}`).join('\n'),
           intent,
+          memorySection: this.memorySection,
         });
         return raw as unknown as TestSuiteOutput;
       } catch (err) {
@@ -104,6 +129,7 @@ export class LangChainLlmService implements LlmService {
           falseNegatives: fns.length > 0
             ? fns.map((r) => `- "${r.testCase.prompt}" (${r.testCase.category})`).join('\n')
             : 'None',
+          memorySection: this.memorySection,
         });
         return raw as unknown as AnalysisReportOutput;
       } catch (err) {
@@ -146,6 +172,7 @@ export class LangChainLlmService implements LlmService {
           specificFPs: fps.map((r) => `- "${r.testCase.prompt}"`).join('\n') || 'None',
           specificFNs: fns.map((r) => `- "${r.testCase.prompt}"`).join('\n') || 'None',
           suggestions: analysis.suggestions.join('; '),
+          memorySection: this.memorySection,
         });
         const result = clampTopic(raw as unknown as CustomTopicOutput);
 

@@ -28,6 +28,9 @@ function fromEnv(): Record<string, unknown> {
     scanConcurrency: env.SCAN_CONCURRENCY,
     propagationDelayMs: env.PROPAGATION_DELAY_MS,
     dataDir: env.DATA_DIR,
+    memoryEnabled: env.MEMORY_ENABLED,
+    memoryDir: env.MEMORY_DIR,
+    maxMemoryChars: env.MAX_MEMORY_CHARS,
   };
 }
 
@@ -64,5 +67,6 @@ export async function loadConfig(
   return {
     ...config,
     dataDir: expandHome(config.dataDir),
+    memoryDir: expandHome(config.memoryDir),
   };
 }

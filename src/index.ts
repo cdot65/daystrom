@@ -10,6 +10,9 @@ export { AirsScanService } from './airs/scanner.js';
 export { SdkManagementService } from './airs/management.js';
 export { JsonFileStore } from './persistence/store.js';
 export { loadConfig } from './config/loader.js';
+export { MemoryStore, normalizeCategory } from './memory/store.js';
+export { MemoryInjector } from './memory/injector.js';
+export { LearningExtractor } from './memory/extractor.js';
 
 export type {
   CustomTopic,
@@ -22,3 +25,9 @@ export type {
   RunState,
   LoopEvent,
 } from './core/types.js';
+
+export type {
+  Learning,
+  TopicMemory,
+  IterationDiff,
+} from './memory/types.js';
