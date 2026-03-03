@@ -94,7 +94,16 @@ describe('LangChainLlmService', () => {
       const model = createMockModel({ ...validTopic, examples: [longExample] });
       const service = new LangChainLlmService(model as any);
       const result = await service.generateTopic('weapons', 'block');
-      expect(result.examples[0].length).toBeLessThanOrEqual(250);
+      expect(Buffer.byteLength(result.examples[0], 'utf8')).toBeLessThanOrEqual(250);
+    });
+
+    it('clamps description with multi-byte chars by byte length', async () => {
+      // 248 ASCII + 1 em dash (3 bytes) = 251 bytes, should be trimmed to ≤250 bytes
+      const desc = 'a'.repeat(248) + '—';
+      const model = createMockModel({ ...validTopic, description: desc });
+      const service = new LangChainLlmService(model as any);
+      const result = await service.generateTopic('weapons', 'block');
+      expect(Buffer.byteLength(result.description, 'utf8')).toBeLessThanOrEqual(250);
     });
 
     it('drops examples when combined length exceeds limit', async () => {
