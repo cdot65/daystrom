@@ -1,11 +1,11 @@
-import { nanoid } from 'nanoid';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { nanoid } from 'nanoid';
 import type { RunState } from '../core/types.js';
-import type { Learning, TopicMemory } from './types.js';
-import { LearningExtractionOutputSchema, type LearningExtractionOutput } from './schemas.js';
-import { extractLearningsPrompt } from './prompts/extract-learnings.js';
 import { computeIterationDiff } from './diff.js';
-import { MemoryStore, normalizeCategory } from './store.js';
+import { extractLearningsPrompt } from './prompts/extract-learnings.js';
+import { type LearningExtractionOutput, LearningExtractionOutputSchema } from './schemas.js';
+import { type MemoryStore, normalizeCategory } from './store.js';
+import type { Learning, TopicMemory } from './types.js';
 
 export class LearningExtractor {
   constructor(
@@ -28,12 +28,14 @@ export class LearningExtractor {
       intent: runState.userInput.intent,
       totalIterations: runState.iterations.length,
       bestIteration: runState.bestIteration,
-      bestCoverage: (runState.bestCoverage * 100).toFixed(1) + '%',
+      bestCoverage: `${(runState.bestCoverage * 100).toFixed(1)}%`,
       iterationHistory,
     })) as LearningExtractionOutput;
 
     const category = normalizeCategory(runState.userInput.topicDescription);
-    const bestIter = runState.iterations[runState.bestIteration - 1] ?? runState.iterations[runState.iterations.length - 1];
+    const bestIter =
+      runState.iterations[runState.bestIteration - 1] ??
+      runState.iterations[runState.iterations.length - 1];
 
     // Build learnings with metadata
     const newLearnings: Learning[] = raw.learnings.map((l) => ({
@@ -123,7 +125,9 @@ export class LearningExtractor {
       lines.push(`--- Iteration ${iter.iteration} ---`);
       lines.push(`Description: "${iter.topic.description}"`);
       lines.push(`Examples: ${iter.topic.examples.map((e) => `"${e}"`).join(', ')}`);
-      lines.push(`Coverage: ${(iter.metrics.coverage * 100).toFixed(1)}% | TPR: ${(iter.metrics.truePositiveRate * 100).toFixed(1)}% | TNR: ${(iter.metrics.trueNegativeRate * 100).toFixed(1)}%`);
+      lines.push(
+        `Coverage: ${(iter.metrics.coverage * 100).toFixed(1)}% | TPR: ${(iter.metrics.truePositiveRate * 100).toFixed(1)}% | TNR: ${(iter.metrics.trueNegativeRate * 100).toFixed(1)}%`,
+      );
       lines.push(`Analysis: ${iter.analysis.summary}`);
 
       if (i > 0) {
@@ -131,11 +135,15 @@ export class LearningExtractor {
         const changes: string[] = [];
         if (diff.descriptionChanged) changes.push('description changed');
         if (diff.examplesChanged) {
-          if (diff.examplesAdded.length) changes.push(`+examples: ${diff.examplesAdded.join(', ')}`);
-          if (diff.examplesRemoved.length) changes.push(`-examples: ${diff.examplesRemoved.join(', ')}`);
+          if (diff.examplesAdded.length)
+            changes.push(`+examples: ${diff.examplesAdded.join(', ')}`);
+          if (diff.examplesRemoved.length)
+            changes.push(`-examples: ${diff.examplesRemoved.join(', ')}`);
         }
         lines.push(`Changes: ${changes.join('; ') || 'none'}`);
-        lines.push(`Coverage delta: ${diff.metricDelta.coverage >= 0 ? '+' : ''}${(diff.metricDelta.coverage * 100).toFixed(1)}%`);
+        lines.push(
+          `Coverage delta: ${diff.metricDelta.coverage >= 0 ? '+' : ''}${(diff.metricDelta.coverage * 100).toFixed(1)}%`,
+        );
       }
 
       lines.push('');

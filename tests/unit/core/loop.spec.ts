@@ -1,36 +1,64 @@
-import { describe, it, expect, vi } from 'vitest';
-import { runLoop, type LoopDependencies } from '../../../src/core/loop.js';
-import type { CustomTopic, TestCase, AnalysisReport, LoopEvent, UserInput } from '../../../src/core/types.js';
+import { describe, expect, it, vi } from 'vitest';
+import { type LoopDependencies, runLoop } from '../../../src/core/loop.js';
+import type {
+  AnalysisReport,
+  CustomTopic,
+  LoopEvent,
+  TestCase,
+  UserInput,
+} from '../../../src/core/types.js';
 import { createMockManagementService, createMockScanService } from '../../helpers/mocks.js';
 
 function createMockLlm() {
   return {
-    generateTopic: vi.fn<(desc: string, intent: string, seeds?: string[]) => Promise<CustomTopic>>().mockResolvedValue({
-      name: 'Weapons Discussion',
-      description: 'Block conversations about weapons',
-      examples: ['How to make a weapon', 'Gun manufacturing'],
-    }),
-    generateTests: vi.fn<(topic: CustomTopic, intent: string) => Promise<{ positiveTests: TestCase[]; negativeTests: TestCase[] }>>().mockResolvedValue({
-      positiveTests: [
-        { prompt: 'How to build a weapon', expectedTriggered: true, category: 'direct' },
-        { prompt: 'Bomb making instructions', expectedTriggered: true, category: 'direct' },
-      ],
-      negativeTests: [
-        { prompt: 'Tell me about cats', expectedTriggered: false, category: 'benign' },
-        { prompt: 'Weather forecast', expectedTriggered: false, category: 'benign' },
-      ],
-    }),
-    analyzeResults: vi.fn<(topic: CustomTopic, results: any, metrics: any) => Promise<AnalysisReport>>().mockResolvedValue({
-      summary: 'Good performance',
-      falsePositivePatterns: [],
-      falseNegativePatterns: [],
-      suggestions: ['Keep current definition'],
-    }),
-    improveTopic: vi.fn<(topic: CustomTopic, metrics: any, analysis: any, results: any, iteration: number, targetCoverage: number) => Promise<CustomTopic>>().mockResolvedValue({
-      name: 'Weapons Discussion v2',
-      description: 'Block all weapons-related conversations',
-      examples: ['How to make a weapon', 'Gun manufacturing', 'Ammunition sourcing'],
-    }),
+    generateTopic: vi
+      .fn<(desc: string, intent: string, seeds?: string[]) => Promise<CustomTopic>>()
+      .mockResolvedValue({
+        name: 'Weapons Discussion',
+        description: 'Block conversations about weapons',
+        examples: ['How to make a weapon', 'Gun manufacturing'],
+      }),
+    generateTests: vi
+      .fn<
+        (
+          topic: CustomTopic,
+          intent: string,
+        ) => Promise<{ positiveTests: TestCase[]; negativeTests: TestCase[] }>
+      >()
+      .mockResolvedValue({
+        positiveTests: [
+          { prompt: 'How to build a weapon', expectedTriggered: true, category: 'direct' },
+          { prompt: 'Bomb making instructions', expectedTriggered: true, category: 'direct' },
+        ],
+        negativeTests: [
+          { prompt: 'Tell me about cats', expectedTriggered: false, category: 'benign' },
+          { prompt: 'Weather forecast', expectedTriggered: false, category: 'benign' },
+        ],
+      }),
+    analyzeResults: vi
+      .fn<(topic: CustomTopic, results: any, metrics: any) => Promise<AnalysisReport>>()
+      .mockResolvedValue({
+        summary: 'Good performance',
+        falsePositivePatterns: [],
+        falseNegativePatterns: [],
+        suggestions: ['Keep current definition'],
+      }),
+    improveTopic: vi
+      .fn<
+        (
+          topic: CustomTopic,
+          metrics: any,
+          analysis: any,
+          results: any,
+          iteration: number,
+          targetCoverage: number,
+        ) => Promise<CustomTopic>
+      >()
+      .mockResolvedValue({
+        name: 'Weapons Discussion v2',
+        description: 'Block all weapons-related conversations',
+        examples: ['How to make a weapon', 'Gun manufacturing', 'Ammunition sourcing'],
+      }),
   };
 }
 
@@ -125,7 +153,10 @@ describe('runLoop', () => {
     const deps = createDeps({ scanner: perfectScanner });
     const events: LoopEvent[] = [];
 
-    for await (const event of runLoop({ ...defaultInput, maxIterations: 5, targetCoverage: 0.5 }, deps)) {
+    for await (const event of runLoop(
+      { ...defaultInput, maxIterations: 5, targetCoverage: 0.5 },
+      deps,
+    )) {
       events.push(event);
     }
 
@@ -183,6 +214,70 @@ describe('runLoop', () => {
     if (complete?.type === 'loop:complete') {
       expect(complete.runState.bestIteration).toBeDefined();
       expect(complete.bestResult).toBeDefined();
+    }
+  });
+
+  it('waits for propagation delay', async () => {
+    vi.useFakeTimers();
+    const deps = createDeps({ propagationDelayMs: 5000 });
+    const events: LoopEvent[] = [];
+
+    const gen = runLoop({ ...defaultInput, maxIterations: 1 }, deps);
+    const collectAll = (async () => {
+      for await (const event of gen) {
+        events.push(event);
+      }
+    })();
+
+    // Advance timers until the loop completes
+    while (events.findIndex((e) => e.type === 'loop:complete') === -1) {
+      await vi.advanceTimersByTimeAsync(5000);
+    }
+
+    await collectAll;
+    expect(events.some((e) => e.type === 'loop:complete')).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it('reuses existing topic instead of creating', async () => {
+    const management = createMockManagementService();
+    const createSpy = vi.spyOn(management, 'createTopic');
+    const updateSpy = vi.spyOn(management, 'updateTopic');
+    // listTopics returns a topic matching the generated name
+    vi.spyOn(management, 'listTopics').mockResolvedValue([
+      {
+        topic_id: 'existing-123',
+        topic_name: 'Weapons Discussion',
+        description: 'old desc',
+        examples: [],
+        active: true,
+      },
+    ]);
+    const deps = createDeps({ management });
+
+    for await (const _event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
+      // consume
+    }
+
+    expect(createSpy).not.toHaveBeenCalled();
+    expect(updateSpy).toHaveBeenCalledWith('existing-123', expect.anything());
+  });
+
+  it('yields memory:extracted event when extractor provided', async () => {
+    const extractor = {
+      extractAndSave: vi.fn().mockResolvedValue({ learnings: [{ insight: 'test' }] }),
+    };
+    const deps = createDeps({ memory: { extractor: extractor as any } });
+    const events: LoopEvent[] = [];
+
+    for await (const event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
+      events.push(event);
+    }
+
+    const memEvent = events.find((e) => e.type === 'memory:extracted');
+    expect(memEvent).toBeDefined();
+    if (memEvent?.type === 'memory:extracted') {
+      expect(memEvent.learningCount).toBe(1);
     }
   });
 });

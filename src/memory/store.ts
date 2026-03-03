@@ -1,9 +1,26 @@
-import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { TopicMemory } from './types.js';
 
 const STOP_WORDS = new Set([
-  'a', 'an', 'the', 'and', 'or', 'of', 'about', 'for', 'in', 'on', 'to', 'with', 'that', 'this', 'is', 'are', 'was', 'were',
+  'a',
+  'an',
+  'the',
+  'and',
+  'or',
+  'of',
+  'about',
+  'for',
+  'in',
+  'on',
+  'to',
+  'with',
+  'that',
+  'this',
+  'is',
+  'are',
+  'was',
+  'were',
 ]);
 
 export function normalizeCategory(description: string): string {
@@ -56,9 +73,7 @@ export class MemoryStore {
   async listCategories(): Promise<string[]> {
     try {
       const files = await readdir(this.dir);
-      return files
-        .filter((f) => f.endsWith('.json'))
-        .map((f) => f.replace(/\.json$/, ''));
+      return files.filter((f) => f.endsWith('.json')).map((f) => f.replace(/\.json$/, ''));
     } catch {
       return [];
     }

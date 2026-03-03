@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtemp, rm, readdir } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { JsonFileStore } from '../../../src/persistence/store.js';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RunState } from '../../../src/core/types.js';
+import { JsonFileStore } from '../../../src/persistence/store.js';
 
 function makeRunState(overrides: Partial<RunState> = {}): RunState {
   return {
@@ -94,6 +94,25 @@ describe('JsonFileStore', () => {
 
     it('does not throw when deleting non-existent run', async () => {
       await expect(store.delete('nonexistent')).resolves.not.toThrow();
+    });
+  });
+
+  describe('list edge cases', () => {
+    it('returns empty array for non-existent directory', async () => {
+      const missingStore = new JsonFileStore(join(dir, 'does-not-exist'));
+      const list = await missingStore.list();
+      expect(list).toEqual([]);
+    });
+
+    it('skips corrupted JSON files', async () => {
+      await store.save(makeRunState({ id: 'good-run' }));
+      // Write a corrupted JSON file directly
+      const { writeFile: wf } = await import('node:fs/promises');
+      await wf(join(dir, 'bad-run.json'), 'not-valid-json!!!');
+
+      const list = await store.list();
+      expect(list).toHaveLength(1);
+      expect(list[0].id).toBe('good-run');
     });
   });
 

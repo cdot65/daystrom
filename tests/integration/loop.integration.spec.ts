@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { runLoop, type LoopDependencies, type LlmService } from '../../src/core/loop.js';
-import type { CustomTopic, TestCase, AnalysisReport, EfficacyMetrics, TestResult, LoopEvent, UserInput } from '../../src/core/types.js';
+import { describe, expect, it } from 'vitest';
+import { type LlmService, type LoopDependencies, runLoop } from '../../src/core/loop.js';
+import type { LoopEvent, UserInput } from '../../src/core/types.js';
 import { createMockManagementService, createMockScanService } from '../helpers/mocks.js';
 
 /**

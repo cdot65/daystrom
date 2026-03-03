@@ -22,13 +22,10 @@ export function computeMetrics(results: TestResult[]): EfficacyMetrics {
   const accuracy = total > 0 ? (truePositives + trueNegatives) / total : 0;
   const coverage = Math.min(truePositiveRate, trueNegativeRate);
 
-  const precision = truePositives + falsePositives > 0
-    ? truePositives / (truePositives + falsePositives)
-    : 0;
+  const precision =
+    truePositives + falsePositives > 0 ? truePositives / (truePositives + falsePositives) : 0;
   const recall = truePositiveRate;
-  const f1Score = precision + recall > 0
-    ? (2 * precision * recall) / (precision + recall)
-    : 0;
+  const f1Score = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0;
 
   return {
     truePositives,

@@ -67,14 +67,16 @@ Each provider requires different environment variables. Only configure the provi
 
 | Provider | Env Vars Required | Default Model |
 |----------|-------------------|---------------|
-| `claude-api` (default) | `ANTHROPIC_API_KEY` | `claude-sonnet-4-20250514` |
-| `claude-vertex` | `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` | `claude-sonnet-4@20250514` |
-| `claude-bedrock` | `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | `anthropic.claude-sonnet-4-20250514-v1:0` |
+| `claude-api` (default) | `ANTHROPIC_API_KEY` | `claude-opus-4-6` |
+| `claude-vertex` | `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` | `claude-opus-4-6` |
+| `claude-bedrock` | `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | `anthropic.claude-opus-4-6-v1` |
 | `gemini-api` | `GOOGLE_API_KEY` | `gemini-2.0-flash` |
 | `gemini-vertex` | `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` | `gemini-2.0-flash` |
 | `gemini-bedrock` | `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | `gemini-2.0-flash` |
 
 All LLM calls use `temperature: 0` for deterministic output. You can override the model with `--model <name>` or `LLM_MODEL` env var.
+
+For detailed setup instructions for each provider, see [LLM Providers](LLM-PROVIDERS.md).
 
 ## AIRS Credential Details
 
@@ -139,7 +141,7 @@ You can place a JSON config file at `~/.prisma-airs-guardrails/config.json` with
 ## Verify Installation
 
 ```bash
-pnpm test              # Run all 108 tests
+pnpm test              # Run all 165 tests
 pnpm run lint          # Biome lint check
 pnpm tsc --noEmit      # TypeScript type-check (strict mode)
 ```

@@ -72,6 +72,7 @@ All commands use `guardrail-gen` as the binary name (or `pnpm run dev` in develo
 - [Architecture](docs/ARCHITECTURE.md) — system design, module responsibilities, data flow, key decisions
 - [Workflow](docs/WORKFLOW.md) — iterative loop stages, memory system, CLI usage examples
 - [Features](docs/FEATURES.md) — capabilities, constraints, configuration reference, testing
+- [LLM Providers](docs/LLM-PROVIDERS.md) — provider auth, env vars, model naming, troubleshooting
 
 ## Tech Stack
 
@@ -79,7 +80,7 @@ All commands use `guardrail-gen` as the binary name (or `pnpm run dev` in develo
 - **LangChain.js** — Claude (Anthropic API, Vertex, Bedrock) and Gemini (API, Vertex, Bedrock) with structured output via Zod schemas
 - **Prisma AIRS SDK** (`@cdot65/prisma-airs-sdk@^0.2.0`) — scan API + management API (OAuth2 client credentials)
 - **Commander.js** — CLI framework with 4 subcommands
-- **Vitest** + **MSW** — 108 tests across 13 files
+- **Vitest** + **MSW** — 165 tests across 17 files (~98% stmt coverage)
 - **Biome** — linting and formatting
 - **Zod** — config validation, LLM output parsing, learning extraction schemas
 

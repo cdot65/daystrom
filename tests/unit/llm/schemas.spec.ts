@@ -1,5 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { CustomTopicSchema, TestSuiteSchema, AnalysisReportSchema } from '../../../src/llm/schemas.js';
+import { describe, expect, it } from 'vitest';
+import {
+  AnalysisReportSchema,
+  CustomTopicSchema,
+  TestSuiteSchema,
+} from '../../../src/llm/schemas.js';
 
 describe('LLM schemas', () => {
   describe('CustomTopicSchema', () => {

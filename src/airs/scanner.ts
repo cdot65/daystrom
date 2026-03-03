@@ -1,4 +1,4 @@
-import { init, Scanner, Content } from '@cdot65/prisma-airs-sdk';
+import { Content, init, Scanner } from '@cdot65/prisma-airs-sdk';
 import pLimit from 'p-limit';
 import type { ScanResult, ScanService } from './types.js';
 
@@ -38,6 +38,8 @@ export class AirsScanService implements ScanService {
     sessionId?: string,
   ): Promise<ScanResult[]> {
     const limit = pLimit(concurrency);
-    return Promise.all(prompts.map((prompt) => limit(() => this.scan(profileName, prompt, sessionId))));
+    return Promise.all(
+      prompts.map((prompt) => limit(() => this.scan(profileName, prompt, sessionId))),
+    );
   }
 }

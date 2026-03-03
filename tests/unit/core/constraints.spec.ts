@@ -1,11 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  validateName,
   validateDescription,
   validateExample,
   validateExamples,
+  validateName,
   validateTopic,
-  type ValidationError,
 } from '../../../src/core/constraints.js';
 import type { CustomTopic } from '../../../src/core/types.js';
 
