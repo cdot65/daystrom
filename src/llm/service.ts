@@ -31,21 +31,36 @@ import {
 
 const MAX_RETRIES = 3;
 
-/** Clamp topic fields to fit Prisma AIRS constraints (including combined limit) */
-function clampTopic(topic: CustomTopicOutput): CustomTopicOutput {
-  const name = topic.name.slice(0, MAX_NAME_LENGTH);
-  let description = topic.description.slice(0, MAX_DESCRIPTION_LENGTH);
-  const examples = topic.examples.slice(0, MAX_EXAMPLES).map((e) => e.slice(0, MAX_EXAMPLE_LENGTH));
+/** Truncate a string so its UTF-8 byte length does not exceed maxBytes. */
+function sliceToBytes(s: string, maxBytes: number): string {
+  while (Buffer.byteLength(s, 'utf8') > maxBytes) {
+    s = s.slice(0, -1);
+  }
+  return s;
+}
 
-  // Enforce combined length limit by dropping examples from the end, then trimming description
+/** UTF-8 byte length of a string. */
+function byteLen(s: string): number {
+  return Buffer.byteLength(s, 'utf8');
+}
+
+/** Clamp topic fields to fit Prisma AIRS constraints (byte-aware, including combined limit) */
+function clampTopic(topic: CustomTopicOutput): CustomTopicOutput {
+  const name = sliceToBytes(topic.name, MAX_NAME_LENGTH);
+  let description = sliceToBytes(topic.description, MAX_DESCRIPTION_LENGTH);
+  const examples = topic.examples
+    .slice(0, MAX_EXAMPLES)
+    .map((e) => sliceToBytes(e, MAX_EXAMPLE_LENGTH));
+
+  // Enforce combined byte-length limit by dropping examples from the end, then trimming description
   const combined = () =>
-    name.length + description.length + examples.reduce((s, e) => s + e.length, 0);
+    byteLen(name) + byteLen(description) + examples.reduce((s, e) => s + byteLen(e), 0);
   while (combined() > MAX_COMBINED_LENGTH && examples.length > 1) {
     examples.pop();
   }
   if (combined() > MAX_COMBINED_LENGTH) {
     const overflow = combined() - MAX_COMBINED_LENGTH;
-    description = description.slice(0, description.length - overflow);
+    description = sliceToBytes(description, byteLen(description) - overflow);
   }
 
   return { name, description, examples };

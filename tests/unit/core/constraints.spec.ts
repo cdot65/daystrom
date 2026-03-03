@@ -132,5 +132,20 @@ describe('constraints', () => {
       // 100 + 250 + 200 + 200 + 250 = 1000
       expect(validateTopic(topic)).toEqual([]);
     });
+
+    it('rejects description with multi-byte chars exceeding 250 bytes', () => {
+      // 248 ASCII chars + 1 em dash (3 bytes) = 251 bytes > 250
+      const desc = 'a'.repeat(248) + '—';
+      expect(desc.length).toBe(249); // JS char count is 249
+      const errors = validateDescription(desc);
+      expect(errors).toHaveLength(1);
+      expect(errors[0].message).toContain('250');
+    });
+
+    it('accepts multi-byte description within 250 bytes', () => {
+      // 247 ASCII chars + 1 em dash (3 bytes) = 250 bytes
+      const desc = 'a'.repeat(247) + '—';
+      expect(validateDescription(desc)).toEqual([]);
+    });
   });
 });

@@ -14,12 +14,17 @@ export const MAX_COMBINED_LENGTH = 1000;
 /** @deprecated Use MAX_EXAMPLES */
 const MAX_EXAMPLES_COUNT = MAX_EXAMPLES;
 
+/** UTF-8 byte length — AIRS API enforces limits in bytes, not JS characters. */
+function byteLen(s: string): number {
+  return Buffer.byteLength(s, 'utf8');
+}
+
 export function validateName(name: string): ValidationError[] {
   const errors: ValidationError[] = [];
   if (!name || name.length === 0) {
     errors.push({ field: 'name', message: 'Name is required' });
-  } else if (name.length > MAX_NAME_LENGTH) {
-    errors.push({ field: 'name', message: `Name must be at most ${MAX_NAME_LENGTH} characters` });
+  } else if (byteLen(name) > MAX_NAME_LENGTH) {
+    errors.push({ field: 'name', message: `Name must be at most ${MAX_NAME_LENGTH} bytes` });
   }
   return errors;
 }
@@ -28,10 +33,10 @@ export function validateDescription(description: string): ValidationError[] {
   const errors: ValidationError[] = [];
   if (!description || description.length === 0) {
     errors.push({ field: 'description', message: 'Description is required' });
-  } else if (description.length > MAX_DESCRIPTION_LENGTH) {
+  } else if (byteLen(description) > MAX_DESCRIPTION_LENGTH) {
     errors.push({
       field: 'description',
-      message: `Description must be at most ${MAX_DESCRIPTION_LENGTH} characters`,
+      message: `Description must be at most ${MAX_DESCRIPTION_LENGTH} bytes`,
     });
   }
   return errors;
@@ -41,10 +46,10 @@ export function validateExample(example: string, index: number): ValidationError
   const errors: ValidationError[] = [];
   if (!example || example.length === 0) {
     errors.push({ field: `examples[${index}]`, message: `Example ${index} is required` });
-  } else if (example.length > MAX_EXAMPLE_LENGTH) {
+  } else if (byteLen(example) > MAX_EXAMPLE_LENGTH) {
     errors.push({
       field: `examples[${index}]`,
-      message: `Example ${index} must be at most ${MAX_EXAMPLE_LENGTH} characters`,
+      message: `Example ${index} must be at most ${MAX_EXAMPLE_LENGTH} bytes`,
     });
   }
   return errors;
@@ -71,14 +76,14 @@ export function validateTopic(topic: CustomTopic): ValidationError[] {
   errors.push(...validateExamples(topic.examples));
 
   const combined =
-    topic.name.length +
-    topic.description.length +
-    topic.examples.reduce((sum, ex) => sum + ex.length, 0);
+    byteLen(topic.name) +
+    byteLen(topic.description) +
+    topic.examples.reduce((sum, ex) => sum + byteLen(ex), 0);
 
   if (combined > MAX_COMBINED_LENGTH) {
     errors.push({
       field: 'topic',
-      message: `Combined length (${combined}) exceeds ${MAX_COMBINED_LENGTH} characters`,
+      message: `Combined length (${combined}) exceeds ${MAX_COMBINED_LENGTH} bytes`,
     });
   }
 
