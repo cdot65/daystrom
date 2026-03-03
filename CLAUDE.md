@@ -1,22 +1,40 @@
-# CLAUDE.md — Daystrom
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Summary
 
-Daystrom is an automated CLI tool that generates, tests, and iteratively refines **Palo Alto Prisma AIRS custom topic guardrails**. It uses an LLM to produce topic definitions (name, description, examples), deploys them to a Prisma AIRS security profile, scans test prompts against the live AIRS API, evaluates efficacy metrics (TPR, TNR, coverage, F1), and improves the topic in a loop until a coverage target is met. A cross-run memory system persists learnings so future runs start with accumulated knowledge.
+Daystrom is an automated CLI that generates, tests, and iteratively refines **Palo Alto Prisma AIRS custom topic guardrails**. Uses an LLM to produce topic definitions (name, description, examples), deploys to Prisma AIRS, scans test prompts, evaluates efficacy (TPR, TNR, coverage, F1), and improves in a loop until a coverage target is met. Cross-run memory persists learnings for future runs.
 
-Named after Dr. Daystrom's self-learning M-5 multitronic unit from Star Trek TOS.
+## Commands
+
+```bash
+# Dev
+pnpm install               # Install deps
+pnpm run build             # tsc compile to dist/
+pnpm run dev               # Run CLI via tsx (any subcommand)
+pnpm run generate          # Interactive guardrail generation loop
+
+# Test
+pnpm test                  # All tests (vitest run)
+pnpm test:watch            # Watch mode
+pnpm test -- tests/unit/core/metrics.spec.ts   # Single file
+pnpm test -- -t "pattern"  # Tests matching name pattern
+pnpm test:coverage         # Coverage (excludes src/cli/**, src/index.ts, **/types.ts)
+pnpm test:e2e              # E2E tests (requires real creds, opt-in)
+
+# Lint & Format
+pnpm run lint              # Biome check
+pnpm run lint:fix          # Biome check --write
+pnpm run format            # Biome format --write
+
+# Type-check
+pnpm tsc --noEmit
+```
 
 ## Tech Stack
 
-- **Runtime:** TypeScript ESM, Node.js 20+, pnpm
-- **LLM:** LangChain.js with structured output (Zod schemas)
-  - Providers: `claude-api` (default), `claude-vertex`, `claude-bedrock`, `gemini-api`, `gemini-vertex`, `gemini-bedrock`
-  - Default model: `claude-sonnet-4-20250514` / `gemini-2.0-flash`
-- **AIRS SDK:** `@cdot65/prisma-airs-sdk@^0.2.0` — scan API + management API (OAuth2)
-- **CLI:** Commander.js, Inquirer, Chalk
-- **Test:** Vitest, MSW (HTTP mocking)
-- **Lint/Format:** Biome
-- **Validation:** Zod (config schema, LLM output schemas)
+TypeScript ESM, Node 20+, pnpm. LangChain.js w/ structured output (Zod). `@cdot65/prisma-airs-sdk` for AIRS scan+management APIs. Commander.js CLI, Inquirer prompts, Chalk rendering. Vitest+MSW tests. Biome lint/format.
 
 ## Directory Structure
 
@@ -63,89 +81,67 @@ src/
 └── index.ts               # Library exports
 
 tests/
-├── unit/                  # 12 spec files
+├── unit/                  # 16 spec files
 │   ├── airs/              # scanner.spec.ts, management.spec.ts
+│   ├── config/            # schema.spec.ts, loader.spec.ts
 │   ├── core/              # loop.spec.ts, metrics.spec.ts, constraints.spec.ts
-│   ├── llm/               # provider.spec.ts, schemas.spec.ts
+│   ├── llm/               # provider.spec.ts, schemas.spec.ts, service.spec.ts, prompts.spec.ts
 │   ├── memory/            # store.spec.ts, extractor.spec.ts, injector.spec.ts, diff.spec.ts
 │   └── persistence/       # store.spec.ts
 ├── integration/           # loop.integration.spec.ts (full loop w/ mocks)
+├── e2e/                   # vertex-provider.e2e.spec.ts (opt-in, requires real creds)
 └── helpers/               # mocks.ts
 ```
 
-## Key Architectural Patterns
+## Architecture
 
 ### Core Loop (`src/core/loop.ts`)
-- `runLoop()` is an **async generator** yielding typed `LoopEvent` discriminated unions
+- `runLoop()` async generator yields typed `LoopEvent` discriminated unions
 - Events: `iteration:start`, `generate:complete`, `apply:complete`, `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete`, `loop:complete`, `loop:paused`, `memory:loaded`, `memory:extracted`
-- Topic name is **locked** after iteration 1 — only description + examples change
-- Stop condition: `coverage >= targetCoverage` (default 0.9)
+- Topic name **locked after iteration 1** — only description+examples change thereafter
+- Stop: `coverage >= targetCoverage` (default 0.9). Coverage = `min(TPR, TNR)`
 
-### AIRS Integration
-- **Scanner** (`src/airs/scanner.ts`): uses `@cdot65/prisma-airs-sdk` `Scanner.syncScan()`, detection via `prompt_detected.topic_violation` boolean
-- **Management** (`src/airs/management.ts`): uses `ManagementClient` for topic CRUD + profile linking
-- Profile updates create **new revisions with new UUIDs** — always reference profiles by name, never by ID
-- Topics must be explicitly added to profile's `model-protection` → `topic-guardrails` → `topic-list`
-- Topics cannot be deleted if any profile revision references them
+### AIRS Integration (`src/airs/`)
+- **Scanner**: `Scanner.syncScan()` via SDK, detection = `prompt_detected.topic_violation` (fallback: `topic_guardrails_details`)
+- **Management**: `ManagementClient` for topic CRUD + profile linking via OAuth2
+- Profile updates create **new revisions with new UUIDs** — always reference profiles by name, never ID
+- Topics must be added to profile's `model-protection` → `topic-guardrails` → `topic-list`
+- Topics can't be deleted while referenced by any profile revision
 
-### Memory System
-- **Store** (`src/memory/store.ts`): file-based at `~/.prisma-airs-guardrails/memory/{category}.json`
+### LLM Service (`src/llm/`)
+- 6 providers: `claude-api` (default), `claude-vertex`, `claude-bedrock`, `gemini-api`, `gemini-vertex`, `gemini-bedrock`
+- Default model: `claude-opus-4-6` (Vertex: `claude-opus-4-6`, Bedrock: `anthropic.claude-opus-4-6-v1`)
+- `claude-vertex` default region: `global` (not `us-central1`)
+- All 4 calls use `withStructuredOutput(ZodSchema)` — 3 retries on parse failure
+- Memory injected via `{memorySection}` template variable
+- `clampTopic()` enforces AIRS constraints post-LLM (not Zod) — drops examples, trims description
+
+### Memory System (`src/memory/`)
+- File-based at `~/.prisma-airs-guardrails/memory/{category}.json`
 - Category = normalized keyword extraction (stop-word removal, alphabetical sort)
 - Cross-topic transfer when keyword overlap ≥ 50%
-- **Extractor** (`src/memory/extractor.ts`): post-loop LLM call, deduplicates by insight string, increments corroboration count
-- **Injector** (`src/memory/injector.ts`): budget-aware (default 3000 chars)
-  - Sorts by corroborations desc (most validated first)
-  - Verbose format: `- [DO/AVOID] {insight} ({changeType}, seen Nx)` while under budget
-  - Compact format: `- [DO/AVOID] {insight}` for overflow
-  - Omission notice: `(+N more learnings omitted)` if even compact doesn't fit
-
-### LLM Service (`src/llm/service.ts`)
-- All 4 LLM calls use `withStructuredOutput(ZodSchema)` for type-safe responses
-- Memory section injected into all prompt templates via `{memorySection}` variable
-- `clampTopic()` enforces AIRS constraints post-LLM — drops examples, trims description
-- 3 retries per LLM call on parse failure
+- Budget-aware injection (3000 char default): sorts by corroboration count desc, verbose→compact→omit
 
 ### Config (`src/config/`)
 - Priority: CLI flags > env vars > `~/.prisma-airs-guardrails/config.json` > Zod defaults
-- All fields defined in `ConfigSchema` with coercion + defaults
-- `~` paths expanded via `expandHome()`
+- All fields in `ConfigSchema` with coercion + defaults; `~` expanded via `expandHome()`
 
-## Commands
+### Persistence (`src/persistence/`)
+- `JsonFileStore` saves/loads `RunState` as JSON at `~/.prisma-airs-guardrails/runs/{runId}.json`
 
-```bash
-pnpm run generate          # Interactive or with CLI flags
-pnpm run dev resume <id>   # Resume paused run
-pnpm run dev report <id>   # View run report
-pnpm run dev list          # List all runs
-```
+## AIRS Constraints (`src/core/constraints.ts`)
 
-## Testing
+- Topic name: 100 chars max
+- Description: 250 chars max
+- Each example: 250 chars max, 5 examples max
+- Combined (desc + all examples): 1000 chars max
 
-```bash
-pnpm test                  # 108 tests across 13 files
-pnpm test:watch            # Watch mode
-pnpm test:coverage         # Coverage (excludes src/cli/**, src/index.ts)
-pnpm tsc --noEmit          # Type-check
-pnpm run lint              # Biome check
-```
+## Critical Details
 
-## Critical Implementation Details
-
-- LLM description output often exceeds 250 char AIRS limit — `clampTopic()` in `src/llm/service.ts` handles this, not Zod
-- Scan detection field: `prompt_detected.topic_violation` (boolean) — also checks `topic_guardrails_details` as fallback
-- `propagationDelayMs` default 10s — AIRS needs time after topic create/update before scans reflect changes
-- `scanConcurrency` default 5 — too high risks rate limiting
-- Coverage metric = `min(TPR, TNR)` — ensures both sensitivity and specificity
+- `propagationDelayMs` default 10s — AIRS needs propagation time after topic create/update
+- `scanConcurrency` default 5 — higher risks rate limiting
+- LLM description output routinely exceeds 250 char AIRS limit — `clampTopic()` handles this
 
 ## Environment Variables
 
-See `.env.example` for full list. Required:
-- `ANTHROPIC_API_KEY` (or equivalent for chosen provider)
-- `PANW_AI_SEC_API_KEY` (scan API)
-- `PANW_MGMT_CLIENT_ID`, `PANW_MGMT_CLIENT_SECRET`, `PANW_MGMT_TSG_ID` (management API)
-
-## Data Locations
-
-- Runs: `~/.prisma-airs-guardrails/runs/{runId}.json`
-- Memory: `~/.prisma-airs-guardrails/memory/{category}.json`
-- Config: `~/.prisma-airs-guardrails/config.json`
+See `.env.example`. Required: `ANTHROPIC_API_KEY` (or provider equivalent), `PANW_AI_SEC_API_KEY`, `PANW_MGMT_CLIENT_ID`, `PANW_MGMT_CLIENT_SECRET`, `PANW_MGMT_TSG_ID`.

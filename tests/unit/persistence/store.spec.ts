@@ -97,6 +97,25 @@ describe('JsonFileStore', () => {
     });
   });
 
+  describe('list edge cases', () => {
+    it('returns empty array for non-existent directory', async () => {
+      const missingStore = new JsonFileStore(join(dir, 'does-not-exist'));
+      const list = await missingStore.list();
+      expect(list).toEqual([]);
+    });
+
+    it('skips corrupted JSON files', async () => {
+      await store.save(makeRunState({ id: 'good-run' }));
+      // Write a corrupted JSON file directly
+      const { writeFile: wf } = await import('node:fs/promises');
+      await wf(join(dir, 'bad-run.json'), 'not-valid-json!!!');
+
+      const list = await store.list();
+      expect(list).toHaveLength(1);
+      expect(list[0].id).toBe('good-run');
+    });
+  });
+
   describe('atomic writes', () => {
     it('creates directory if it does not exist', async () => {
       const nested = join(dir, 'nested', 'deep');

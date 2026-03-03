@@ -216,4 +216,68 @@ describe('runLoop', () => {
       expect(complete.bestResult).toBeDefined();
     }
   });
+
+  it('waits for propagation delay', async () => {
+    vi.useFakeTimers();
+    const deps = createDeps({ propagationDelayMs: 5000 });
+    const events: LoopEvent[] = [];
+
+    const gen = runLoop({ ...defaultInput, maxIterations: 1 }, deps);
+    const collectAll = (async () => {
+      for await (const event of gen) {
+        events.push(event);
+      }
+    })();
+
+    // Advance timers until the loop completes
+    while (events.findIndex((e) => e.type === 'loop:complete') === -1) {
+      await vi.advanceTimersByTimeAsync(5000);
+    }
+
+    await collectAll;
+    expect(events.some((e) => e.type === 'loop:complete')).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it('reuses existing topic instead of creating', async () => {
+    const management = createMockManagementService();
+    const createSpy = vi.spyOn(management, 'createTopic');
+    const updateSpy = vi.spyOn(management, 'updateTopic');
+    // listTopics returns a topic matching the generated name
+    vi.spyOn(management, 'listTopics').mockResolvedValue([
+      {
+        topic_id: 'existing-123',
+        topic_name: 'Weapons Discussion',
+        description: 'old desc',
+        examples: [],
+        active: true,
+      },
+    ]);
+    const deps = createDeps({ management });
+
+    for await (const _event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
+      // consume
+    }
+
+    expect(createSpy).not.toHaveBeenCalled();
+    expect(updateSpy).toHaveBeenCalledWith('existing-123', expect.anything());
+  });
+
+  it('yields memory:extracted event when extractor provided', async () => {
+    const extractor = {
+      extractAndSave: vi.fn().mockResolvedValue({ learnings: [{ insight: 'test' }] }),
+    };
+    const deps = createDeps({ memory: { extractor: extractor as any } });
+    const events: LoopEvent[] = [];
+
+    for await (const event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
+      events.push(event);
+    }
+
+    const memEvent = events.find((e) => e.type === 'memory:extracted');
+    expect(memEvent).toBeDefined();
+    if (memEvent?.type === 'memory:extracted') {
+      expect(memEvent.learningCount).toBe(1);
+    }
+  });
 });

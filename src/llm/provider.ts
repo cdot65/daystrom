@@ -18,9 +18,9 @@ export interface LlmProviderConfig {
 }
 
 const DEFAULT_MODELS: Record<LlmProvider, string> = {
-  'claude-api': 'claude-sonnet-4-20250514',
-  'claude-vertex': 'claude-sonnet-4@20250514',
-  'claude-bedrock': 'anthropic.claude-sonnet-4-20250514-v1:0',
+  'claude-api': 'claude-opus-4-6',
+  'claude-vertex': 'claude-opus-4-6',
+  'claude-bedrock': 'anthropic.claude-opus-4-6-v1',
   'gemini-api': 'gemini-2.0-flash',
   'gemini-vertex': 'gemini-2.0-flash',
   'gemini-bedrock': 'gemini-2.0-flash',
@@ -41,7 +41,7 @@ export async function createLlmProvider(config: LlmProviderConfig): Promise<Base
       const { AnthropicVertex } = await import('@anthropic-ai/vertex-sdk');
       const client = new AnthropicVertex({
         projectId: config.googleCloudProject,
-        region: config.googleCloudLocation ?? 'us-central1',
+        region: config.googleCloudLocation ?? 'global',
       });
       return new ChatAnthropic({
         model: modelName,

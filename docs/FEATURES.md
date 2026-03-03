@@ -12,9 +12,9 @@ Pluggable LLM backend via LangChain.js. All providers use structured output (Zod
 
 | Provider | Config Value | Default Model | Auth |
 |----------|-------------|---------------|------|
-| Claude API | `claude-api` | `claude-sonnet-4-20250514` | `ANTHROPIC_API_KEY` |
-| Claude Vertex | `claude-vertex` | `claude-sonnet-4@20250514` | GCP project + location |
-| Claude Bedrock | `claude-bedrock` | `anthropic.claude-sonnet-4-20250514-v1:0` | AWS credentials |
+| Claude API | `claude-api` | `claude-opus-4-6` | `ANTHROPIC_API_KEY` |
+| Claude Vertex | `claude-vertex` | `claude-opus-4-6` | GCP project + location (`global` region) |
+| Claude Bedrock | `claude-bedrock` | `anthropic.claude-opus-4-6-v1` | AWS credentials |
 | Gemini API | `gemini-api` | `gemini-2.0-flash` | `GOOGLE_API_KEY` |
 | Gemini Vertex | `gemini-vertex` | `gemini-2.0-flash` | GCP project + location |
 | Gemini Bedrock | `gemini-bedrock` | `gemini-2.0-flash` | AWS credentials |
@@ -112,12 +112,13 @@ Optional JSON at `~/.prisma-airs-guardrails/config.json`. Uses camelCase keys ma
 
 ## Testing
 
-108 tests across 13 files. All tests run without AIRS credentials — HTTP is mocked via MSW.
+165 tests across 17 files (~98% statement coverage). Unit/integration tests run without AIRS credentials — HTTP is mocked via MSW. E2E tests require real credentials.
 
 ```bash
-pnpm test              # Run all tests
+pnpm test              # Run all unit/integration tests
 pnpm run test:watch    # Watch mode
 pnpm run test:coverage # Coverage report (v8 provider)
+pnpm run test:e2e      # E2E tests (requires real Vertex AI creds)
 pnpm tsc --noEmit      # Type-check (strict mode)
 pnpm run lint          # Biome lint + format check
 pnpm run lint:fix      # Auto-fix lint issues
@@ -126,15 +127,19 @@ pnpm run format        # Format with Biome
 
 ### Test Coverage
 
-Coverage excludes `src/cli/**` and `src/index.ts` (type exports only). Covered modules:
+Coverage excludes `src/cli/**`, `src/index.ts`, and `**/types.ts` (type-only files). Covered modules:
 
 | Module | Test File(s) |
 |--------|-------------|
+| `config/schema.ts` | `tests/unit/config/schema.spec.ts` |
+| `config/loader.ts` | `tests/unit/config/loader.spec.ts` |
 | `core/metrics.ts` | `tests/unit/core/metrics.spec.ts` |
 | `core/constraints.ts` | `tests/unit/core/constraints.spec.ts` |
 | `core/loop.ts` | `tests/unit/core/loop.spec.ts` |
 | `llm/provider.ts` | `tests/unit/llm/provider.spec.ts` |
+| `llm/service.ts` | `tests/unit/llm/service.spec.ts` |
 | `llm/schemas.ts` | `tests/unit/llm/schemas.spec.ts` |
+| `llm/prompts/*` | `tests/unit/llm/prompts.spec.ts` |
 | `airs/scanner.ts` | `tests/unit/airs/scanner.spec.ts` |
 | `airs/management.ts` | `tests/unit/airs/management.spec.ts` |
 | `memory/store.ts` | `tests/unit/memory/store.spec.ts` |
@@ -143,6 +148,7 @@ Coverage excludes `src/cli/**` and `src/index.ts` (type exports only). Covered m
 | `memory/diff.ts` | `tests/unit/memory/diff.spec.ts` |
 | `persistence/store.ts` | `tests/unit/persistence/store.spec.ts` |
 | Full loop | `tests/integration/loop.integration.spec.ts` |
+| Vertex AI providers | `tests/e2e/vertex-provider.e2e.spec.ts` (opt-in) |
 
 ## Scripts Reference
 
@@ -154,6 +160,7 @@ Coverage excludes `src/cli/**` and `src/index.ts` (type exports only). Covered m
 | `test` | `vitest run` | Run all tests once |
 | `test:watch` | `vitest` | Run tests in watch mode |
 | `test:coverage` | `vitest run --coverage` | Run tests with v8 coverage |
+| `test:e2e` | `vitest run --config vitest.e2e.config.ts` | E2E tests (requires real creds) |
 | `lint` | `biome check .` | Lint check |
 | `lint:fix` | `biome check --write .` | Lint auto-fix |
 | `format` | `biome format --write .` | Format all files |
