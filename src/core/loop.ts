@@ -1,25 +1,21 @@
 import { nanoid } from 'nanoid';
-import type {
-  CustomTopic,
-  TestCase,
-  TestResult,
-  AnalysisReport,
-  EfficacyMetrics,
-  IterationResult,
-  RunState,
-  UserInput,
-  LoopEvent,
-} from './types.js';
-import { computeMetrics } from './metrics.js';
 import type { ManagementService, ScanService } from '../airs/types.js';
 import type { LearningExtractor } from '../memory/extractor.js';
+import { computeMetrics } from './metrics.js';
+import type {
+  AnalysisReport,
+  CustomTopic,
+  EfficacyMetrics,
+  IterationResult,
+  LoopEvent,
+  RunState,
+  TestCase,
+  TestResult,
+  UserInput,
+} from './types.js';
 
 export interface LlmService {
-  generateTopic(
-    description: string,
-    intent: string,
-    seeds?: string[],
-  ): Promise<CustomTopic>;
+  generateTopic(description: string, intent: string, seeds?: string[]): Promise<CustomTopic>;
   generateTests(
     topic: CustomTopic,
     intent: string,
@@ -154,17 +150,19 @@ export async function* runLoop(
     }
 
     // Step 3: Generate test cases
-    const { positiveTests, negativeTests } = await deps.llm.generateTests(
-      topic,
-      input.intent,
-    );
+    const { positiveTests, negativeTests } = await deps.llm.generateTests(topic, input.intent);
     const allTests = [...positiveTests, ...negativeTests];
 
     // Step 4: Run scans
     const sessionId = `guardrail-gen-${runState.id.slice(0, 7)}-iter${i}`;
     const testResults: TestResult[] = [];
     const prompts = allTests.map((t) => t.prompt);
-    const scanResults = await deps.scanner.scanBatch(input.profileName, prompts, undefined, sessionId);
+    const scanResults = await deps.scanner.scanBatch(
+      input.profileName,
+      prompts,
+      undefined,
+      sessionId,
+    );
 
     for (let j = 0; j < allTests.length; j++) {
       const testCase = allTests[j];
@@ -226,7 +224,9 @@ export async function* runLoop(
     yield { type: 'memory:extracted', learningCount: learnings.length };
   }
 
-  const bestResult = runState.iterations[runState.bestIteration - 1] ?? runState.iterations[runState.iterations.length - 1];
+  const bestResult =
+    runState.iterations[runState.bestIteration - 1] ??
+    runState.iterations[runState.iterations.length - 1];
 
   yield { type: 'loop:complete', bestResult, runState };
 }

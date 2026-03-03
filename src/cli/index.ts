@@ -3,9 +3,9 @@
 import 'dotenv/config';
 import { Command } from 'commander';
 import { registerGenerateCommand } from './commands/generate.js';
-import { registerResumeCommand } from './commands/resume.js';
-import { registerReportCommand } from './commands/report.js';
 import { registerListCommand } from './commands/list.js';
+import { registerReportCommand } from './commands/report.js';
+import { registerResumeCommand } from './commands/resume.js';
 
 const program = new Command();
 

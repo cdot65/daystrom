@@ -1,21 +1,21 @@
 import type { Command } from 'commander';
+import { SdkManagementService } from '../../airs/management.js';
+import { AirsScanService } from '../../airs/scanner.js';
 import { loadConfig } from '../../config/loader.js';
+import { runLoop } from '../../core/loop.js';
 import { createLlmProvider } from '../../llm/provider.js';
 import { LangChainLlmService } from '../../llm/service.js';
-import { AirsScanService } from '../../airs/scanner.js';
-import { SdkManagementService } from '../../airs/management.js';
 import { JsonFileStore } from '../../persistence/store.js';
-import { runLoop } from '../../core/loop.js';
 import {
+  renderAnalysis,
+  renderError,
   renderHeader,
   renderIterationStart,
-  renderTopic,
-  renderTestProgress,
-  renderMetrics,
-  renderAnalysis,
-  renderLoopComplete,
-  renderError,
   renderIterationSummary,
+  renderLoopComplete,
+  renderMetrics,
+  renderTestProgress,
+  renderTopic,
 } from '../renderer.js';
 
 export function registerResumeCommand(program: Command): void {
@@ -48,7 +48,7 @@ export function registerResumeCommand(program: Command): void {
           maxIterations: existingRun.currentIteration + additionalIterations,
         };
 
-        const model = createLlmProvider({
+        const model = await createLlmProvider({
           provider: config.llmProvider,
           model: config.llmModel,
           anthropicApiKey: config.anthropicApiKey,
@@ -56,6 +56,8 @@ export function registerResumeCommand(program: Command): void {
           googleCloudProject: config.googleCloudProject,
           googleCloudLocation: config.googleCloudLocation,
           awsRegion: config.awsRegion,
+          awsAccessKeyId: config.awsAccessKeyId,
+          awsSecretAccessKey: config.awsSecretAccessKey,
         });
 
         const llm = new LangChainLlmService(model);

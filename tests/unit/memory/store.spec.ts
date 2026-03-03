@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtemp, rm } from 'node:fs/promises';
-import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MemoryStore, normalizeCategory } from '../../../src/memory/store.js';
 import type { Learning, TopicMemory } from '../../../src/memory/types.js';
 
@@ -25,7 +25,9 @@ function makeLearning(overrides: Partial<Learning> = {}): Learning {
 
 describe('normalizeCategory', () => {
   it('normalizes a description to sorted keywords', () => {
-    const result = normalizeCategory('Block discussions about weapons manufacturing and procurement');
+    const result = normalizeCategory(
+      'Block discussions about weapons manufacturing and procurement',
+    );
     expect(result).toBe('block-discussions-manufacturing-procurement-weapons');
   });
 
@@ -72,8 +74,8 @@ describe('MemoryStore', () => {
     const loaded = await store.load('block-weapons-discussions');
 
     expect(loaded).not.toBeNull();
-    expect(loaded!.learnings).toHaveLength(1);
-    expect(loaded!.learnings[0].insight).toBe('Short descriptions work better');
+    expect(loaded?.learnings).toHaveLength(1);
+    expect(loaded?.learnings[0].insight).toBe('Short descriptions work better');
   });
 
   it('returns null for nonexistent category', async () => {
@@ -123,23 +125,34 @@ describe('MemoryStore', () => {
     const memory2: TopicMemory = {
       category: 'test-cat',
       updatedAt: '2025-01-02T00:00:00Z',
-      learnings: [makeLearning({ id: 'l1' }), makeLearning({ id: 'l2', insight: 'Second insight' })],
+      learnings: [
+        makeLearning({ id: 'l1' }),
+        makeLearning({ id: 'l2', insight: 'Second insight' }),
+      ],
       bestKnown: null,
       antiPatterns: ['do not add coded language'],
     };
     await store.save(memory2);
 
     const loaded = await store.load('test-cat');
-    expect(loaded!.learnings).toHaveLength(2);
-    expect(loaded!.antiPatterns).toHaveLength(1);
+    expect(loaded?.learnings).toHaveLength(2);
+    expect(loaded?.antiPatterns).toHaveLength(1);
   });
 
   it('lists all categories', async () => {
     await store.save({
-      category: 'cat-a', updatedAt: '', learnings: [], bestKnown: null, antiPatterns: [],
+      category: 'cat-a',
+      updatedAt: '',
+      learnings: [],
+      bestKnown: null,
+      antiPatterns: [],
     });
     await store.save({
-      category: 'cat-b', updatedAt: '', learnings: [], bestKnown: null, antiPatterns: [],
+      category: 'cat-b',
+      updatedAt: '',
+      learnings: [],
+      bestKnown: null,
+      antiPatterns: [],
     });
 
     const categories = await store.listCategories();

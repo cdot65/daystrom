@@ -1,5 +1,11 @@
 import chalk from 'chalk';
-import type { CustomTopic, EfficacyMetrics, AnalysisReport, IterationResult, RunState } from '../core/types.js';
+import type {
+  AnalysisReport,
+  CustomTopic,
+  EfficacyMetrics,
+  IterationResult,
+  RunState,
+} from '../core/types.js';
 import type { RunStateSummary } from '../persistence/types.js';
 
 export function renderHeader(): void {
@@ -29,15 +35,20 @@ export function renderTestProgress(completed: number, total: number): void {
 }
 
 export function renderMetrics(metrics: EfficacyMetrics): void {
-  const coverageColor = metrics.coverage >= 0.9 ? chalk.green : metrics.coverage >= 0.7 ? chalk.yellow : chalk.red;
+  const coverageColor =
+    metrics.coverage >= 0.9 ? chalk.green : metrics.coverage >= 0.7 ? chalk.yellow : chalk.red;
 
   console.log(chalk.bold('\n  Metrics:'));
-  console.log(`    Coverage:  ${coverageColor((metrics.coverage * 100).toFixed(1) + '%')}`);
+  console.log(`    Coverage:  ${coverageColor(`${(metrics.coverage * 100).toFixed(1)}%`)}`);
   console.log(`    Accuracy:  ${(metrics.accuracy * 100).toFixed(1)}%`);
   console.log(`    TPR:       ${(metrics.truePositiveRate * 100).toFixed(1)}%`);
   console.log(`    TNR:       ${(metrics.trueNegativeRate * 100).toFixed(1)}%`);
   console.log(`    F1 Score:  ${metrics.f1Score.toFixed(3)}`);
-  console.log(chalk.dim(`    TP: ${metrics.truePositives}  TN: ${metrics.trueNegatives}  FP: ${metrics.falsePositives}  FN: ${metrics.falseNegatives}`));
+  console.log(
+    chalk.dim(
+      `    TP: ${metrics.truePositives}  TN: ${metrics.trueNegatives}  FP: ${metrics.falsePositives}  FN: ${metrics.falseNegatives}`,
+    ),
+  );
 }
 
 export function renderAnalysis(analysis: AnalysisReport): void {
@@ -60,7 +71,9 @@ export function renderAnalysis(analysis: AnalysisReport): void {
 export function renderLoopComplete(runState: RunState): void {
   const best = runState.iterations[runState.bestIteration - 1];
   console.log(chalk.bold.green('\n━━━ Complete ━━━'));
-  console.log(`  Best iteration: ${runState.bestIteration} (coverage: ${(runState.bestCoverage * 100).toFixed(1)}%)`);
+  console.log(
+    `  Best iteration: ${runState.bestIteration} (coverage: ${(runState.bestCoverage * 100).toFixed(1)}%)`,
+  );
   console.log(`  Total iterations: ${runState.iterations.length}`);
   if (best) {
     renderTopic(best.topic);
@@ -75,9 +88,18 @@ export function renderRunList(runs: RunStateSummary[]): void {
   }
   console.log(chalk.bold('\n  Saved Runs:\n'));
   for (const run of runs) {
-    const statusColor = run.status === 'completed' ? chalk.green : run.status === 'running' ? chalk.blue : run.status === 'paused' ? chalk.yellow : chalk.red;
+    const statusColor =
+      run.status === 'completed'
+        ? chalk.green
+        : run.status === 'running'
+          ? chalk.blue
+          : run.status === 'paused'
+            ? chalk.yellow
+            : chalk.red;
     console.log(`  ${chalk.dim(run.id)}`);
-    console.log(`    Status: ${statusColor(run.status)}  Coverage: ${(run.bestCoverage * 100).toFixed(1)}%  Iterations: ${run.currentIteration}`);
+    console.log(
+      `    Status: ${statusColor(run.status)}  Coverage: ${(run.bestCoverage * 100).toFixed(1)}%  Iterations: ${run.currentIteration}`,
+    );
     console.log(`    Topic: ${run.topicDescription}`);
     console.log(`    Created: ${run.createdAt}\n`);
   }
@@ -88,8 +110,15 @@ export function renderError(message: string): void {
 }
 
 export function renderIterationSummary(result: IterationResult): void {
-  const coverageColor = result.metrics.coverage >= 0.9 ? chalk.green : result.metrics.coverage >= 0.7 ? chalk.yellow : chalk.red;
-  console.log(`  ${chalk.dim(`[${result.durationMs}ms]`)} Coverage: ${coverageColor((result.metrics.coverage * 100).toFixed(1) + '%')} | Accuracy: ${(result.metrics.accuracy * 100).toFixed(1)}%`);
+  const coverageColor =
+    result.metrics.coverage >= 0.9
+      ? chalk.green
+      : result.metrics.coverage >= 0.7
+        ? chalk.yellow
+        : chalk.red;
+  console.log(
+    `  ${chalk.dim(`[${result.durationMs}ms]`)} Coverage: ${coverageColor(`${(result.metrics.coverage * 100).toFixed(1)}%`)} | Accuracy: ${(result.metrics.accuracy * 100).toFixed(1)}%`,
+  );
 }
 
 export function renderMemoryLoaded(learningCount: number): void {

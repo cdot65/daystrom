@@ -1,9 +1,8 @@
 import {
+  type CreateCustomTopicRequest,
   ManagementClient,
   type ManagementClientOptions,
-  type CreateCustomTopicRequest,
   type CustomTopic as SdkCustomTopic,
-  type SecurityProfile,
 } from '@cdot65/prisma-airs-sdk';
 import type { ManagementService } from './types.js';
 
@@ -55,11 +54,13 @@ export class SdkManagementService implements ManagementService {
 
     // Deep clone the policy to mutate
     const policy = JSON.parse(JSON.stringify(profile.policy ?? {}));
-    const aiProfiles = policy['ai-security-profiles'] ?? [{ 'model-type': 'default', 'model-configuration': {} }];
+    const aiProfiles = policy['ai-security-profiles'] ?? [
+      { 'model-type': 'default', 'model-configuration': {} },
+    ];
     const modelConfig = aiProfiles[0]?.['model-configuration'] ?? {};
 
     // Find or create model-protection with topic-guardrails
-    let modelProtection: any[] = modelConfig['model-protection'] ?? [];
+    const modelProtection: any[] = modelConfig['model-protection'] ?? [];
     let topicGuardrails = modelProtection.find((mp: any) => mp.name === 'topic-guardrails');
 
     if (!topicGuardrails) {

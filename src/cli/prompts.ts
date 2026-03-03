@@ -1,6 +1,6 @@
-import { input, select, confirm, number } from '@inquirer/prompts';
-import type { UserInput } from '../core/types.js';
+import { confirm, input, number, select } from '@inquirer/prompts';
 import type { LlmProvider } from '../config/schema.js';
+import type { UserInput } from '../core/types.js';
 
 export async function collectUserInput(): Promise<UserInput> {
   const topicDescription = await input({
@@ -29,7 +29,8 @@ export async function collectUserInput(): Promise<UserInput> {
   let seedExamples: string[] | undefined;
   if (hasSeedExamples) {
     const examplesRaw = await input({
-      message: 'Enter examples (one per line, empty line to finish):\nPaste examples separated by newlines:',
+      message:
+        'Enter examples (one per line, empty line to finish):\nPaste examples separated by newlines:',
     });
     seedExamples = examplesRaw
       .split('\n')

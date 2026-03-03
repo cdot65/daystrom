@@ -1,7 +1,7 @@
 import type { Command } from 'commander';
 import { loadConfig } from '../../config/loader.js';
 import { JsonFileStore } from '../../persistence/store.js';
-import { renderHeader, renderRunList, renderError } from '../renderer.js';
+import { renderError, renderHeader, renderRunList } from '../renderer.js';
 
 export function registerListCommand(program: Command): void {
   program

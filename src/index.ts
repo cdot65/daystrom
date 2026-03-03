@@ -1,33 +1,37 @@
 // Library entry point
-export { runLoop } from './core/loop.js';
-export type { LlmService, LoopDependencies } from './core/loop.js';
-export { computeMetrics } from './core/metrics.js';
-export { validateTopic, validateName, validateDescription, validateExamples } from './core/constraints.js';
-export type { ValidationError } from './core/constraints.js';
-export { LangChainLlmService } from './llm/service.js';
-export { createLlmProvider } from './llm/provider.js';
-export { AirsScanService } from './airs/scanner.js';
-export { SdkManagementService } from './airs/management.js';
-export { JsonFileStore } from './persistence/store.js';
-export { loadConfig } from './config/loader.js';
-export { MemoryStore, normalizeCategory } from './memory/store.js';
-export { MemoryInjector } from './memory/injector.js';
-export { LearningExtractor } from './memory/extractor.js';
 
+export { SdkManagementService } from './airs/management.js';
+export { AirsScanService } from './airs/scanner.js';
+export { loadConfig } from './config/loader.js';
+export type { ValidationError } from './core/constraints.js';
+export {
+  validateDescription,
+  validateExamples,
+  validateName,
+  validateTopic,
+} from './core/constraints.js';
+export type { LlmService, LoopDependencies } from './core/loop.js';
+export { runLoop } from './core/loop.js';
+export { computeMetrics } from './core/metrics.js';
 export type {
+  AnalysisReport,
   CustomTopic,
-  UserInput,
+  EfficacyMetrics,
+  IterationResult,
+  LoopEvent,
+  RunState,
   TestCase,
   TestResult,
-  EfficacyMetrics,
-  AnalysisReport,
-  IterationResult,
-  RunState,
-  LoopEvent,
+  UserInput,
 } from './core/types.js';
-
+export { createLlmProvider } from './llm/provider.js';
+export { LangChainLlmService } from './llm/service.js';
+export { LearningExtractor } from './memory/extractor.js';
+export { MemoryInjector } from './memory/injector.js';
+export { MemoryStore, normalizeCategory } from './memory/store.js';
 export type {
+  IterationDiff,
   Learning,
   TopicMemory,
-  IterationDiff,
 } from './memory/types.js';
+export { JsonFileStore } from './persistence/store.js';

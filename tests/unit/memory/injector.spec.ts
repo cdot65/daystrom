@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtemp, rm } from 'node:fs/promises';
-import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MemoryInjector } from '../../../src/memory/injector.js';
 import { MemoryStore } from '../../../src/memory/store.js';
-import type { TopicMemory, Learning } from '../../../src/memory/types.js';
+import type { Learning, TopicMemory } from '../../../src/memory/types.js';
 
 function makeLearning(overrides: Partial<Learning> = {}): Learning {
   return {
@@ -42,8 +42,17 @@ describe('MemoryInjector', () => {
       category: 'block-weapons-discussions',
       updatedAt: '2025-01-01T00:00:00Z',
       learnings: [
-        makeLearning({ outcome: 'improved', insight: 'Short descriptions work best', corroborations: 2 }),
-        makeLearning({ id: 'l2', outcome: 'degraded', insight: 'Coded language degrades TNR', corroborations: 1 }),
+        makeLearning({
+          outcome: 'improved',
+          insight: 'Short descriptions work best',
+          corroborations: 2,
+        }),
+        makeLearning({
+          id: 'l2',
+          outcome: 'degraded',
+          insight: 'Coded language degrades TNR',
+          corroborations: 1,
+        }),
       ],
       bestKnown: null,
       antiPatterns: ['Adding exclusion clauses near char limit causes truncation'],
@@ -78,11 +87,13 @@ describe('MemoryInjector', () => {
   it('keeps output within char budget', async () => {
     const learnings: Learning[] = [];
     for (let i = 0; i < 50; i++) {
-      learnings.push(makeLearning({
-        id: `l-${i}`,
-        insight: `Insight number ${i} with some extra text to increase length`,
-        corroborations: i,
-      }));
+      learnings.push(
+        makeLearning({
+          id: `l-${i}`,
+          insight: `Insight number ${i} with some extra text to increase length`,
+          corroborations: i,
+        }),
+      );
     }
 
     const memory: TopicMemory = {
@@ -104,11 +115,13 @@ describe('MemoryInjector', () => {
   it('includes all learnings when under budget (no artificial count cap)', async () => {
     const learnings: Learning[] = [];
     for (let i = 0; i < 15; i++) {
-      learnings.push(makeLearning({
-        id: `l-${i}`,
-        insight: `Insight ${i}`,
-        corroborations: i,
-      }));
+      learnings.push(
+        makeLearning({
+          id: `l-${i}`,
+          insight: `Insight ${i}`,
+          corroborations: i,
+        }),
+      );
     }
 
     const memory: TopicMemory = {
@@ -132,11 +145,13 @@ describe('MemoryInjector', () => {
   it('uses compact format for overflow learnings', async () => {
     const learnings: Learning[] = [];
     for (let i = 0; i < 20; i++) {
-      learnings.push(makeLearning({
-        id: `l-${i}`,
-        insight: `Insight number ${i} with padding text`,
-        corroborations: 20 - i, // highest corroboration first
-      }));
+      learnings.push(
+        makeLearning({
+          id: `l-${i}`,
+          insight: `Insight number ${i} with padding text`,
+          corroborations: 20 - i, // highest corroboration first
+        }),
+      );
     }
 
     const memory: TopicMemory = {
@@ -164,11 +179,13 @@ describe('MemoryInjector', () => {
   it('appends omission notice when learnings overflow budget', async () => {
     const learnings: Learning[] = [];
     for (let i = 0; i < 30; i++) {
-      learnings.push(makeLearning({
-        id: `l-${i}`,
-        insight: `Insight number ${i} with a reasonably long description to eat the budget`,
-        corroborations: 30 - i,
-      }));
+      learnings.push(
+        makeLearning({
+          id: `l-${i}`,
+          insight: `Insight number ${i} with a reasonably long description to eat the budget`,
+          corroborations: 30 - i,
+        }),
+      );
     }
 
     const memory: TopicMemory = {

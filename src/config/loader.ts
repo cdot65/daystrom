@@ -1,7 +1,7 @@
-import { homedir } from 'node:os';
 import { readFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { ConfigSchema, type Config } from './schema.js';
+import { type Config, ConfigSchema } from './schema.js';
 
 function expandHome(p: string): string {
   return p.startsWith('~') ? join(homedir(), p.slice(1)) : p;

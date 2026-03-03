@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { computeMetrics } from '../../../src/core/metrics.js';
-import type { TestResult, TestCase } from '../../../src/core/types.js';
+import type { TestResult } from '../../../src/core/types.js';
 
 function makeResult(expected: boolean, actual: boolean): TestResult {
   return {
@@ -81,10 +81,7 @@ describe('metrics', () => {
     });
 
     it('handles only positives (no negatives)', () => {
-      const results: TestResult[] = [
-        makeResult(true, true),
-        makeResult(true, true),
-      ];
+      const results: TestResult[] = [makeResult(true, true), makeResult(true, true)];
       const m = computeMetrics(results);
       expect(m.truePositiveRate).toBe(1);
       expect(m.trueNegativeRate).toBe(0);
@@ -92,10 +89,7 @@ describe('metrics', () => {
     });
 
     it('handles only negatives (no positives)', () => {
-      const results: TestResult[] = [
-        makeResult(false, false),
-        makeResult(false, false),
-      ];
+      const results: TestResult[] = [makeResult(false, false), makeResult(false, false)];
       const m = computeMetrics(results);
       expect(m.truePositiveRate).toBe(0);
       expect(m.trueNegativeRate).toBe(1);
@@ -105,8 +99,12 @@ describe('metrics', () => {
     it('computes F1 correctly for imbalanced results', () => {
       // 3 TP, 0 FN, 0 FP, 7 TN
       const results: TestResult[] = [
-        ...Array(3).fill(null).map(() => makeResult(true, true)),
-        ...Array(7).fill(null).map(() => makeResult(false, false)),
+        ...Array(3)
+          .fill(null)
+          .map(() => makeResult(true, true)),
+        ...Array(7)
+          .fill(null)
+          .map(() => makeResult(false, false)),
       ];
       const m = computeMetrics(results);
       expect(m.truePositives).toBe(3);

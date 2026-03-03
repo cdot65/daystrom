@@ -1,7 +1,7 @@
-import { readFile, writeFile, readdir, unlink, mkdir } from 'node:fs/promises';
+import { mkdir, readdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { RunState } from '../core/types.js';
-import type { RunStore, RunStateSummary } from './types.js';
+import type { RunStateSummary, RunStore } from './types.js';
 
 export class JsonFileStore implements RunStore {
   constructor(private readonly dir: string) {}

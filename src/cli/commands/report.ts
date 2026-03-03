@@ -1,13 +1,13 @@
-import type { Command } from 'commander';
 import chalk from 'chalk';
+import type { Command } from 'commander';
 import { loadConfig } from '../../config/loader.js';
 import { JsonFileStore } from '../../persistence/store.js';
 import {
-  renderHeader,
-  renderTopic,
-  renderMetrics,
   renderAnalysis,
   renderError,
+  renderHeader,
+  renderMetrics,
+  renderTopic,
 } from '../renderer.js';
 
 export function registerReportCommand(program: Command): void {
@@ -32,7 +32,9 @@ export function registerReportCommand(program: Command): void {
         console.log(`  Created: ${run.createdAt}`);
         console.log(`  Topic: ${run.userInput.topicDescription}`);
         console.log(`  Intent: ${run.userInput.intent}`);
-        console.log(`  Best coverage: ${(run.bestCoverage * 100).toFixed(1)}% (iteration ${run.bestIteration})`);
+        console.log(
+          `  Best coverage: ${(run.bestCoverage * 100).toFixed(1)}% (iteration ${run.bestIteration})`,
+        );
         console.log(`  Total iterations: ${run.iterations.length}`);
 
         if (opts.iteration) {

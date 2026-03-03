@@ -1,6 +1,6 @@
 import type {
-  CustomTopic as SdkCustomTopic,
   CreateCustomTopicRequest,
+  CustomTopic as SdkCustomTopic,
 } from '@cdot65/prisma-airs-sdk';
 
 export type { CreateCustomTopicRequest, SdkCustomTopic };
@@ -16,7 +16,12 @@ export interface ScanResult {
 
 export interface ScanService {
   scan(profileName: string, prompt: string, sessionId?: string): Promise<ScanResult>;
-  scanBatch(profileName: string, prompts: string[], concurrency?: number, sessionId?: string): Promise<ScanResult[]>;
+  scanBatch(
+    profileName: string,
+    prompts: string[],
+    concurrency?: number,
+    sessionId?: string,
+  ): Promise<ScanResult[]>;
 }
 
 /**

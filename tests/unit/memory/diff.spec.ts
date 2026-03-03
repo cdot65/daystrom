@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { computeIterationDiff } from '../../../src/memory/diff.js';
+import { describe, expect, it } from 'vitest';
 import type { IterationResult } from '../../../src/core/types.js';
+import { computeIterationDiff } from '../../../src/memory/diff.js';
 
 function makeIteration(overrides: Partial<IterationResult> = {}): IterationResult {
   return {
@@ -40,8 +40,19 @@ describe('computeIterationDiff', () => {
     const from = makeIteration({ iteration: 1 });
     const to = makeIteration({
       iteration: 2,
-      topic: { name: 'Test Topic', description: 'New description', examples: ['example 1', 'example 2'] },
-      metrics: { ...from.metrics, coverage: 0.8, truePositiveRate: 0.9, trueNegativeRate: 0.7, accuracy: 0.8, f1Score: 0.85 },
+      topic: {
+        name: 'Test Topic',
+        description: 'New description',
+        examples: ['example 1', 'example 2'],
+      },
+      metrics: {
+        ...from.metrics,
+        coverage: 0.8,
+        truePositiveRate: 0.9,
+        trueNegativeRate: 0.7,
+        accuracy: 0.8,
+        f1Score: 0.85,
+      },
     });
 
     const diff = computeIterationDiff(from, to);
@@ -58,7 +69,11 @@ describe('computeIterationDiff', () => {
     const from = makeIteration({ iteration: 1 });
     const to = makeIteration({
       iteration: 2,
-      topic: { name: 'Test Topic', description: 'Original description', examples: ['example 1', 'example 3'] },
+      topic: {
+        name: 'Test Topic',
+        description: 'Original description',
+        examples: ['example 1', 'example 3'],
+      },
     });
 
     const diff = computeIterationDiff(from, to);
@@ -86,15 +101,29 @@ describe('computeIterationDiff', () => {
     const from = makeIteration({
       iteration: 1,
       metrics: {
-        truePositives: 10, trueNegatives: 10, falsePositives: 0, falseNegatives: 0,
-        truePositiveRate: 1.0, trueNegativeRate: 1.0, accuracy: 1.0, coverage: 1.0, f1Score: 1.0,
+        truePositives: 10,
+        trueNegatives: 10,
+        falsePositives: 0,
+        falseNegatives: 0,
+        truePositiveRate: 1.0,
+        trueNegativeRate: 1.0,
+        accuracy: 1.0,
+        coverage: 1.0,
+        f1Score: 1.0,
       },
     });
     const to = makeIteration({
       iteration: 2,
       metrics: {
-        truePositives: 8, trueNegatives: 8, falsePositives: 2, falseNegatives: 2,
-        truePositiveRate: 0.8, trueNegativeRate: 0.8, accuracy: 0.8, coverage: 0.8, f1Score: 0.8,
+        truePositives: 8,
+        trueNegatives: 8,
+        falsePositives: 2,
+        falseNegatives: 2,
+        truePositiveRate: 0.8,
+        trueNegativeRate: 0.8,
+        accuracy: 0.8,
+        coverage: 0.8,
+        f1Score: 0.8,
       },
     });
 

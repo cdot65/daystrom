@@ -1,13 +1,33 @@
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import {
+  MAX_COMBINED_LENGTH,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_EXAMPLE_LENGTH,
+  MAX_EXAMPLES,
+  MAX_NAME_LENGTH,
+  validateTopic,
+} from '../core/constraints.js';
 import type { LlmService } from '../core/loop.js';
-import type { CustomTopic, TestCase, EfficacyMetrics, TestResult, AnalysisReport } from '../core/types.js';
-import { CustomTopicSchema, TestSuiteSchema, AnalysisReportSchema, type CustomTopicOutput, type TestSuiteOutput, type AnalysisReportOutput } from './schemas.js';
-import { generateTopicPrompt, buildSeedExamplesSection } from './prompts/generate-topic.js';
-import { generateTestsPrompt } from './prompts/generate-tests.js';
-import { analyzeResultsPrompt } from './prompts/analyze-results.js';
-import { improveTopicPrompt } from './prompts/improve-topic.js';
-import { validateTopic, MAX_NAME_LENGTH, MAX_DESCRIPTION_LENGTH, MAX_EXAMPLE_LENGTH, MAX_EXAMPLES, MAX_COMBINED_LENGTH } from '../core/constraints.js';
+import type {
+  AnalysisReport,
+  CustomTopic,
+  EfficacyMetrics,
+  TestCase,
+  TestResult,
+} from '../core/types.js';
 import type { MemoryInjector } from '../memory/injector.js';
+import { analyzeResultsPrompt } from './prompts/analyze-results.js';
+import { generateTestsPrompt } from './prompts/generate-tests.js';
+import { buildSeedExamplesSection, generateTopicPrompt } from './prompts/generate-topic.js';
+import { improveTopicPrompt } from './prompts/improve-topic.js';
+import {
+  type AnalysisReportOutput,
+  AnalysisReportSchema,
+  type CustomTopicOutput,
+  CustomTopicSchema,
+  type TestSuiteOutput,
+  TestSuiteSchema,
+} from './schemas.js';
 
 const MAX_RETRIES = 3;
 
@@ -15,10 +35,11 @@ const MAX_RETRIES = 3;
 function clampTopic(topic: CustomTopicOutput): CustomTopicOutput {
   const name = topic.name.slice(0, MAX_NAME_LENGTH);
   let description = topic.description.slice(0, MAX_DESCRIPTION_LENGTH);
-  const examples = topic.examples.slice(0, MAX_EXAMPLES).map(e => e.slice(0, MAX_EXAMPLE_LENGTH));
+  const examples = topic.examples.slice(0, MAX_EXAMPLES).map((e) => e.slice(0, MAX_EXAMPLE_LENGTH));
 
   // Enforce combined length limit by dropping examples from the end, then trimming description
-  const combined = () => name.length + description.length + examples.reduce((s, e) => s + e.length, 0);
+  const combined = () =>
+    name.length + description.length + examples.reduce((s, e) => s + e.length, 0);
   while (combined() > MAX_COMBINED_LENGTH && examples.length > 1) {
     examples.pop();
   }
@@ -45,11 +66,7 @@ export class LangChainLlmService implements LlmService {
     return this.memorySection.split('\n').filter((l) => l.startsWith('- [')).length;
   }
 
-  async generateTopic(
-    description: string,
-    intent: string,
-    seeds?: string[],
-  ): Promise<CustomTopic> {
+  async generateTopic(description: string, intent: string, seeds?: string[]): Promise<CustomTopic> {
     const structured = this.model.withStructuredOutput(CustomTopicSchema);
     const chain = generateTopicPrompt.pipe(structured);
 
@@ -67,7 +84,9 @@ export class LangChainLlmService implements LlmService {
         if (errors.length === 0) return result;
 
         if (attempt === MAX_RETRIES - 1) {
-          throw new Error(`LLM output violates constraints after ${MAX_RETRIES} attempts: ${errors.map((e) => e.message).join(', ')}`);
+          throw new Error(
+            `LLM output violates constraints after ${MAX_RETRIES} attempts: ${errors.map((e) => e.message).join(', ')}`,
+          );
         }
       } catch (err) {
         if (attempt === MAX_RETRIES - 1) throw err;
@@ -119,16 +138,18 @@ export class LangChainLlmService implements LlmService {
           topicName: topic.name,
           topicDescription: topic.description,
           topicExamples: topic.examples.join(', '),
-          tpr: (metrics.truePositiveRate * 100).toFixed(1) + '%',
-          tnr: (metrics.trueNegativeRate * 100).toFixed(1) + '%',
-          accuracy: (metrics.accuracy * 100).toFixed(1) + '%',
-          coverage: (metrics.coverage * 100).toFixed(1) + '%',
-          falsePositives: fps.length > 0
-            ? fps.map((r) => `- "${r.testCase.prompt}" (${r.testCase.category})`).join('\n')
-            : 'None',
-          falseNegatives: fns.length > 0
-            ? fns.map((r) => `- "${r.testCase.prompt}" (${r.testCase.category})`).join('\n')
-            : 'None',
+          tpr: `${(metrics.truePositiveRate * 100).toFixed(1)}%`,
+          tnr: `${(metrics.trueNegativeRate * 100).toFixed(1)}%`,
+          accuracy: `${(metrics.accuracy * 100).toFixed(1)}%`,
+          coverage: `${(metrics.coverage * 100).toFixed(1)}%`,
+          falsePositives:
+            fps.length > 0
+              ? fps.map((r) => `- "${r.testCase.prompt}" (${r.testCase.category})`).join('\n')
+              : 'None',
+          falseNegatives:
+            fns.length > 0
+              ? fns.map((r) => `- "${r.testCase.prompt}" (${r.testCase.category})`).join('\n')
+              : 'None',
           memorySection: this.memorySection,
         });
         return raw as unknown as AnalysisReportOutput;
@@ -161,11 +182,11 @@ export class LangChainLlmService implements LlmService {
           currentDescription: topic.description,
           currentExamples: topic.examples.join(', '),
           iteration,
-          coverage: (metrics.coverage * 100).toFixed(1) + '%',
-          targetCoverage: (targetCoverage * 100).toFixed(1) + '%',
-          tpr: (metrics.truePositiveRate * 100).toFixed(1) + '%',
-          tnr: (metrics.trueNegativeRate * 100).toFixed(1) + '%',
-          accuracy: (metrics.accuracy * 100).toFixed(1) + '%',
+          coverage: `${(metrics.coverage * 100).toFixed(1)}%`,
+          targetCoverage: `${(targetCoverage * 100).toFixed(1)}%`,
+          tpr: `${(metrics.truePositiveRate * 100).toFixed(1)}%`,
+          tnr: `${(metrics.trueNegativeRate * 100).toFixed(1)}%`,
+          accuracy: `${(metrics.accuracy * 100).toFixed(1)}%`,
           analysisSummary: analysis.summary,
           fpPatterns: analysis.falsePositivePatterns.join('; ') || 'None',
           fnPatterns: analysis.falseNegativePatterns.join('; ') || 'None',
@@ -180,7 +201,9 @@ export class LangChainLlmService implements LlmService {
         if (errors.length === 0) return result;
 
         if (attempt === MAX_RETRIES - 1) {
-          throw new Error(`LLM output violates constraints after ${MAX_RETRIES} attempts: ${errors.map((e) => e.message).join(', ')}`);
+          throw new Error(
+            `LLM output violates constraints after ${MAX_RETRIES} attempts: ${errors.map((e) => e.message).join(', ')}`,
+          );
         }
       } catch (err) {
         if (attempt === MAX_RETRIES - 1) throw err;

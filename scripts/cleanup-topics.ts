@@ -5,8 +5,8 @@ async function main() {
   const mgmt = new ManagementClient();
   const { custom_topics } = await mgmt.topics.list();
 
-  const weaponsTopics = custom_topics.filter(t =>
-    t.topic_name === 'Weapons Manufacturing and Procurement'
+  const weaponsTopics = custom_topics.filter(
+    (t) => t.topic_name === 'Weapons Manufacturing and Procurement',
   );
 
   console.log(`Found ${weaponsTopics.length} weapons topic(s) to clean up`);

@@ -1,8 +1,8 @@
 import { ChatAnthropic } from '@langchain/anthropic';
-import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
-import { ChatVertexAI } from '@langchain/google-vertexai';
 import { ChatBedrockConverse } from '@langchain/aws';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { ChatVertexAI } from '@langchain/google-vertexai';
 import type { LlmProvider } from '../config/schema.js';
 
 export interface LlmProviderConfig {
@@ -26,7 +26,7 @@ const DEFAULT_MODELS: Record<LlmProvider, string> = {
   'gemini-bedrock': 'gemini-2.0-flash',
 };
 
-export function createLlmProvider(config: LlmProviderConfig): BaseChatModel {
+export async function createLlmProvider(config: LlmProviderConfig): Promise<BaseChatModel> {
   const modelName = config.model ?? DEFAULT_MODELS[config.provider];
 
   switch (config.provider) {
@@ -37,18 +37,33 @@ export function createLlmProvider(config: LlmProviderConfig): BaseChatModel {
         temperature: 0,
       });
 
-    case 'claude-vertex':
+    case 'claude-vertex': {
+      const { AnthropicVertex } = await import('@anthropic-ai/vertex-sdk');
+      const client = new AnthropicVertex({
+        projectId: config.googleCloudProject,
+        region: config.googleCloudLocation ?? 'us-central1',
+      });
       return new ChatAnthropic({
         model: modelName,
         temperature: 0,
+        createClient: () => client,
       });
+    }
 
-    case 'claude-bedrock':
-      return new ChatBedrockConverse({
+    case 'claude-bedrock': {
+      const opts: Record<string, unknown> = {
         model: modelName,
         region: config.awsRegion ?? 'us-east-1',
         temperature: 0,
-      });
+      };
+      if (config.awsAccessKeyId && config.awsSecretAccessKey) {
+        opts.credentials = {
+          accessKeyId: config.awsAccessKeyId,
+          secretAccessKey: config.awsSecretAccessKey,
+        };
+      }
+      return new ChatBedrockConverse(opts);
+    }
 
     case 'gemini-api':
       return new ChatGoogleGenerativeAI({
@@ -62,6 +77,7 @@ export function createLlmProvider(config: LlmProviderConfig): BaseChatModel {
         model: modelName,
         location: config.googleCloudLocation ?? 'us-central1',
         temperature: 0,
+        authOptions: { projectId: config.googleCloudProject },
       });
 
     case 'gemini-bedrock':

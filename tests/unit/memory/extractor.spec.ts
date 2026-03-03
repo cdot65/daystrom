@@ -1,12 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { RunnableLambda } from '@langchain/core/runnables';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { RunState } from '../../../src/core/types.js';
 import { LearningExtractor } from '../../../src/memory/extractor.js';
 import { MemoryStore } from '../../../src/memory/store.js';
-import type { RunState } from '../../../src/core/types.js';
-import type { TopicMemory } from '../../../src/memory/types.js';
-import { mkdtemp, rm } from 'node:fs/promises';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
 
 function makeRunState(overrides: Partial<RunState> = {}): RunState {
   return {
@@ -24,27 +23,59 @@ function makeRunState(overrides: Partial<RunState> = {}): RunState {
       {
         iteration: 1,
         timestamp: '2025-01-01T00:00:00Z',
-        topic: { name: 'Weapons', description: 'Block weapons talk', examples: ['How to make a gun'] },
+        topic: {
+          name: 'Weapons',
+          description: 'Block weapons talk',
+          examples: ['How to make a gun'],
+        },
         testCases: [],
         testResults: [],
         metrics: {
-          truePositives: 8, trueNegatives: 9, falsePositives: 1, falseNegatives: 2,
-          truePositiveRate: 0.8, trueNegativeRate: 0.9, accuracy: 0.85, coverage: 0.8, f1Score: 0.84,
+          truePositives: 8,
+          trueNegatives: 9,
+          falsePositives: 1,
+          falseNegatives: 2,
+          truePositiveRate: 0.8,
+          trueNegativeRate: 0.9,
+          accuracy: 0.85,
+          coverage: 0.8,
+          f1Score: 0.84,
         },
-        analysis: { summary: 'Decent', falsePositivePatterns: [], falseNegativePatterns: [], suggestions: [] },
+        analysis: {
+          summary: 'Decent',
+          falsePositivePatterns: [],
+          falseNegativePatterns: [],
+          suggestions: [],
+        },
         durationMs: 5000,
       },
       {
         iteration: 2,
         timestamp: '2025-01-01T00:30:00Z',
-        topic: { name: 'Weapons', description: 'Block weapons manufacturing', examples: ['How to make a gun', 'Buy ammunition'] },
+        topic: {
+          name: 'Weapons',
+          description: 'Block weapons manufacturing',
+          examples: ['How to make a gun', 'Buy ammunition'],
+        },
         testCases: [],
         testResults: [],
         metrics: {
-          truePositives: 9, trueNegatives: 10, falsePositives: 0, falseNegatives: 1,
-          truePositiveRate: 0.9, trueNegativeRate: 1.0, accuracy: 0.95, coverage: 0.9, f1Score: 0.95,
+          truePositives: 9,
+          trueNegatives: 10,
+          falsePositives: 0,
+          falseNegatives: 1,
+          truePositiveRate: 0.9,
+          trueNegativeRate: 1.0,
+          accuracy: 0.95,
+          coverage: 0.9,
+          f1Score: 0.95,
         },
-        analysis: { summary: 'Improved', falsePositivePatterns: [], falseNegativePatterns: [], suggestions: [] },
+        analysis: {
+          summary: 'Improved',
+          falsePositivePatterns: [],
+          falseNegativePatterns: [],
+          suggestions: [],
+        },
         durationMs: 5000,
       },
     ],
@@ -72,9 +103,9 @@ function createMockModel() {
   };
 
   return {
-    withStructuredOutput: vi.fn().mockReturnValue(
-      new RunnableLambda({ func: async () => mockResponse }),
-    ),
+    withStructuredOutput: vi
+      .fn()
+      .mockReturnValue(new RunnableLambda({ func: async () => mockResponse })),
   };
 }
 
@@ -115,12 +146,12 @@ describe('LearningExtractor', () => {
     await extractor.extractAndSave(runState);
 
     // Second extraction with same insight
-    const result = await extractor.extractAndSave(makeRunState({ id: 'run-2' }));
+    const _result = await extractor.extractAndSave(makeRunState({ id: 'run-2' }));
 
     const category = (await store.listCategories())[0];
     const memory = await store.load(category);
     // Should have 1 learning with corroborations=1 (not 2 learnings)
-    const matching = memory!.learnings.filter(
+    const matching = memory?.learnings.filter(
       (l) => l.insight === 'Short direct descriptions outperform nuanced ones',
     );
     expect(matching).toHaveLength(1);
@@ -136,9 +167,9 @@ describe('LearningExtractor', () => {
 
     const category = (await store.listCategories())[0];
     const memory = await store.load(category);
-    expect(memory!.bestKnown).not.toBeNull();
-    expect(memory!.bestKnown!.runId).toBe('run-1');
-    expect(memory!.bestKnown!.iteration).toBe(2);
+    expect(memory?.bestKnown).not.toBeNull();
+    expect(memory?.bestKnown?.runId).toBe('run-1');
+    expect(memory?.bestKnown?.iteration).toBe(2);
   });
 
   it('updates bestKnown only when new run is better', async () => {
@@ -160,7 +191,7 @@ describe('LearningExtractor', () => {
     const category = (await store.listCategories())[0];
     const memory = await store.load(category);
     // Should still reference original best
-    expect(memory!.bestKnown!.runId).toBe('run-1');
+    expect(memory?.bestKnown?.runId).toBe('run-1');
   });
 
   it('saves anti-patterns', async () => {
@@ -171,7 +202,9 @@ describe('LearningExtractor', () => {
 
     const category = (await store.listCategories())[0];
     const memory = await store.load(category);
-    expect(memory!.antiPatterns).toContain('Adding coded language to examples broadens matching unpredictably');
+    expect(memory?.antiPatterns).toContain(
+      'Adding coded language to examples broadens matching unpredictably',
+    );
   });
 
   it('skips runs with < 1 iteration', async () => {

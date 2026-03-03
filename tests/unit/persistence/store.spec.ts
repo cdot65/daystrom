@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtemp, rm, readdir } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { JsonFileStore } from '../../../src/persistence/store.js';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { RunState } from '../../../src/core/types.js';
+import { JsonFileStore } from '../../../src/persistence/store.js';
 
 function makeRunState(overrides: Partial<RunState> = {}): RunState {
   return {

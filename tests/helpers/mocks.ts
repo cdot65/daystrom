@@ -1,11 +1,11 @@
-import type { CustomTopic, TestCase, AnalysisReport } from '../../src/core/types.js';
 import type {
-  ScanResult,
-  ManagementService,
-  ScanService,
   CreateCustomTopicRequest,
+  ManagementService,
+  ScanResult,
+  ScanService,
   SdkCustomTopic,
 } from '../../src/airs/types.js';
+import type { AnalysisReport, CustomTopic, TestCase } from '../../src/core/types.js';
 
 export function mockTopic(overrides: Partial<CustomTopic> = {}): CustomTopic {
   return {
@@ -44,7 +44,10 @@ export function createMockManagementService(): ManagementService {
       examples: request.examples,
       active: true,
     }),
-    updateTopic: async (id: string, request: CreateCustomTopicRequest): Promise<SdkCustomTopic> => ({
+    updateTopic: async (
+      id: string,
+      request: CreateCustomTopicRequest,
+    ): Promise<SdkCustomTopic> => ({
       topic_id: id,
       topic_name: request.topic_name,
       description: request.description,
@@ -57,7 +60,9 @@ export function createMockManagementService(): ManagementService {
   };
 }
 
-export function createMockScanService(triggerPatterns: RegExp[] = [/weapon/i, /bomb/i]): ScanService {
+export function createMockScanService(
+  triggerPatterns: RegExp[] = [/weapon/i, /bomb/i],
+): ScanService {
   return {
     scan: async (_profile: string, prompt: string, _sessionId?: string): Promise<ScanResult> => {
       const triggered = triggerPatterns.some((p) => p.test(prompt));
@@ -68,7 +73,12 @@ export function createMockScanService(triggerPatterns: RegExp[] = [/weapon/i, /b
         triggered,
       };
     },
-    scanBatch: async (_profile: string, prompts: string[], _concurrency?: number, _sessionId?: string): Promise<ScanResult[]> => {
+    scanBatch: async (
+      _profile: string,
+      prompts: string[],
+      _concurrency?: number,
+      _sessionId?: string,
+    ): Promise<ScanResult[]> => {
       const results: ScanResult[] = [];
       for (const prompt of prompts) {
         const triggered = triggerPatterns.some((p) => p.test(prompt));

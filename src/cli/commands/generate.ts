@@ -1,27 +1,28 @@
 import type { Command } from 'commander';
+import { SdkManagementService } from '../../airs/management.js';
+import { AirsScanService } from '../../airs/scanner.js';
 import { loadConfig } from '../../config/loader.js';
+import { runLoop } from '../../core/loop.js';
+import type { UserInput } from '../../core/types.js';
 import { createLlmProvider } from '../../llm/provider.js';
 import { LangChainLlmService } from '../../llm/service.js';
-import { AirsScanService } from '../../airs/scanner.js';
-import { SdkManagementService } from '../../airs/management.js';
-import { JsonFileStore } from '../../persistence/store.js';
-import { runLoop } from '../../core/loop.js';
-import { collectUserInput } from '../prompts.js';
-import { MemoryStore } from '../../memory/store.js';
-import { MemoryInjector } from '../../memory/injector.js';
 import { LearningExtractor } from '../../memory/extractor.js';
+import { MemoryInjector } from '../../memory/injector.js';
+import { MemoryStore } from '../../memory/store.js';
+import { JsonFileStore } from '../../persistence/store.js';
+import { collectUserInput } from '../prompts.js';
 import {
+  renderAnalysis,
+  renderError,
   renderHeader,
   renderIterationStart,
-  renderTopic,
-  renderTestProgress,
-  renderMetrics,
-  renderAnalysis,
-  renderLoopComplete,
-  renderError,
   renderIterationSummary,
-  renderMemoryLoaded,
+  renderLoopComplete,
   renderMemoryExtracted,
+  renderMemoryLoaded,
+  renderMetrics,
+  renderTestProgress,
+  renderTopic,
 } from '../renderer.js';
 
 export function registerGenerateCommand(program: Command): void {
@@ -48,7 +49,7 @@ export function registerGenerateCommand(program: Command): void {
         });
 
         // Collect user input (interactive or from CLI flags)
-        let userInput;
+        let userInput: UserInput;
         if (opts.topic && opts.profile) {
           userInput = {
             topicDescription: opts.topic,
@@ -62,7 +63,7 @@ export function registerGenerateCommand(program: Command): void {
         }
 
         // Initialize services
-        const model = createLlmProvider({
+        const model = await createLlmProvider({
           provider: config.llmProvider,
           model: config.llmModel,
           anthropicApiKey: config.anthropicApiKey,
@@ -70,12 +71,16 @@ export function registerGenerateCommand(program: Command): void {
           googleCloudProject: config.googleCloudProject,
           googleCloudLocation: config.googleCloudLocation,
           awsRegion: config.awsRegion,
+          awsAccessKeyId: config.awsAccessKeyId,
+          awsSecretAccessKey: config.awsSecretAccessKey,
         });
 
         // Set up memory system
         const memoryEnabled = config.memoryEnabled;
         const memoryStore = memoryEnabled ? new MemoryStore(config.memoryDir) : undefined;
-        const memoryInjector = memoryStore ? new MemoryInjector(memoryStore, config.maxMemoryChars) : undefined;
+        const memoryInjector = memoryStore
+          ? new MemoryInjector(memoryStore, config.maxMemoryChars)
+          : undefined;
 
         const llm = new LangChainLlmService(model, memoryInjector);
         const scanner = new AirsScanService(config.airsApiKey!);

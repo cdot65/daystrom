@@ -17,7 +17,9 @@ async function main() {
   // Also try updating a topic with explicit active: true
   console.log('\n=== Updating topic with active: true ===');
   const { custom_topics } = await mgmt.topics.list();
-  const weaponsTopic = custom_topics.find(t => t.topic_name === 'Weapons Manufacturing and Procurement');
+  const weaponsTopic = custom_topics.find(
+    (t) => t.topic_name === 'Weapons Manufacturing and Procurement',
+  );
   if (weaponsTopic?.topic_id) {
     const updated = await mgmt.topics.update(weaponsTopic.topic_id, {
       topic_name: weaponsTopic.topic_name,
