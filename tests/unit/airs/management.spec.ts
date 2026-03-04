@@ -1,6 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SdkManagementService } from '../../../src/airs/management.js';
 
+interface PolicyTopicEntry {
+  topic_id: string;
+  topic_name: string;
+  revision: number;
+}
+interface PolicyActionEntry {
+  action: string;
+  topic: PolicyTopicEntry[];
+}
+interface PolicyProtectionEntry {
+  name: string;
+  'topic-list': PolicyActionEntry[];
+}
+
+/** Extract topic-guardrails from an update call's policy */
+function getTopicGuardrails(call: Record<string, Record<string, unknown>>): PolicyProtectionEntry {
+  const mp = call.policy['ai-security-profiles'] as Record<string, Record<string, unknown>>[];
+  const protection = mp[0]['model-configuration']['model-protection'] as PolicyProtectionEntry[];
+  const tg = protection.find((p) => p.name === 'topic-guardrails');
+  if (!tg) throw new Error('topic-guardrails not found in policy');
+  return tg;
+}
+
 // Mock the SDK ManagementClient
 const mockCreate = vi.fn();
 const mockUpdate = vi.fn();
@@ -151,58 +174,101 @@ describe('SdkManagementService', () => {
         }),
       );
 
-      const call = mockProfileUpdate.mock.calls[0][1];
-      const aiProfiles = call.policy['ai-security-profiles'];
-      const modelProtection = aiProfiles[0]['model-configuration']['model-protection'];
-      const tg = modelProtection.find((mp: any) => mp.name === 'topic-guardrails');
-      expect(tg).toBeDefined();
-      const blockEntry = tg['topic-list'].find((tl: any) => tl.action === 'block');
-      expect(blockEntry.topic).toEqual([
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      const blockEntry = tg['topic-list'].find((tl) => tl.action === 'block');
+      expect(blockEntry?.topic).toEqual([
         { topic_id: 'topic-1', topic_name: 'Weapons', revision: 1 },
+      ]);
+      // Opposite action should be empty
+      const allowEntry = tg['topic-list'].find((tl) => tl.action === 'allow');
+      expect(allowEntry?.topic).toEqual([]);
+    });
+
+    it('handles profile with no policy (undefined)', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [{ profile_id: 'p-1', profile_name: 'test-profile', active: true }],
+      });
+      mockProfileUpdate.mockResolvedValue({});
+
+      await service.assignTopicToProfile('test-profile', 'topic-1', 'Weapons', 'block');
+
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      const blockEntry = tg['topic-list'].find((tl) => tl.action === 'block');
+      expect(blockEntry?.topic).toHaveLength(1);
+    });
+
+    it('handles profile with ai-security-profiles but no model-configuration', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          {
+            profile_id: 'p-1',
+            profile_name: 'test-profile',
+            active: true,
+            policy: {
+              'ai-security-profiles': [{ 'model-type': 'default' }],
+            },
+          },
+        ],
+      });
+      mockProfileUpdate.mockResolvedValue({});
+
+      await service.assignTopicToProfile('test-profile', 'topic-1', 'Weapons', 'block');
+
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      const blockEntry = tg['topic-list'].find((tl) => tl.action === 'block');
+      expect(blockEntry?.topic).toHaveLength(1);
+    });
+
+    it('replaces stale topics from previous runs', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          {
+            profile_id: 'p-1',
+            profile_name: 'test-profile',
+            active: true,
+            policy: {
+              'ai-security-profiles': [
+                {
+                  'model-type': 'default',
+                  'model-configuration': {
+                    'model-protection': [
+                      {
+                        name: 'topic-guardrails',
+                        action: 'allow',
+                        options: [],
+                        'topic-list': [
+                          {
+                            action: 'block',
+                            topic: [
+                              { topic_id: 'stale-1', topic_name: 'Old Run 1', revision: 1 },
+                              { topic_id: 'stale-2', topic_name: 'Old Run 2', revision: 1 },
+                              { topic_id: 'stale-3', topic_name: 'Old Run 3', revision: 1 },
+                            ],
+                          },
+                          { action: 'allow', topic: [] },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      });
+      mockProfileUpdate.mockResolvedValue({});
+
+      await service.assignTopicToProfile('test-profile', 'topic-new', 'Current Run', 'block');
+
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      const blockEntry = tg['topic-list'].find((tl) => tl.action === 'block');
+      // Only the current topic — stale ones removed
+      expect(blockEntry?.topic).toEqual([
+        { topic_id: 'topic-new', topic_name: 'Current Run', revision: 1 },
       ]);
     });
 
-    it('creates action entry when topic-guardrails exists but action missing', async () => {
-      mockProfileList.mockResolvedValue({
-        ai_profiles: [
-          {
-            profile_id: 'p-1',
-            profile_name: 'test-profile',
-            active: true,
-            policy: {
-              'ai-security-profiles': [
-                {
-                  'model-type': 'default',
-                  'model-configuration': {
-                    'model-protection': [
-                      {
-                        name: 'topic-guardrails',
-                        action: 'allow',
-                        options: [],
-                        'topic-list': [{ action: 'allow', topic: [] }],
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      });
-      mockProfileUpdate.mockResolvedValue({});
-
-      await service.assignTopicToProfile('test-profile', 'topic-1', 'Weapons', 'block');
-
-      const call = mockProfileUpdate.mock.calls[0][1];
-      const tg = call.policy['ai-security-profiles'][0]['model-configuration'][
-        'model-protection'
-      ].find((mp: any) => mp.name === 'topic-guardrails');
-      const blockEntry = tg['topic-list'].find((tl: any) => tl.action === 'block');
-      expect(blockEntry).toBeDefined();
-      expect(blockEntry.topic).toHaveLength(1);
-    });
-
-    it('returns early without update when topic already linked', async () => {
+    it('always updates even when same topic already linked', async () => {
       mockProfileList.mockResolvedValue({
         ai_profiles: [
           {
@@ -222,7 +288,10 @@ describe('SdkManagementService', () => {
                         'topic-list': [
                           {
                             action: 'block',
-                            topic: [{ topic_id: 'topic-1', topic_name: 'Weapons', revision: 1 }],
+                            topic: [
+                              { topic_id: 'topic-1', topic_name: 'Weapons', revision: 1 },
+                              { topic_id: 'stale', topic_name: 'Stale', revision: 1 },
+                            ],
                           },
                         ],
                       },
@@ -234,13 +303,19 @@ describe('SdkManagementService', () => {
           },
         ],
       });
+      mockProfileUpdate.mockResolvedValue({});
 
       await service.assignTopicToProfile('test-profile', 'topic-1', 'Weapons', 'block');
 
-      expect(mockProfileUpdate).not.toHaveBeenCalled();
+      // Still calls update to remove stale topics
+      expect(mockProfileUpdate).toHaveBeenCalled();
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      const blockEntry = tg['topic-list'].find((tl) => tl.action === 'block');
+      expect(blockEntry?.topic).toHaveLength(1);
+      expect(blockEntry?.topic[0].topic_id).toBe('topic-1');
     });
 
-    it('adds topic to existing action entry', async () => {
+    it('clears opposite action list', async () => {
       mockProfileList.mockResolvedValue({
         ai_profiles: [
           {
@@ -259,8 +334,12 @@ describe('SdkManagementService', () => {
                         options: [],
                         'topic-list': [
                           {
+                            action: 'allow',
+                            topic: [{ topic_id: 'old-allow', topic_name: 'Old', revision: 1 }],
+                          },
+                          {
                             action: 'block',
-                            topic: [{ topic_id: 'topic-old', topic_name: 'Old', revision: 1 }],
+                            topic: [{ topic_id: 'old-block', topic_name: 'Old', revision: 1 }],
                           },
                         ],
                       },
@@ -274,15 +353,13 @@ describe('SdkManagementService', () => {
       });
       mockProfileUpdate.mockResolvedValue({});
 
-      await service.assignTopicToProfile('test-profile', 'topic-new', 'New Topic', 'block');
+      await service.assignTopicToProfile('test-profile', 'topic-1', 'Weapons', 'block');
 
-      const call = mockProfileUpdate.mock.calls[0][1];
-      const tg = call.policy['ai-security-profiles'][0]['model-configuration'][
-        'model-protection'
-      ].find((mp: any) => mp.name === 'topic-guardrails');
-      const blockEntry = tg['topic-list'].find((tl: any) => tl.action === 'block');
-      expect(blockEntry.topic).toHaveLength(2);
-      expect(blockEntry.topic[1].topic_id).toBe('topic-new');
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      const allowEntry = tg['topic-list'].find((tl) => tl.action === 'allow');
+      expect(allowEntry?.topic).toEqual([]);
+      const blockEntry = tg['topic-list'].find((tl) => tl.action === 'block');
+      expect(blockEntry?.topic).toHaveLength(1);
     });
 
     it('works with action=allow', async () => {
@@ -295,14 +372,14 @@ describe('SdkManagementService', () => {
 
       await service.assignTopicToProfile('test-profile', 'topic-1', 'Safe Topic', 'allow');
 
-      const call = mockProfileUpdate.mock.calls[0][1];
-      const tg = call.policy['ai-security-profiles'][0]['model-configuration'][
-        'model-protection'
-      ].find((mp: any) => mp.name === 'topic-guardrails');
-      const allowEntry = tg['topic-list'].find((tl: any) => tl.action === 'allow');
-      expect(allowEntry.topic).toEqual([
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      const allowEntry = tg['topic-list'].find((tl) => tl.action === 'allow');
+      expect(allowEntry?.topic).toEqual([
         { topic_id: 'topic-1', topic_name: 'Safe Topic', revision: 1 },
       ]);
+      // Block list should be empty
+      const blockEntry = tg['topic-list'].find((tl) => tl.action === 'block');
+      expect(blockEntry?.topic).toEqual([]);
     });
   });
 });

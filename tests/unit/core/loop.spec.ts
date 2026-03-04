@@ -3,10 +3,13 @@ import { type LoopDependencies, runLoop } from '../../../src/core/loop.js';
 import type {
   AnalysisReport,
   CustomTopic,
+  EfficacyMetrics,
   LoopEvent,
   TestCase,
+  TestResult,
   UserInput,
 } from '../../../src/core/types.js';
+import type { LearningExtractor } from '../../../src/memory/extractor.js';
 import { createMockManagementService, createMockScanService } from '../../helpers/mocks.js';
 
 function createMockLlm() {
@@ -36,7 +39,13 @@ function createMockLlm() {
         ],
       }),
     analyzeResults: vi
-      .fn<(topic: CustomTopic, results: any, metrics: any) => Promise<AnalysisReport>>()
+      .fn<
+        (
+          topic: CustomTopic,
+          results: TestResult[],
+          metrics: EfficacyMetrics,
+        ) => Promise<AnalysisReport>
+      >()
       .mockResolvedValue({
         summary: 'Good performance',
         falsePositivePatterns: [],
@@ -47,9 +56,9 @@ function createMockLlm() {
       .fn<
         (
           topic: CustomTopic,
-          metrics: any,
-          analysis: any,
-          results: any,
+          metrics: EfficacyMetrics,
+          analysis: AnalysisReport,
+          results: TestResult[],
           iteration: number,
           targetCoverage: number,
         ) => Promise<CustomTopic>
@@ -217,6 +226,27 @@ describe('runLoop', () => {
     }
   });
 
+  it('uses default maxIterations and targetCoverage when not provided', async () => {
+    // Scanner always triggers → coverage = 0.5, never meets 0.9 default target
+    const deps = createDeps();
+    const events: LoopEvent[] = [];
+    const input: UserInput = {
+      topicDescription: 'Block weapons discussions',
+      intent: 'block',
+      profileName: 'test-profile',
+      // No maxIterations or targetCoverage — should use defaults (20, 0.9)
+    };
+
+    for await (const event of runLoop(input, deps)) {
+      events.push(event);
+      // Stop after first iteration to avoid running all 20
+      if (event.type === 'iteration:complete') break;
+    }
+
+    const starts = events.filter((e) => e.type === 'iteration:start');
+    expect(starts.length).toBeGreaterThanOrEqual(1);
+  });
+
   it('waits for propagation delay', async () => {
     vi.useFakeTimers();
     const deps = createDeps({ propagationDelayMs: 5000 });
@@ -234,6 +264,27 @@ describe('runLoop', () => {
       await vi.advanceTimersByTimeAsync(5000);
     }
 
+    await collectAll;
+    expect(events.some((e) => e.type === 'loop:complete')).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it('uses default propagation delay when not provided in deps', async () => {
+    vi.useFakeTimers();
+    const deps: LoopDependencies = {
+      llm: createMockLlm(),
+      management: createMockManagementService(),
+      scanner: createMockScanService(),
+      // No propagationDelayMs — should default to 10000
+    };
+    const events: LoopEvent[] = [];
+    const gen = runLoop({ ...defaultInput, maxIterations: 1 }, deps);
+    const collectAll = (async () => {
+      for await (const event of gen) events.push(event);
+    })();
+    while (!events.some((e) => e.type === 'loop:complete')) {
+      await vi.advanceTimersByTimeAsync(10000);
+    }
     await collectAll;
     expect(events.some((e) => e.type === 'loop:complete')).toBe(true);
     vi.useRealTimers();
@@ -267,7 +318,9 @@ describe('runLoop', () => {
     const extractor = {
       extractAndSave: vi.fn().mockResolvedValue({ learnings: [{ insight: 'test' }] }),
     };
-    const deps = createDeps({ memory: { extractor: extractor as any } });
+    const deps = createDeps({
+      memory: { extractor: extractor as unknown as LearningExtractor },
+    });
     const events: LoopEvent[] = [];
 
     for await (const event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {

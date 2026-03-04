@@ -68,8 +68,8 @@ export async function* runLoop(
   };
 
   let currentTopic: CustomTopic | null = null;
-  let topicId: string | null = null;
-  let lockedName: string | null = null;
+  let topicId = '';
+  let lockedName = '';
 
   for (let i = 1; i <= maxIterations; i++) {
     const iterationStart = Date.now();
@@ -85,10 +85,10 @@ export async function* runLoop(
         input.seedExamples,
       );
       lockedName = currentTopic.name;
-    } else {
+    } else if (currentTopic) {
       const prevIteration = runState.iterations[runState.iterations.length - 1];
       currentTopic = await deps.llm.improveTopic(
-        currentTopic!,
+        currentTopic,
         prevIteration.metrics,
         prevIteration.analysis,
         prevIteration.testResults,
@@ -96,10 +96,12 @@ export async function* runLoop(
         targetCoverage,
       );
       // Force the name to stay consistent across iterations
-      currentTopic = { ...currentTopic, name: lockedName! };
+      currentTopic = { ...currentTopic, name: lockedName };
     }
 
-    const topic = currentTopic!;
+    /* v8 ignore next */
+    if (!currentTopic) throw new Error('Invariant: topic must exist');
+    const topic = currentTopic;
     yield { type: 'generate:complete', topic };
 
     // Step 2: Apply topic via management API (SDK v2)
@@ -108,8 +110,8 @@ export async function* runLoop(
       const existing = await deps.management.listTopics();
       const match = existing.find((t) => t.topic_name === topic.name);
 
-      if (match) {
-        topicId = match.topic_id!;
+      if (match?.topic_id) {
+        topicId = match.topic_id;
         await deps.management.updateTopic(topicId, {
           topic_name: topic.name,
           description: topic.description,
@@ -123,7 +125,9 @@ export async function* runLoop(
           examples: topic.examples,
           active: true,
         });
-        topicId = response.topic_id!;
+        /* v8 ignore next */
+        if (!response.topic_id) throw new Error('Invariant: topic_id missing from create response');
+        topicId = response.topic_id;
       }
 
       // Link topic to the security profile's topic-guardrails
@@ -134,7 +138,7 @@ export async function* runLoop(
         input.intent,
       );
     } else {
-      await deps.management.updateTopic(topicId!, {
+      await deps.management.updateTopic(topicId, {
         topic_name: topic.name,
         description: topic.description,
         examples: topic.examples,
@@ -142,7 +146,7 @@ export async function* runLoop(
       });
     }
 
-    yield { type: 'apply:complete', topicId: topicId! };
+    yield { type: 'apply:complete', topicId };
 
     // Wait for propagation
     if (propagationDelay > 0) {

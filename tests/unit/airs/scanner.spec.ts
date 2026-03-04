@@ -68,6 +68,29 @@ describe('AirsScanService', () => {
       );
     });
 
+    it('falls back to empty strings when scan_id/report_id are undefined', async () => {
+      mockSyncScan.mockResolvedValue({
+        action: 'allow',
+        prompt_detected: {},
+      });
+
+      const result = await service.scan('my-profile', 'hello');
+      expect(result.scanId).toBe('');
+      expect(result.reportId).toBe('');
+    });
+
+    it('detects topic_violation as triggered', async () => {
+      mockSyncScan.mockResolvedValue({
+        scan_id: 's1',
+        report_id: 'r1',
+        action: 'block',
+        prompt_detected: { topic_violation: true },
+      });
+
+      const result = await service.scan('my-profile', 'bad prompt');
+      expect(result.triggered).toBe(true);
+    });
+
     it('passes sessionId to syncScan when provided', async () => {
       mockSyncScan.mockResolvedValue({
         scan_id: 's1',

@@ -135,7 +135,7 @@ describe('constraints', () => {
 
     it('rejects description with multi-byte chars exceeding 250 bytes', () => {
       // 248 ASCII chars + 1 em dash (3 bytes) = 251 bytes > 250
-      const desc = 'a'.repeat(248) + '—';
+      const desc = `${'a'.repeat(248)}\u2014`;
       expect(desc.length).toBe(249); // JS char count is 249
       const errors = validateDescription(desc);
       expect(errors).toHaveLength(1);
@@ -144,7 +144,7 @@ describe('constraints', () => {
 
     it('accepts multi-byte description within 250 bytes', () => {
       // 247 ASCII chars + 1 em dash (3 bytes) = 250 bytes
-      const desc = 'a'.repeat(247) + '—';
+      const desc = `${'a'.repeat(247)}\u2014`;
       expect(validateDescription(desc)).toEqual([]);
     });
   });

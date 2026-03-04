@@ -104,6 +104,17 @@ describe('JsonFileStore', () => {
       expect(list).toEqual([]);
     });
 
+    it('skips non-json files in directory', async () => {
+      await store.save(makeRunState({ id: 'valid-run' }));
+      const { writeFile: wf } = await import('node:fs/promises');
+      await wf(join(dir, 'README.txt'), 'not a json file');
+      await wf(join(dir, '.hidden'), 'hidden file');
+
+      const list = await store.list();
+      expect(list).toHaveLength(1);
+      expect(list[0].id).toBe('valid-run');
+    });
+
     it('skips corrupted JSON files', async () => {
       await store.save(makeRunState({ id: 'good-run' }));
       // Write a corrupted JSON file directly

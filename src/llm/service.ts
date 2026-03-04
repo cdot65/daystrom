@@ -58,6 +58,7 @@ function clampTopic(topic: CustomTopicOutput): CustomTopicOutput {
   while (combined() > MAX_COMBINED_LENGTH && examples.length > 1) {
     examples.pop();
   }
+  /* v8 ignore next 4 -- unreachable with current MAX constants (100+250+250=600 < 1000) */
   if (combined() > MAX_COMBINED_LENGTH) {
     const overflow = combined() - MAX_COMBINED_LENGTH;
     description = sliceToBytes(description, byteLen(description) - overflow);
@@ -108,6 +109,7 @@ export class LangChainLlmService implements LlmService {
       }
     }
 
+    /* v8 ignore next */
     throw new Error('Unreachable');
   }
 
@@ -133,6 +135,7 @@ export class LangChainLlmService implements LlmService {
       }
     }
 
+    /* v8 ignore next */
     throw new Error('Unreachable');
   }
 
@@ -173,6 +176,7 @@ export class LangChainLlmService implements LlmService {
       }
     }
 
+    /* v8 ignore next */
     throw new Error('Unreachable');
   }
 
@@ -225,6 +229,7 @@ export class LangChainLlmService implements LlmService {
       }
     }
 
+    /* v8 ignore next */
     throw new Error('Unreachable');
   }
 }

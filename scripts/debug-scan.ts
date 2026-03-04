@@ -31,7 +31,7 @@ async function main() {
     console.log(`  prompt_detected:`, JSON.stringify(resp.prompt_detected, null, 2));
     console.log(
       `  prompt_detection_details:`,
-      JSON.stringify((resp as any).prompt_detection_details, null, 2),
+      JSON.stringify((resp as Record<string, unknown>).prompt_detection_details, null, 2),
     );
     console.log(`  scan_id: ${resp.scan_id}`);
   }

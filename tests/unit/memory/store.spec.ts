@@ -139,6 +139,12 @@ describe('MemoryStore', () => {
     expect(loaded?.antiPatterns).toHaveLength(1);
   });
 
+  it('returns empty from listCategories when dir does not exist', async () => {
+    const missingStore = new MemoryStore(join(tempDir, 'nonexistent'));
+    const cats = await missingStore.listCategories();
+    expect(cats).toEqual([]);
+  });
+
   it('lists all categories', async () => {
     await store.save({
       category: 'cat-a',

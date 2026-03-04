@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { LlmProvider } from '../../../src/config/schema.js';
 import { createLlmProvider } from '../../../src/llm/provider.js';
 
 const { ChatAnthropicMock, ChatVertexAIMock, ChatBedrockConverseMock, AnthropicVertexMock } =
@@ -90,11 +91,11 @@ describe('createLlmProvider', () => {
       projectId: 'my-project',
       region: 'us-east5',
     });
-    expect(ChatAnthropicMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        createClient: expect.any(Function),
-      }),
-    );
+    const callOpts = ChatAnthropicMock.mock.calls[0][0];
+    expect(callOpts.createClient).toBeTypeOf('function');
+    // Invoke createClient to cover the arrow function
+    const client = callOpts.createClient();
+    expect(client._type).toBe('AnthropicVertex');
   });
 
   it('creates Claude Bedrock provider', async () => {
@@ -138,7 +139,37 @@ describe('createLlmProvider', () => {
     expect(model).toBeDefined();
   });
 
+  it('uses default region for claude-vertex when not provided', async () => {
+    AnthropicVertexMock.mockClear();
+    await createLlmProvider({ provider: 'claude-vertex', googleCloudProject: 'proj' });
+    expect(AnthropicVertexMock).toHaveBeenCalledWith({ projectId: 'proj', region: 'global' });
+  });
+
+  it('uses default region for claude-bedrock when not provided', async () => {
+    ChatBedrockConverseMock.mockClear();
+    await createLlmProvider({ provider: 'claude-bedrock' });
+    expect(ChatBedrockConverseMock).toHaveBeenCalledWith(
+      expect.objectContaining({ region: 'us-east-1' }),
+    );
+  });
+
+  it('uses default location for gemini-vertex when not provided', async () => {
+    ChatVertexAIMock.mockClear();
+    await createLlmProvider({ provider: 'gemini-vertex', googleCloudProject: 'proj' });
+    expect(ChatVertexAIMock).toHaveBeenCalledWith(
+      expect.objectContaining({ location: 'us-central1' }),
+    );
+  });
+
+  it('uses default region for gemini-bedrock when not provided', async () => {
+    ChatBedrockConverseMock.mockClear();
+    await createLlmProvider({ provider: 'gemini-bedrock' });
+    expect(ChatBedrockConverseMock).toHaveBeenCalledWith(
+      expect.objectContaining({ region: 'us-east-1' }),
+    );
+  });
+
   it('throws for unknown provider', async () => {
-    await expect(createLlmProvider({ provider: 'unknown' as any })).rejects.toThrow();
+    await expect(createLlmProvider({ provider: 'unknown' as LlmProvider })).rejects.toThrow();
   });
 });
