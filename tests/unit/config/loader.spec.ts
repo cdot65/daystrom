@@ -113,4 +113,15 @@ describe('loadConfig', () => {
     const config = await loadConfig({}, configPath);
     expect(config.llmProvider).toBe('claude-api');
   });
+
+  it('does not expand absolute paths (non-tilde)', async () => {
+    const config = await loadConfig({ dataDir: '/tmp/custom-dir' }, configPath);
+    expect(config.dataDir).toBe('/tmp/custom-dir');
+  });
+
+  it('uses default config file path when configFilePath not provided', async () => {
+    // loadConfig with no configFilePath reads from ~/.prisma-airs-guardrails/config.json (likely missing)
+    const config = await loadConfig({});
+    expect(config.llmProvider).toBe('claude-api');
+  });
 });

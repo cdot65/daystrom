@@ -1,6 +1,7 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { RunnableLambda } from '@langchain/core/runnables';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RunState } from '../../../src/core/types.js';
@@ -124,7 +125,7 @@ describe('LearningExtractor', () => {
 
   it('extracts learnings and saves to store', async () => {
     const model = createMockModel();
-    const extractor = new LearningExtractor(model as any, store);
+    const extractor = new LearningExtractor(model as BaseChatModel, store);
     const runState = makeRunState();
 
     const result = await extractor.extractAndSave(runState);
@@ -139,7 +140,7 @@ describe('LearningExtractor', () => {
 
   it('increments corroboration for duplicate insights', async () => {
     const model = createMockModel();
-    const extractor = new LearningExtractor(model as any, store);
+    const extractor = new LearningExtractor(model as BaseChatModel, store);
     const runState = makeRunState();
 
     // First extraction
@@ -160,7 +161,7 @@ describe('LearningExtractor', () => {
 
   it('tracks bestKnown from run state', async () => {
     const model = createMockModel();
-    const extractor = new LearningExtractor(model as any, store);
+    const extractor = new LearningExtractor(model as BaseChatModel, store);
     const runState = makeRunState();
 
     await extractor.extractAndSave(runState);
@@ -174,7 +175,7 @@ describe('LearningExtractor', () => {
 
   it('updates bestKnown only when new run is better', async () => {
     const model = createMockModel();
-    const extractor = new LearningExtractor(model as any, store);
+    const extractor = new LearningExtractor(model as BaseChatModel, store);
 
     // First run: coverage 0.9
     await extractor.extractAndSave(makeRunState());
@@ -196,7 +197,7 @@ describe('LearningExtractor', () => {
 
   it('saves anti-patterns', async () => {
     const model = createMockModel();
-    const extractor = new LearningExtractor(model as any, store);
+    const extractor = new LearningExtractor(model as BaseChatModel, store);
 
     await extractor.extractAndSave(makeRunState());
 
@@ -207,9 +208,85 @@ describe('LearningExtractor', () => {
     );
   });
 
+  it('formats iteration history with example removals and additions', async () => {
+    const model = createMockModel();
+    const extractor = new LearningExtractor(model as BaseChatModel, store);
+    // Iteration 2 removes an example and adds a new one
+    const runState = makeRunState({
+      iterations: [
+        {
+          ...makeRunState().iterations[0],
+          topic: {
+            name: 'Weapons',
+            description: 'Block weapons talk',
+            examples: ['How to make a gun', 'Knife fighting'],
+          },
+        },
+        {
+          ...makeRunState().iterations[1],
+          topic: {
+            name: 'Weapons',
+            description: 'Block weapons manufacturing',
+            examples: ['How to make a gun', 'Buy ammunition'],
+          },
+        },
+      ],
+    });
+
+    const result = await extractor.extractAndSave(runState);
+    expect(result.learnings).toHaveLength(1);
+  });
+
+  it('formats "none" when no changes between iterations and shows negative delta', async () => {
+    const model = createMockModel();
+    const extractor = new LearningExtractor(model as BaseChatModel, store);
+    // Two iterations with identical desc+examples but coverage drops
+    const runState = makeRunState({
+      iterations: [
+        {
+          ...makeRunState().iterations[0],
+          topic: {
+            name: 'Weapons',
+            description: 'Block weapons talk',
+            examples: ['How to make a gun'],
+          },
+          metrics: {
+            ...makeRunState().iterations[0].metrics,
+            coverage: 0.9,
+          },
+        },
+        {
+          ...makeRunState().iterations[1],
+          topic: {
+            name: 'Weapons',
+            description: 'Block weapons talk',
+            examples: ['How to make a gun'],
+          },
+          metrics: {
+            ...makeRunState().iterations[1].metrics,
+            coverage: 0.7,
+          },
+        },
+      ],
+    });
+
+    const result = await extractor.extractAndSave(runState);
+    expect(result.learnings).toHaveLength(1);
+  });
+
+  it('falls back to last iteration when bestIteration index is out of bounds', async () => {
+    const model = createMockModel();
+    const extractor = new LearningExtractor(model as BaseChatModel, store);
+    // bestIteration=0 means index -1 which is undefined, should fall back to last
+    const runState = makeRunState({ bestIteration: 0 });
+
+    const result = await extractor.extractAndSave(runState);
+    expect(result.learnings).toHaveLength(1);
+  });
+
   it('skips runs with < 1 iteration', async () => {
     const model = createMockModel();
-    const extractor = new LearningExtractor(model as any, store);
+    const extractor = new LearningExtractor(model as BaseChatModel, store);
 
     const result = await extractor.extractAndSave(makeRunState({ iterations: [] }));
     expect(result.learnings).toHaveLength(0);

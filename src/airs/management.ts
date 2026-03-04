@@ -35,9 +35,9 @@ export class SdkManagementService implements ManagementService {
   }
 
   /**
-   * Links a custom topic to a profile's topic-guardrails config.
-   * Reads the current profile policy, merges the topic into the
-   * model-protection → topic-guardrails → topic-list, then updates.
+   * Sets a single custom topic on a profile's topic-guardrails config.
+   * Replaces any existing topics so only the current topic is evaluated.
+   * Previous runs may have left stale topics — this clears them.
    */
   async assignTopicToProfile(
     profileName: string,
@@ -60,43 +60,34 @@ export class SdkManagementService implements ManagementService {
     const modelConfig = aiProfiles[0]?.['model-configuration'] ?? {};
 
     // Find or create model-protection with topic-guardrails
-    const modelProtection: any[] = modelConfig['model-protection'] ?? [];
-    let topicGuardrails = modelProtection.find((mp: any) => mp.name === 'topic-guardrails');
+    const modelProtection: Record<string, unknown>[] = modelConfig['model-protection'] ?? [];
+    let topicGuardrails = modelProtection.find((mp) => mp.name === 'topic-guardrails');
 
     if (!topicGuardrails) {
       topicGuardrails = {
         action: 'allow',
         name: 'topic-guardrails',
         options: [],
-        'topic-list': [
-          { action: 'allow', topic: [] },
-          { action: 'block', topic: [] },
-        ],
+        'topic-list': [],
       };
       modelProtection.push(topicGuardrails);
     }
 
-    // Ensure topic-list has entries for both actions
-    const topicList: any[] = topicGuardrails['topic-list'] ?? [];
-    let actionEntry = topicList.find((tl: any) => tl.action === action);
-    if (!actionEntry) {
-      actionEntry = { action, topic: [] };
-      topicList.push(actionEntry);
-    }
-
-    // Check if topic already linked
-    const existing = actionEntry.topic.find((t: any) => t.topic_id === topicId);
-    if (existing) return; // already assigned
-
-    // Add the topic
-    actionEntry.topic.push({
-      topic_id: topicId,
-      topic_name: topicName,
-      revision: 1,
-    });
+    // Replace the entire topic-list with only the current topic under the given action.
+    // The opposite action gets an empty list to ensure no stale topics remain.
+    const oppositeAction = action === 'block' ? 'allow' : 'block';
+    topicGuardrails['topic-list'] = [
+      {
+        action,
+        topic: [{ topic_id: topicId, topic_name: topicName, revision: 1 }],
+      },
+      {
+        action: oppositeAction,
+        topic: [],
+      },
+    ];
 
     // Write back
-    topicGuardrails['topic-list'] = topicList;
     modelConfig['model-protection'] = modelProtection;
     aiProfiles[0]['model-configuration'] = modelConfig;
     policy['ai-security-profiles'] = aiProfiles;

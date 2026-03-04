@@ -77,6 +77,21 @@ describe('MemoryInjector', () => {
     expect(section).toBe('');
   });
 
+  it('returns empty string when memories exist but have no learnings or anti-patterns', async () => {
+    const memory: TopicMemory = {
+      category: 'block-weapons-discussions',
+      updatedAt: '2025-01-01T00:00:00Z',
+      learnings: [],
+      bestKnown: null,
+      antiPatterns: [],
+    };
+    await store.save(memory);
+
+    const injector = new MemoryInjector(store, 3000);
+    const section = await injector.buildMemorySection('Block weapons discussions');
+    expect(section).toBe('');
+  });
+
   it('returns empty string when store is empty', async () => {
     const injector = new MemoryInjector(store, 3000);
     const section = await injector.buildMemorySection('Block weapons');

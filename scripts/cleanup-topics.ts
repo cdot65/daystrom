@@ -13,7 +13,8 @@ async function main() {
   for (const t of weaponsTopics) {
     console.log(`  Deleting ${t.topic_id} (${t.topic_name})...`);
     try {
-      await mgmt.topics.forceDelete(t.topic_id!);
+      if (!t.topic_id) continue;
+      await mgmt.topics.forceDelete(t.topic_id);
       console.log('  Done');
     } catch (err) {
       console.error('  Failed:', err);

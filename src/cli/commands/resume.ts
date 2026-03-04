@@ -61,7 +61,8 @@ export function registerResumeCommand(program: Command): void {
         });
 
         const llm = new LangChainLlmService(model);
-        const scanner = new AirsScanService(config.airsApiKey!);
+        if (!config.airsApiKey) throw new Error('PANW_AI_SEC_API_KEY is required');
+        const scanner = new AirsScanService(config.airsApiKey);
         const management = new SdkManagementService({
           clientId: config.mgmtClientId,
           clientSecret: config.mgmtClientSecret,
