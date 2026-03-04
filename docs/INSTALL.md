@@ -114,12 +114,12 @@ These control loop behavior and can be set via env vars, config file, or (where 
 | `PROPAGATION_DELAY_MS` | `propagationDelayMs` | `10000` | ≥ 0 | Milliseconds to wait after deploying a topic before scanning. AIRS needs time to propagate changes. Reduce for faster iteration at the risk of stale scan results. |
 | `MAX_MEMORY_CHARS` | `maxMemoryChars` | `3000` | 500–10000 | Character budget for the memory section injected into LLM prompts. Higher values include more learnings but consume more prompt context. |
 | `MEMORY_ENABLED` | `memoryEnabled` | `true` | — | Enable/disable the cross-run learning system entirely. |
-| `DATA_DIR` | `dataDir` | `~/.prisma-airs-guardrails/runs` | — | Directory for persisted run states. |
-| `MEMORY_DIR` | `memoryDir` | `~/.prisma-airs-guardrails/memory` | — | Directory for cross-run learning files. |
+| `DATA_DIR` | `dataDir` | `~/.daystrom/runs` | — | Directory for persisted run states. |
+| `MEMORY_DIR` | `memoryDir` | `~/.daystrom/memory` | — | Directory for cross-run learning files. |
 
 ## Config File (Optional)
 
-You can place a JSON config file at `~/.prisma-airs-guardrails/config.json` with camelCase keys matching the schema. Values here are overridden by env vars and CLI flags.
+You can place a JSON config file at `~/.daystrom/config.json` with camelCase keys matching the schema. Values here are overridden by env vars and CLI flags.
 
 ```json
 {
@@ -134,9 +134,9 @@ You can place a JSON config file at `~/.prisma-airs-guardrails/config.json` with
 
 | Path | Purpose |
 |------|---------|
-| `~/.prisma-airs-guardrails/runs/` | Persisted run states (JSON per run) |
-| `~/.prisma-airs-guardrails/memory/` | Cross-run learning store (JSON per topic category) |
-| `~/.prisma-airs-guardrails/config.json` | Optional config file |
+| `~/.daystrom/runs/` | Persisted run states (JSON per run) |
+| `~/.daystrom/memory/` | Cross-run learning store (JSON per topic category) |
+| `~/.daystrom/config.json` | Optional config file |
 
 ## Verify Installation
 

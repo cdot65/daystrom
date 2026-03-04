@@ -45,11 +45,11 @@ export const ConfigSchema = z.object({
   propagationDelayMs: z.coerce.number().int().min(0).default(10000),
 
   // Persistence
-  dataDir: z.string().default('~/.prisma-airs-guardrails/runs'),
+  dataDir: z.string().default('~/.daystrom/runs'),
 
   // Memory
   memoryEnabled: z.coerce.boolean().default(true),
-  memoryDir: z.string().default('~/.prisma-airs-guardrails/memory'),
+  memoryDir: z.string().default('~/.daystrom/memory'),
   maxMemoryChars: z.coerce.number().int().min(500).max(10000).default(3000),
 });
 

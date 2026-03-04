@@ -10,8 +10,8 @@ import { registerResumeCommand } from './commands/resume.js';
 const program = new Command();
 
 program
-  .name('guardrail-gen')
-  .description('Prisma AIRS custom topic guardrail generator')
+  .name('daystrom')
+  .description('Automated Prisma AIRS custom topic guardrail generator')
   .version('0.1.0');
 
 registerGenerateCommand(program);

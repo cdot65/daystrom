@@ -158,7 +158,7 @@ export async function* runLoop(
     const allTests = [...positiveTests, ...negativeTests];
 
     // Step 4: Run scans
-    const sessionId = `guardrail-gen-${runState.id.slice(0, 7)}-iter${i}`;
+    const sessionId = `daystrom-${runState.id.slice(0, 7)}-iter${i}`;
     const testResults: TestResult[] = [];
     const prompts = allTests.map((t) => t.prompt);
     const scanResults = await deps.scanner.scanBatch(

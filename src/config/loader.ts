@@ -51,7 +51,7 @@ export async function loadConfig(
   cliOverrides: Record<string, unknown> = {},
   configFilePath?: string,
 ): Promise<Config> {
-  const filePath = configFilePath ?? join(homedir(), '.prisma-airs-guardrails', 'config.json');
+  const filePath = configFilePath ?? join(homedir(), '.daystrom', 'config.json');
   const fileConfig = await fromFile(filePath);
   const envConfig = fromEnv();
 

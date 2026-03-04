@@ -72,7 +72,7 @@ After the loop exits (either by reaching target or exhausting iterations):
 1. **Extract learnings** — The LLM analyzes the full iteration history (what changed, what improved/degraded, metric deltas) and produces structured `Learning` objects with insight, strategy, outcome, changeType, and tags
 2. **Merge into memory** — New learnings are merged with any existing category memory. Duplicate insights (exact string match) increment a corroboration counter rather than creating duplicates. Anti-patterns are also deduplicated.
 3. **Update bestKnown** — If this run achieved better coverage than any previous run for this topic category, the best topic definition and metrics are recorded
-4. **Save run state** — Full `RunState` (all iterations, metrics, analyses) is persisted to `~/.prisma-airs-guardrails/runs/{runId}.json`
+4. **Save run state** — Full `RunState` (all iterations, metrics, analyses) is persisted to `~/.daystrom/runs/{runId}.json`
 
 ## Memory System
 
@@ -171,7 +171,7 @@ pnpm run dev report <runId> --iteration 3  # Specific iteration details
 $ pnpm run generate --profile test-policy --topic "Block phishing attempts" --intent block
 
 ╔══════════════════════════════════════╗
-║   Prisma AIRS Guardrail Generator   ║
+║            Daystrom                  ║
 ╚══════════════════════════════════════╝
 
 ◆ Memory loaded: 3 learnings from previous runs

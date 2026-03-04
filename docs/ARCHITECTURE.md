@@ -97,7 +97,7 @@ User Input (topic description, intent, profile name, seeds)
     ▼
 Post-loop:
   ├── LearningExtractor: extract insights from iteration diffs → merge into memory store
-  ├── Persist RunState to ~/.prisma-airs-guardrails/runs/{runId}.json
+  ├── Persist RunState to ~/.daystrom/runs/{runId}.json
   └── Yield loop:complete event with best iteration
 ```
 
@@ -119,10 +119,10 @@ The core loop (`runLoop()`) is an async generator that yields typed `LoopEvent` 
 The topic name generated in iteration 1 is locked for all subsequent iterations. Only the description and examples change. This prevents the loop from thrashing between different topic identities and ensures the AIRS topic entity stays consistent.
 
 ### Budget-Aware Memory Injection
-Learnings from `~/.prisma-airs-guardrails/memory/` are injected into all LLM prompts. Instead of a hard count cap, a character budget (default 3000, configurable 500–10000 via `MAX_MEMORY_CHARS`) controls section size. High-corroboration learnings get verbose format with metadata; overflow learnings get compact format; the rest are omitted with a count notice. This ensures all learnings are considered without prompt bloat.
+Learnings from `~/.daystrom/memory/` are injected into all LLM prompts. Instead of a hard count cap, a character budget (default 3000, configurable 500–10000 via `MAX_MEMORY_CHARS`) controls section size. High-corroboration learnings get verbose format with metadata; overflow learnings get compact format; the rest are omitted with a count notice. This ensures all learnings are considered without prompt bloat.
 
 ### Config Cascade
-Priority: CLI flags > env vars > `~/.prisma-airs-guardrails/config.json` > Zod schema defaults. All config passes through a single `ConfigSchema.parse()` call — no separate validation logic. The `~` prefix in paths is expanded to `$HOME` after parsing.
+Priority: CLI flags > env vars > `~/.daystrom/config.json` > Zod schema defaults. All config passes through a single `ConfigSchema.parse()` call — no separate validation logic. The `~` prefix in paths is expanded to `$HOME` after parsing.
 
 ### Topic Constraints & Clamping
 AIRS enforces hard limits on topic definitions: 100 chars name, 250 chars description, 250 chars per example, max 5 examples, 1000 chars combined. The LLM frequently exceeds the 250-char description limit. Rather than relying on Zod validation alone, `clampTopic()` in `src/llm/service.ts` truncates fields post-LLM, drops trailing examples if the combined limit is exceeded, and trims the description as a last resort.
@@ -154,7 +154,7 @@ Wraps `@cdot65/prisma-airs-sdk` `Scanner.syncScan()`. Detection is determined by
 Post-loop LLM call that receives formatted iteration history (descriptions, examples, metrics, diffs). Outputs `Learning[]` with insight, strategy, outcome, changeType, tags. Merges into existing category memory: exact-match insights increment corroboration count; new insights are appended. Also tracks `bestKnown` (best topic/metrics across all runs) and anti-patterns.
 
 ### `memory/store.ts`
-File-based persistence at `~/.prisma-airs-guardrails/memory/{category}.json`. Categories are normalized keyword strings. `findRelevant()` loads all category files and returns those with ≥50% keyword overlap. Simple but effective for the expected scale (dozens of categories, not thousands).
+File-based persistence at `~/.daystrom/memory/{category}.json`. Categories are normalized keyword strings. `findRelevant()` loads all category files and returns those with ≥50% keyword overlap. Simple but effective for the expected scale (dozens of categories, not thousands).
 
 ### `memory/injector.ts`
 Builds the memory section string for LLM prompts. Sorts learnings by corroboration count descending. Three rendering tiers within a character budget:
@@ -165,4 +165,4 @@ Builds the memory section string for LLM prompts. Sorts learnings by corroborati
 Anti-patterns are appended after learnings if budget allows.
 
 ### `persistence/store.ts`
-`JsonFileStore` saves `RunState` as pretty-printed JSON to `~/.prisma-airs-guardrails/runs/{runId}.json`. Supports load by ID, list all runs (returns summaries), and save.
+`JsonFileStore` saves `RunState` as pretty-printed JSON to `~/.daystrom/runs/{runId}.json`. Supports load by ID, list all runs (returns summaries), and save.

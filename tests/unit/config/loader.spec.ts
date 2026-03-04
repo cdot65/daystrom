@@ -88,13 +88,13 @@ describe('loadConfig', () => {
 
   it('expands ~ in dataDir', async () => {
     const config = await loadConfig({}, configPath);
-    expect(config.dataDir).toBe(join(homedir(), '.prisma-airs-guardrails/runs'));
+    expect(config.dataDir).toBe(join(homedir(), '.daystrom/runs'));
     expect(config.dataDir).not.toContain('~');
   });
 
   it('expands ~ in memoryDir', async () => {
     const config = await loadConfig({}, configPath);
-    expect(config.memoryDir).toBe(join(homedir(), '.prisma-airs-guardrails/memory'));
+    expect(config.memoryDir).toBe(join(homedir(), '.daystrom/memory'));
   });
 
   it('treats empty strings as unset (stripUndefined)', async () => {
@@ -120,7 +120,7 @@ describe('loadConfig', () => {
   });
 
   it('uses default config file path when configFilePath not provided', async () => {
-    // loadConfig with no configFilePath reads from ~/.prisma-airs-guardrails/config.json (likely missing)
+    // loadConfig with no configFilePath reads from ~/.daystrom/config.json (likely missing)
     const config = await loadConfig({});
     expect(config.llmProvider).toBe('claude-api');
   });

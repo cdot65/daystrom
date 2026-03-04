@@ -44,14 +44,14 @@ pnpm run generate \
 
 ## Commands
 
-All commands use `guardrail-gen` as the binary name (or `pnpm run dev` in development):
+All commands use `daystrom` as the binary name (or `pnpm run dev` in development):
 
 | Command | Description |
 |---------|-------------|
-| `guardrail-gen generate` | Start a new guardrail generation loop |
-| `guardrail-gen resume <runId>` | Resume a paused or failed run with additional iterations |
-| `guardrail-gen report <runId>` | View detailed results for a saved run (best or specific iteration) |
-| `guardrail-gen list` | List all saved runs with status and coverage |
+| `daystrom generate` | Start a new guardrail generation loop |
+| `daystrom resume <runId>` | Resume a paused or failed run with additional iterations |
+| `daystrom report <runId>` | View detailed results for a saved run (best or specific iteration) |
+| `daystrom list` | List all saved runs with status and coverage |
 
 ### Generate Flags
 

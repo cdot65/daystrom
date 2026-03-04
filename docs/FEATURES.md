@@ -31,12 +31,12 @@ A persistent memory system extracts, stores, and injects learnings across runs:
 - **Anti-pattern tracking** — known failure modes (e.g., "adding exclusion clauses near char limit causes truncation") are persisted and surfaced in prompts
 - **Best-known tracking** — the best topic definition and metrics for each category are stored, allowing comparison across runs
 
-Storage: `~/.prisma-airs-guardrails/memory/{category}.json`
+Storage: `~/.daystrom/memory/{category}.json`
 
 ### Resumable Runs
 Runs can be paused (interrupted) and resumed from the last iteration. The full run state — every iteration's topic, test cases, results, metrics, and analysis — is persisted to disk as JSON. Resume adds additional iterations from the current position.
 
-Storage: `~/.prisma-airs-guardrails/runs/{runId}.json`
+Storage: `~/.daystrom/runs/{runId}.json`
 
 ### Automated Test Generation
 Each iteration generates balanced test suites via LLM:
@@ -74,7 +74,7 @@ After each scan batch, the LLM receives the topic definition, all test results, 
 
 ## Configuration Reference
 
-### CLI Flags (`guardrail-gen generate`)
+### CLI Flags (`daystrom generate`)
 
 | Flag | Default | Description |
 |------|---------|-------------|
@@ -98,7 +98,7 @@ See [`.env.example`](../.env.example) for the full list with inline comments. Ke
 
 ### Config File
 
-Optional JSON at `~/.prisma-airs-guardrails/config.json`. Uses camelCase keys matching the Zod `ConfigSchema`. Values are overridden by env vars and CLI flags.
+Optional JSON at `~/.daystrom/config.json`. Uses camelCase keys matching the Zod `ConfigSchema`. Values are overridden by env vars and CLI flags.
 
 ```json
 {

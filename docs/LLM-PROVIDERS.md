@@ -181,7 +181,7 @@ Configuration is resolved in this priority order (highest wins):
 
 1. **CLI flags** (`--provider`, `--model`)
 2. **Environment variables** (`LLM_PROVIDER`, `LLM_MODEL`, etc.)
-3. **Config file** (`~/.prisma-airs-guardrails/config.json`)
+3. **Config file** (`~/.daystrom/config.json`)
 4. **Zod schema defaults** (e.g. `claude-api`, `global`/`us-central1`, `us-east-1`)
 
 See [Installation](INSTALL.md) for full config file and tuning parameter details.

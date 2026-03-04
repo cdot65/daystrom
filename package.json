@@ -1,12 +1,12 @@
 {
-  "name": "prisma-airs-guardrail-generator",
+  "name": "daystrom",
   "version": "0.1.0",
   "description": "Automated Prisma AIRS custom topic guardrail generator with iterative refinement",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "guardrail-gen": "dist/cli/index.js"
+    "daystrom": "dist/cli/index.js"
   },
   "scripts": {
     "build": "tsc",

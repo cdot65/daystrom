@@ -117,17 +117,17 @@ tests/
 - `clampTopic()` enforces AIRS constraints post-LLM (not Zod) — drops examples, trims description
 
 ### Memory System (`src/memory/`)
-- File-based at `~/.prisma-airs-guardrails/memory/{category}.json`
+- File-based at `~/.daystrom/memory/{category}.json`
 - Category = normalized keyword extraction (stop-word removal, alphabetical sort)
 - Cross-topic transfer when keyword overlap ≥ 50%
 - Budget-aware injection (3000 char default): sorts by corroboration count desc, verbose→compact→omit
 
 ### Config (`src/config/`)
-- Priority: CLI flags > env vars > `~/.prisma-airs-guardrails/config.json` > Zod defaults
+- Priority: CLI flags > env vars > `~/.daystrom/config.json` > Zod defaults
 - All fields in `ConfigSchema` with coercion + defaults; `~` expanded via `expandHome()`
 
 ### Persistence (`src/persistence/`)
-- `JsonFileStore` saves/loads `RunState` as JSON at `~/.prisma-airs-guardrails/runs/{runId}.json`
+- `JsonFileStore` saves/loads `RunState` as JSON at `~/.daystrom/runs/{runId}.json`
 
 ## AIRS Constraints (`src/core/constraints.ts`)
 

@@ -99,11 +99,11 @@ describe('AirsScanService', () => {
         prompt_detected: {},
       });
 
-      await service.scan('prof', 'hello', 'guardrail-gen-abc1234-iter1');
+      await service.scan('prof', 'hello', 'daystrom-abc1234-iter1');
       expect(mockSyncScan).toHaveBeenCalledWith(
         expect.objectContaining({ profile_name: 'prof' }),
         expect.anything(),
-        { sessionId: 'guardrail-gen-abc1234-iter1' },
+        { sessionId: 'daystrom-abc1234-iter1' },
       );
     });
   });
