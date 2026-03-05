@@ -21,5 +21,8 @@ Thumbs.db
 *.swp
 *.swo
 
+# MkDocs
+site/
+
 # Runtime data
 ~/.daystrom/

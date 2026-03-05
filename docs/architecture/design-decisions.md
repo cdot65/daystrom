@@ -1,0 +1,115 @@
+# Design Decisions
+
+This page documents key architectural decisions in Daystrom and the rationale behind each.
+
+## 1. Async Generator Loop
+
+`runLoop()` is an async generator that yields typed `LoopEvent` discriminated unions rather than calling renderers or side-effecting functions directly.
+
+**Rationale:** Decouples the iteration engine from the UI layer. The CLI iterates the generator and dispatches events to its Chalk-based renderer, but the loop itself has no knowledge of how events are consumed. This makes the entire loop testable with mock event consumers -- no mocking of terminal output required.
+
+```typescript
+for await (const event of runLoop(services, config)) {
+  renderer.handle(event); // CLI dispatches here; tests collect events instead
+}
+```
+
+!!! note "Swap-friendly"
+    A web UI or API server could consume the same generator without changing any core loop code.
+
+## 2. Topic Name Locking
+
+The topic name is generated in iteration 1 and locked for all subsequent iterations. Only the description and examples are refined.
+
+**Rationale:** AIRS topics are identified by name. Changing the name each iteration would create new entities rather than updating the existing one, leaving orphaned topics and breaking profile references. Locking the name ensures a stable identity throughout the refinement process.
+
+## 3. Budget-Aware Memory Injection
+
+Memory injection uses a character budget (default 3000, configurable 500--10000) instead of a hard item count.
+
+**Rationale:** A fixed count cap treats all learnings equally regardless of length. Budget-based injection prioritizes high-value content:
+
+| Priority | Format | Description |
+|----------|--------|-------------|
+| Highest | Verbose | Full learning text with examples; used for top-corroborated learnings |
+| Medium | Compact | Shortened summary; used when budget is tight |
+| Lowest | Omitted | Excluded entirely; count appended as "and N more learnings..." |
+
+Learnings are sorted by corroboration count (descending) before budget allocation. This ensures battle-tested insights always make it into the prompt.
+
+## 4. Config Cascade
+
+Configuration resolves through a strict priority chain:
+
+```
+CLI flags  >  Environment variables  >  Config file (~/.daystrom/config.json)  >  Zod defaults
+```
+
+**Rationale:** A single `ConfigSchema.parse()` call handles validation, coercion, and defaults. No separate validation layer. Users can override any setting at any level without ambiguity about precedence.
+
+!!! tip "Home Directory Expansion"
+    Paths containing `~` are expanded via `expandHome()` during config loading, so `~/.daystrom/config.json` works on all platforms.
+
+## 5. Post-LLM Clamping
+
+LLM output is clamped to AIRS constraints *after* generation rather than relying solely on Zod schema validation.
+
+**Rationale:** LLMs routinely exceed the 250-character AIRS description limit despite prompt instructions. `clampTopic()` enforces hard limits:
+
+| Constraint | Limit |
+|-----------|-------|
+| Topic name | 100 characters |
+| Description | 250 characters |
+| Each example | 250 characters |
+| Max examples | 5 |
+| Combined (description + all examples) | 1000 characters |
+
+The clamping strategy is ordered: drop trailing examples first if the combined limit is exceeded, then trim the description as a last resort. This preserves as much semantic content as possible.
+
+!!! warning "Why Not Zod Alone?"
+    Zod `.max()` would reject the entire response on overflow, requiring a full retry. Clamping is cheaper and deterministic -- it always produces a valid topic on the first pass.
+
+## 6. Category-Based Memory
+
+Learnings are stored in files keyed by a normalized category derived from the topic's keywords.
+
+**Normalization pipeline:**
+
+1. Lowercase all keywords
+2. Strip punctuation
+3. Remove stop words
+4. Sort alphabetically
+5. Join with hyphens
+
+**Cross-topic transfer** occurs when two categories share 50% or more keyword overlap. This allows learnings from "api-injection-sql" to inform a run targeting "injection-prompt-sql" without requiring exact matches.
+
+**Rationale:** File-per-category keeps I/O simple (no database) while keyword overlap enables knowledge transfer across related topics without manual tagging.
+
+## 7. Structured Output via Zod
+
+All four LLM calls use LangChain's `withStructuredOutput(ZodSchema)` with 3 retries on parse failure.
+
+**Rationale:** Structured output guarantees type-safe responses at the boundary between the LLM and the application. The retry mechanism handles occasional malformed JSON from the model without failing the entire iteration. Zod schemas serve double duty as both runtime validators and TypeScript type sources.
+
+```typescript
+const chain = llm.withStructuredOutput(TopicSchema, {
+  name: "generate_topic",
+});
+// Returns a typed CustomTopic or throws after 3 retries
+```
+
+## 8. Event-Driven Architecture
+
+The loop emits 11 distinct event types covering the full lifecycle:
+
+| Phase | Events |
+|-------|--------|
+| Setup | `memory:loaded` |
+| Per-iteration | `iteration:start`, `generate:complete`, `apply:complete`, `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete` |
+| Terminal | `loop:complete`, `loop:paused` |
+| Teardown | `memory:extracted` |
+
+**Rationale:** Fine-grained events enable rich progress reporting (the CLI shows per-test scan progress), clean separation of concerns (renderer knows nothing about LLM calls), and future extensibility (logging, metrics dashboards, web UIs) without modifying the core loop.
+
+!!! abstract "Summary"
+    The common thread across these decisions is **separation of concerns**: the loop generates events, the renderer displays them, the memory system persists learnings, and the config system resolves settings. Each subsystem is independently testable and replaceable.

@@ -68,11 +68,7 @@ All commands use `daystrom` as the binary name (or `pnpm run dev` in development
 
 ## Documentation
 
-- [Installation](docs/INSTALL.md) — prerequisites, credential setup, provider configuration, tuning
-- [Architecture](docs/ARCHITECTURE.md) — system design, module responsibilities, data flow, key decisions
-- [Workflow](docs/WORKFLOW.md) — iterative loop stages, memory system, CLI usage examples
-- [Features](docs/FEATURES.md) — capabilities, constraints, configuration reference, testing
-- [LLM Providers](docs/LLM-PROVIDERS.md) — provider auth, env vars, model naming, troubleshooting
+Full documentation: **[cdot65.github.io/daystrom](https://cdot65.github.io/daystrom/)**
 
 ## Tech Stack
 

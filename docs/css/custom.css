@@ -1,0 +1,88 @@
+/* ── Deep Purple / Amber overrides ────────────────────────────────── */
+
+:root {
+  --md-admonition-icon--tip: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>');
+}
+
+/* Admonition accent colors */
+.md-typeset .admonition.tip,
+.md-typeset details.tip {
+  border-color: #ffb300;
+}
+
+.md-typeset .tip > .admonition-title,
+.md-typeset .tip > summary {
+  background-color: rgba(255, 179, 0, 0.1);
+}
+
+.md-typeset .admonition.info,
+.md-typeset details.info {
+  border-color: #7e57c2;
+}
+
+.md-typeset .info > .admonition-title,
+.md-typeset .info > summary {
+  background-color: rgba(126, 87, 194, 0.1);
+}
+
+/* Table header styling */
+.md-typeset table:not([class]) th {
+  background-color: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+  font-weight: 600;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+  background-color: rgba(126, 87, 194, 0.3);
+  color: var(--md-default-fg-color);
+}
+
+/* Table row hover */
+.md-typeset table:not([class]) tbody tr:hover {
+  background-color: rgba(126, 87, 194, 0.04);
+}
+
+/* Mermaid diagram margins */
+.md-typeset .mermaid {
+  margin: 1.5em 0;
+  text-align: center;
+}
+
+/* Code block styling */
+.md-typeset code {
+  border-radius: 4px;
+}
+
+/* Nav responsive tweaks */
+@media screen and (min-width: 76.25em) {
+  .md-nav--lifted > .md-nav__list > .md-nav__item--active > .md-nav__link {
+    font-weight: 600;
+  }
+}
+
+/* Footer link styling */
+.md-footer-meta__inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+/* Hero-style home page heading */
+.md-typeset h1 {
+  font-weight: 700;
+}
+
+/* Badge images on home page */
+.md-typeset img[alt="PyPI"],
+.md-typeset img[alt="License"],
+.md-typeset img[alt="Tests"],
+.md-typeset img[alt="Docs"] {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+/* Content tabs accent */
+.md-typeset .tabbed-labels > label:hover {
+  color: var(--md-accent-fg-color);
+}

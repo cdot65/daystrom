@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="brainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5E35B1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7E57C2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="neuralGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFB300;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFC107;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Computer frame -->
+  <rect x="16" y="20" width="96" height="72" rx="8" ry="8" fill="url(#brainGrad)" stroke="#4527A0" stroke-width="2"/>
+  <rect x="24" y="28" width="80" height="56" rx="4" ry="4" fill="#311B92" opacity="0.6"/>
+
+  <!-- Neural network paths (amber) -->
+  <!-- Layer 1 nodes -->
+  <circle cx="40" cy="42" r="4" fill="url(#neuralGrad)"/>
+  <circle cx="40" cy="56" r="4" fill="url(#neuralGrad)"/>
+  <circle cx="40" cy="70" r="4" fill="url(#neuralGrad)"/>
+
+  <!-- Layer 2 nodes -->
+  <circle cx="64" cy="46" r="5" fill="url(#neuralGrad)"/>
+  <circle cx="64" cy="66" r="5" fill="url(#neuralGrad)"/>
+
+  <!-- Layer 3 nodes -->
+  <circle cx="88" cy="56" r="5" fill="url(#neuralGrad)"/>
+
+  <!-- Connections L1→L2 -->
+  <line x1="44" y1="42" x2="59" y2="46" stroke="#FFB300" stroke-width="1.5" opacity="0.7"/>
+  <line x1="44" y1="42" x2="59" y2="66" stroke="#FFB300" stroke-width="1" opacity="0.4"/>
+  <line x1="44" y1="56" x2="59" y2="46" stroke="#FFB300" stroke-width="1.5" opacity="0.7"/>
+  <line x1="44" y1="56" x2="59" y2="66" stroke="#FFB300" stroke-width="1.5" opacity="0.7"/>
+  <line x1="44" y1="70" x2="59" y2="46" stroke="#FFB300" stroke-width="1" opacity="0.4"/>
+  <line x1="44" y1="70" x2="59" y2="66" stroke="#FFB300" stroke-width="1.5" opacity="0.7"/>
+
+  <!-- Connections L2→L3 -->
+  <line x1="69" y1="46" x2="83" y2="56" stroke="#FFB300" stroke-width="2" opacity="0.8"/>
+  <line x1="69" y1="66" x2="83" y2="56" stroke="#FFB300" stroke-width="2" opacity="0.8"/>
+
+  <!-- Monitor stand -->
+  <rect x="48" y="92" width="32" height="6" rx="2" ry="2" fill="url(#brainGrad)"/>
+  <rect x="40" y="98" width="48" height="4" rx="2" ry="2" fill="#4527A0"/>
+
+  <!-- Status dot (green) -->
+  <circle cx="100" cy="32" r="4" fill="#4CAF50"/>
+  <circle cx="100" cy="32" r="2.5" fill="#66BB6A"/>
+</svg>
