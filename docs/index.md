@@ -49,18 +49,8 @@ flowchart LR
 
 ## Quick Links
 
-<div class="grid cards" markdown>
-
--   :material-rocket-launch: **[Getting Started](getting-started/installation.md)**
-
-    Install prerequisites, configure credentials, and run your first guardrail generation.
-
--   :material-sitemap: **[Architecture](architecture/overview.md)**
-
-    Understand the core loop, AIRS integration, LLM service, and memory system.
-
--   :material-console: **[CLI Reference](reference/cli-commands.md)**
-
-    Full command reference for `generate`, `resume`, `report`, and `list`.
-
-</div>
+| | |
+|---|---|
+| **[Getting Started](getting-started/installation.md)** | Install prerequisites, configure credentials, and run your first guardrail generation. |
+| **[Architecture](architecture/overview.md)** | Understand the core loop, AIRS integration, LLM service, and memory system. |
+| **[CLI Reference](reference/cli-commands.md)** | Full command reference for `generate`, `resume`, `report`, and `list`. |
