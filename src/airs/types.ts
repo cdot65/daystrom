@@ -1,10 +1,21 @@
+/**
+ * AIRS integration types — scan results and service interfaces for the
+ * Prisma AIRS scanner and topic management APIs.
+ */
+
 import type {
   CreateCustomTopicRequest,
   CustomTopic as SdkCustomTopic,
 } from '@cdot65/prisma-airs-sdk';
 
+// ---------------------------------------------------------------------------
+// SDK re-exports — upstream types used across the AIRS layer
+// ---------------------------------------------------------------------------
 export type { CreateCustomTopicRequest, SdkCustomTopic };
 
+// ---------------------------------------------------------------------------
+// Scan result — normalized output from a single AIRS prompt scan
+// ---------------------------------------------------------------------------
 export interface ScanResult {
   scanId: string;
   reportId: string;
@@ -14,6 +25,9 @@ export interface ScanResult {
   raw?: unknown;
 }
 
+// ---------------------------------------------------------------------------
+// Service interfaces — contracts for scan and topic management adapters
+// ---------------------------------------------------------------------------
 export interface ScanService {
   scan(profileName: string, prompt: string, sessionId?: string): Promise<ScanResult>;
   scanBatch(
@@ -24,10 +38,6 @@ export interface ScanService {
   ): Promise<ScanResult[]>;
 }
 
-/**
- * Thin interface over the SDK ManagementClient for topic CRUD.
- * Aligns with SDK v2 TopicsClient method signatures.
- */
 export interface ManagementService {
   createTopic(request: CreateCustomTopicRequest): Promise<SdkCustomTopic>;
   updateTopic(topicId: string, request: CreateCustomTopicRequest): Promise<SdkCustomTopic>;
