@@ -57,9 +57,9 @@ Optional JSON file at `~/.daystrom/config.json`. Keys use camelCase matching the
 | `claude-api` | `claude-opus-4-6` |
 | `claude-vertex` | `claude-opus-4-6` |
 | `claude-bedrock` | `anthropic.claude-opus-4-6-v1` |
-| `gemini-api` | per-provider default |
-| `gemini-vertex` | per-provider default |
-| `gemini-bedrock` | per-provider default |
+| `gemini-api` | `gemini-2.0-flash` |
+| `gemini-vertex` | `gemini-2.0-flash` |
+| `gemini-bedrock` | `gemini-2.0-flash` |
 
 !!! warning "Concurrency tuning"
     Setting `scanConcurrency` above 5 risks rate limiting from the AIRS scan API. Increase cautiously.
