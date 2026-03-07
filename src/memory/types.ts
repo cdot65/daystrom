@@ -1,5 +1,13 @@
+/**
+ * Memory system types — cross-run learning persistence that lets
+ * future runs benefit from past refinement insights.
+ */
+
 import type { CustomTopic, EfficacyMetrics } from '../core/types.js';
 
+// ---------------------------------------------------------------------------
+// Iteration diff — what changed between two consecutive iterations
+// ---------------------------------------------------------------------------
 export interface IterationDiff {
   fromIteration: number;
   toIteration: number;
@@ -18,6 +26,9 @@ export interface IterationDiff {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Learning — a single extracted insight from a completed run
+// ---------------------------------------------------------------------------
 export interface Learning {
   id: string;
   runId: string;
@@ -39,6 +50,9 @@ export interface Learning {
   tags: string[];
 }
 
+// ---------------------------------------------------------------------------
+// Topic memory — aggregate learnings and best-known config for a category
+// ---------------------------------------------------------------------------
 export interface TopicMemory {
   category: string;
   updatedAt: string;

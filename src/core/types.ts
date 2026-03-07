@@ -1,9 +1,19 @@
+/**
+ * Core domain types — shared across all Daystrom modules.
+ */
+
+// ---------------------------------------------------------------------------
+// Topic definition — the guardrail artifact generated and refined by the loop
+// ---------------------------------------------------------------------------
 export interface CustomTopic {
   name: string;
   description: string;
   examples: string[];
 }
 
+// ---------------------------------------------------------------------------
+// User input — interactive prompt answers that seed a generation run
+// ---------------------------------------------------------------------------
 export interface UserInput {
   topicDescription: string;
   intent: 'allow' | 'block';
@@ -13,6 +23,9 @@ export interface UserInput {
   targetCoverage?: number;
 }
 
+// ---------------------------------------------------------------------------
+// Testing — prompt test cases and their scan results
+// ---------------------------------------------------------------------------
 export interface TestCase {
   prompt: string;
   expectedTriggered: boolean;
@@ -28,6 +41,9 @@ export interface TestResult {
   correct: boolean;
 }
 
+// ---------------------------------------------------------------------------
+// Evaluation — efficacy metrics and LLM analysis of scan results
+// ---------------------------------------------------------------------------
 export interface EfficacyMetrics {
   truePositives: number;
   trueNegatives: number;
@@ -47,6 +63,9 @@ export interface AnalysisReport {
   suggestions: string[];
 }
 
+// ---------------------------------------------------------------------------
+// Iteration & run state — tracks progress across the refinement loop
+// ---------------------------------------------------------------------------
 export interface IterationResult {
   iteration: number;
   timestamp: string;
@@ -70,6 +89,9 @@ export interface RunState {
   status: 'running' | 'paused' | 'completed' | 'failed';
 }
 
+// ---------------------------------------------------------------------------
+// Loop events — discriminated union yielded by the async generator loop
+// ---------------------------------------------------------------------------
 export type LoopEvent =
   | { type: 'iteration:start'; iteration: number }
   | { type: 'generate:complete'; topic: CustomTopic }
