@@ -15,12 +15,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Enable corepack
+        run: corepack enable && corepack prepare pnpm@10.6.5 --activate
 
       - run: pnpm install --frozen-lockfile
 
