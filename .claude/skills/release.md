@@ -74,7 +74,7 @@ Run these checks first. If ANY fail, abort with a clear message and do not proce
 ```
 Release v{version} complete!
 
-npm:    https://www.npmjs.com/package/daystrom
+npm:    https://www.npmjs.com/package/@cdot65/daystrom
 GitHub: <release URL from gh output>
 Docker: triggered by tag push — monitor with `gh run list -w docker-publish.yml`
 ```

@@ -8,7 +8,7 @@ Create a file named `0000-short-description.md`:
 
 ```md
 ---
-"daystrom": patch
+"@cdot65/daystrom": patch
 ---
 
 Description of the change (user-facing).

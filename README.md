@@ -11,7 +11,7 @@ Daystrom uses an LLM to produce topic definitions, deploys them to Prisma AIRS, 
 ## Install
 
 ```bash
-npm install -g daystrom
+npm install -g @cdot65/daystrom
 ```
 
 Requires **Node.js >= 20**.

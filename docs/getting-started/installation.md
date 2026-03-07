@@ -15,7 +15,7 @@ title: Installation
 ## Install from npm
 
 ```bash
-npm install -g daystrom
+npm install -g @cdot65/daystrom
 ```
 
 Verify:
@@ -28,7 +28,7 @@ daystrom --help
 !!! tip "npx"
     Run without installing globally:
     ```bash
-    npx daystrom generate
+    npx @cdot65/daystrom generate
     ```
 
 ## Platform Notes
