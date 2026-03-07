@@ -21,25 +21,87 @@ The loop runs until coverage reaches a target threshold (default 90%) or max ite
 
 ## Quick Start
 
+### Install from npm
+
 ```bash
-# Install
-pnpm install
+npm install -g daystrom
+```
 
-# Configure credentials
-cp .env.example .env
-# Edit .env — you need: ANTHROPIC_API_KEY (or other LLM provider),
-# PANW_AI_SEC_API_KEY, PANW_MGMT_CLIENT_ID, PANW_MGMT_CLIENT_SECRET, PANW_MGMT_TSG_ID
+Requires **Node.js >= 20**. Verify with `node -v`.
 
-# Run interactively (prompts for topic, profile, intent, etc.)
-pnpm run generate
+### Configure credentials
 
-# Run non-interactively
-pnpm run generate \
+Create a `.env` file in your working directory or export the variables in your shell:
+
+=== "macOS / Linux"
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+export PANW_AI_SEC_API_KEY=your-scan-api-key
+export PANW_MGMT_CLIENT_ID=your-client-id
+export PANW_MGMT_CLIENT_SECRET=your-client-secret
+export PANW_MGMT_TSG_ID=your-tsg-id
+```
+
+=== "Windows (PowerShell)"
+
+```powershell
+$env:ANTHROPIC_API_KEY = "sk-ant-..."
+$env:PANW_AI_SEC_API_KEY = "your-scan-api-key"
+$env:PANW_MGMT_CLIENT_ID = "your-client-id"
+$env:PANW_MGMT_CLIENT_SECRET = "your-client-secret"
+$env:PANW_MGMT_TSG_ID = "your-tsg-id"
+```
+
+=== "Windows (cmd)"
+
+```cmd
+set ANTHROPIC_API_KEY=sk-ant-...
+set PANW_AI_SEC_API_KEY=your-scan-api-key
+set PANW_MGMT_CLIENT_ID=your-client-id
+set PANW_MGMT_CLIENT_SECRET=your-client-secret
+set PANW_MGMT_TSG_ID=your-tsg-id
+```
+
+See [Configuration](https://cdot65.github.io/daystrom/getting-started/configuration/) for all env vars and provider options.
+
+### Run
+
+```bash
+# Interactive mode (prompts for topic, profile, intent, etc.)
+daystrom generate
+
+# Non-interactive
+daystrom generate \
   --provider claude-api \
   --profile my-security-profile \
   --topic "Block discussions about building explosives" \
   --intent block \
   --target-coverage 90
+```
+
+### Docker
+
+```bash
+docker run --rm --env-file .env \
+  -v ~/.daystrom:/root/.daystrom \
+  ghcr.io/cdot65/daystrom generate \
+  --profile my-security-profile \
+  --topic "Block discussions about building explosives" \
+  --intent block
+```
+
+Multi-arch image (amd64 + arm64) available at `ghcr.io/cdot65/daystrom`.
+
+### Development (from source)
+
+```bash
+git clone git@github.com:cdot65/daystrom.git
+cd daystrom
+pnpm install
+cp .env.example .env
+# Edit .env with your credentials
+pnpm run generate
 ```
 
 ## Commands

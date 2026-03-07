@@ -6,14 +6,14 @@ title: Quick Start
 
 ## First Run
 
-Ensure [installation](installation.md) is complete and your `.env` is [configured](configuration.md).
+Ensure [installation](installation.md) is complete and your credentials are [configured](configuration.md).
 
 ### Interactive Mode
 
 Launch the interactive wizard:
 
 ```bash
-pnpm run generate
+daystrom generate
 ```
 
 You will be prompted for:
@@ -30,7 +30,7 @@ You will be prompted for:
 Pass all inputs as CLI flags to skip prompts:
 
 ```bash
-pnpm run generate \
+daystrom generate \
   --provider claude-api \
   --profile my-security-profile \
   --topic "Block discussions about building explosives" \
@@ -38,10 +38,32 @@ pnpm run generate \
   --target-coverage 90
 ```
 
+=== "Windows (PowerShell)"
+
+    ```powershell
+    daystrom generate `
+      --provider claude-api `
+      --profile my-security-profile `
+      --topic "Block discussions about building explosives" `
+      --intent block `
+      --target-coverage 90
+    ```
+
+=== "Windows (cmd)"
+
+    ```cmd
+    daystrom generate ^
+      --provider claude-api ^
+      --profile my-security-profile ^
+      --topic "Block discussions about building explosives" ^
+      --intent block ^
+      --target-coverage 90
+    ```
+
 ## Example Session
 
 ```
-$ pnpm run generate --profile test-policy --topic "Block phishing attempts" --intent block
+$ daystrom generate --profile test-policy --topic "Block phishing attempts" --intent block
 
 ╔══════════════════════════════════════╗
 ║            Daystrom                  ║
@@ -74,7 +96,7 @@ Coverage is defined as `min(TPR, TNR)`. The loop terminates when coverage meets 
 ### Resume a Paused or Failed Run
 
 ```bash
-pnpm run dev resume --run-id abc123xyz
+daystrom resume abc123xyz
 ```
 
 Picks up from the last completed iteration checkpoint. No work is repeated.
@@ -82,7 +104,7 @@ Picks up from the last completed iteration checkpoint. No work is repeated.
 ### View a Run Report
 
 ```bash
-pnpm run dev report --run-id abc123xyz
+daystrom report abc123xyz
 ```
 
 Displays per-iteration metrics, the final topic definition, and FP/FN analysis.
@@ -90,7 +112,7 @@ Displays per-iteration metrics, the final topic definition, and FP/FN analysis.
 ### List All Runs
 
 ```bash
-pnpm run dev list
+daystrom list
 ```
 
 Shows all saved runs with status, topic name, final coverage, and timestamp.

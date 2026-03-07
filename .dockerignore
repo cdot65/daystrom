@@ -1,0 +1,16 @@
+node_modules
+dist
+.env
+.env.*
+.git
+.github
+.changeset
+docs
+tests
+coverage
+*.md
+!README.md
+biome.jsonc
+vitest.config.ts
+vitest.e2e.config.ts
+tsconfig.json.bak
