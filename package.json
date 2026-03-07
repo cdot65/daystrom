@@ -6,11 +6,15 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "bin": {
     "daystrom": "dist/cli/index.js"
   },
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "pnpm run build",
     "dev": "tsx src/cli/index.ts",
     "generate": "tsx src/cli/index.ts generate",
     "test": "vitest run",
@@ -19,7 +23,11 @@
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "format": "biome format --write ."
+    "format": "biome format --write .",
+    "docker:build": "docker build -t daystrom:local .",
+    "docker:build:amd64": "docker buildx build --platform linux/amd64 --load -t daystrom:local-amd64 .",
+    "docker:build:arm64": "docker buildx build --platform linux/arm64 --load -t daystrom:local-arm64 .",
+    "docker:run": "docker run --rm -v ~/.daystrom:/root/.daystrom daystrom:local"
   },
   "engines": {
     "node": ">=20.0.0"
