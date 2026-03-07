@@ -40,7 +40,7 @@ Create `~/.daystrom/config.json` for persistent defaults:
 | Gemini Bedrock | `gemini-bedrock` | `gemini-2.0-flash` | AWS creds |
 
 !!! note "Claude Vertex region"
-    The `claude-vertex` provider defaults to the `global` region, not `us-central1`. Override with the `VERTEX_REGION` env var if needed.
+    The `claude-vertex` provider defaults to the `global` region, not `us-central1`. Override with the `CLOUD_ML_REGION` env var if needed.
 
 ## Tuning Parameters
 

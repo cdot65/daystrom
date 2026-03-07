@@ -13,9 +13,7 @@ All environment variables used by Daystrom, grouped by category. See `.env.examp
 | `ANTHROPIC_API_KEY` | `claude-api` | Anthropic API key (`sk-ant-...`) |
 | `GOOGLE_API_KEY` | `gemini-api` | Google AI API key |
 | `GOOGLE_CLOUD_PROJECT` | `claude-vertex`, `gemini-vertex` | GCP project ID |
-| `GOOGLE_CLOUD_LOCATION` | `gemini-vertex` | GCP region (default: `us-central1`) |
-| `CLOUD_ML_REGION` | `claude-vertex` | GCP region for Claude (default: `global`) |
-| `ANTHROPIC_VERTEX_PROJECT_ID` | `claude-vertex` | GCP project for Anthropic Vertex |
+| `GOOGLE_CLOUD_LOCATION` | `claude-vertex`, `gemini-vertex` | GCP region (default: `us-central1`; claude-vertex uses `global`) |
 | `AWS_REGION` | `claude-bedrock`, `gemini-bedrock` | AWS region (default: `us-east-1`) |
 | `AWS_ACCESS_KEY_ID` | `claude-bedrock`*, `gemini-bedrock`* | IAM access key |
 | `AWS_SECRET_ACCESS_KEY` | `claude-bedrock`*, `gemini-bedrock`* | IAM secret key |
