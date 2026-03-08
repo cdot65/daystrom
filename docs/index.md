@@ -8,7 +8,7 @@ title: Home
 
 # Daystrom
 
-**Automated guardrail generation for Palo Alto Prisma AIRS**
+**CLI and library for Palo Alto Prisma AIRS AI security**
 
 [![CI](https://github.com/cdot65/daystrom/actions/workflows/ci.yml/badge.svg)](https://github.com/cdot65/daystrom/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
@@ -19,7 +19,7 @@ title: Home
 
 ---
 
-Daystrom is a CLI tool that takes a plain-English description of what you want to block or allow, then **automatically generates, tests, and refines** a custom topic guardrail until it meets your coverage target. Named after Star Trek's Dr. Richard Daystrom, it delegates the tedious cycle of write-deploy-test-improve to an LLM so you can focus on intent.
+Daystrom is a CLI tool that provides full operational coverage over **Palo Alto Prisma AIRS** AI security capabilities. Generate and iteratively refine custom topic guardrails with LLM-driven feedback loops, run adversarial red team scans against AI targets, manage ML model supply chain security, and audit entire security profiles for coverage gaps and cross-topic conflicts. Named after Star Trek's Dr. Richard Daystrom, it automates the tedious so you can focus on intent.
 
 <div class="grid cards" markdown>
 
@@ -118,7 +118,7 @@ flowchart LR
 
     ---
 
-    Run your first guardrail generation in minutes.
+    Run your first command in minutes.
 
     [:octicons-arrow-right-24: Quick Start](getting-started/quick-start.md)
 

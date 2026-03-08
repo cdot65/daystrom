@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Summary
 
-Daystrom is an automated CLI that generates, tests, and iteratively refines **Palo Alto Prisma AIRS custom topic guardrails**. Uses an LLM to produce topic definitions (name, description, examples), deploys to Prisma AIRS, scans test prompts, evaluates efficacy (TPR, TNR, coverage, F1), and improves in a loop until a coverage target is met. Cross-run memory persists learnings for future runs.
+Daystrom is a CLI and library providing full operational coverage over **Palo Alto Prisma AIRS** AI security capabilities: LLM-driven guardrail generation with iterative refinement, adversarial red team scanning, ML model supply chain security, and multi-topic profile audits with conflict detection. The guardrail loop uses an LLM to produce topic definitions, deploys to Prisma AIRS, scans test prompts, evaluates efficacy (TPR, TNR, coverage, F1), and improves until a coverage target is met. Cross-run memory persists learnings for future runs.
 
 ## Commands
 
