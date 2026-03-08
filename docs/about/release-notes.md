@@ -1,5 +1,18 @@
 # Release Notes
 
+## v1.7.2
+
+### Features
+
+- **`daystrom model-security` command group**: Full AI Model Security operations — security groups CRUD, rule browsing, rule instance configuration, scan operations (create/list/get), evaluations, violations, files, label management, and PyPI authentication.
+- **`SdkModelSecurityService`**: New service wrapping `ModelSecurityClient` with camelCase normalization for all 23 SDK methods.
+- **5 subcommand groups**: `groups` (list/get/create/update/delete), `rules` (list/get), `rule-instances` (list/get/update), `scans` (list/get/create/evaluations/violations/files), `labels` (add/set/delete/keys/values), plus `pypi-auth`.
+- **SDK upgrade**: `@cdot65/prisma-airs-sdk` v0.6.0 → v0.6.1 — fixed list filter options for groups, rules, and rule instances.
+
+### Tests
+
+- 390 tests across 25 spec files (up from 360)
+
 ## v1.7.0
 
 ### Features
