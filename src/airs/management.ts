@@ -78,16 +78,11 @@ export class SdkManagementService implements ManagementService {
     topicGuardrails.action = 'block';
 
     // Replace the entire topic-list with only the current topic under the given action.
-    // The opposite action gets an empty list to ensure no stale topics remain.
-    const oppositeAction = action === 'block' ? 'allow' : 'block';
+    // AIRS rejects empty topic-list entries, so only include the entry with the topic.
     topicGuardrails['topic-list'] = [
       {
         action,
-        topic: [{ topic_id: topicId, topic_name: topicName, revision: 1 }],
-      },
-      {
-        action: oppositeAction,
-        topic: [],
+        topic: [{ topic_id: topicId, topic_name: topicName }],
       },
     ];
 

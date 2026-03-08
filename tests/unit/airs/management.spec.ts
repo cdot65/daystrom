@@ -4,7 +4,6 @@ import { SdkManagementService } from '../../../src/airs/management.js';
 interface PolicyTopicEntry {
   topic_id: string;
   topic_name: string;
-  revision: number;
 }
 interface PolicyActionEntry {
   action: string;
@@ -175,13 +174,10 @@ describe('SdkManagementService', () => {
       );
 
       const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      // Only a single topic-list entry for the action (no empty opposite entry)
+      expect(tg['topic-list']).toHaveLength(1);
       const blockEntry = tg['topic-list'].find((tl) => tl.action === 'block');
-      expect(blockEntry?.topic).toEqual([
-        { topic_id: 'topic-1', topic_name: 'Weapons', revision: 1 },
-      ]);
-      // Opposite action should be empty
-      const allowEntry = tg['topic-list'].find((tl) => tl.action === 'allow');
-      expect(allowEntry?.topic).toEqual([]);
+      expect(blockEntry?.topic).toEqual([{ topic_id: 'topic-1', topic_name: 'Weapons' }]);
     });
 
     it('handles profile with no policy (undefined)', async () => {
@@ -240,9 +236,9 @@ describe('SdkManagementService', () => {
                           {
                             action: 'block',
                             topic: [
-                              { topic_id: 'stale-1', topic_name: 'Old Run 1', revision: 1 },
-                              { topic_id: 'stale-2', topic_name: 'Old Run 2', revision: 1 },
-                              { topic_id: 'stale-3', topic_name: 'Old Run 3', revision: 1 },
+                              { topic_id: 'stale-1', topic_name: 'Old Run 1' },
+                              { topic_id: 'stale-2', topic_name: 'Old Run 2' },
+                              { topic_id: 'stale-3', topic_name: 'Old Run 3' },
                             ],
                           },
                           { action: 'allow', topic: [] },
@@ -263,9 +259,7 @@ describe('SdkManagementService', () => {
       const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
       const blockEntry = tg['topic-list'].find((tl) => tl.action === 'block');
       // Only the current topic — stale ones removed
-      expect(blockEntry?.topic).toEqual([
-        { topic_id: 'topic-new', topic_name: 'Current Run', revision: 1 },
-      ]);
+      expect(blockEntry?.topic).toEqual([{ topic_id: 'topic-new', topic_name: 'Current Run' }]);
     });
 
     it('always updates even when same topic already linked', async () => {
@@ -289,8 +283,8 @@ describe('SdkManagementService', () => {
                           {
                             action: 'block',
                             topic: [
-                              { topic_id: 'topic-1', topic_name: 'Weapons', revision: 1 },
-                              { topic_id: 'stale', topic_name: 'Stale', revision: 1 },
+                              { topic_id: 'topic-1', topic_name: 'Weapons' },
+                              { topic_id: 'stale', topic_name: 'Stale' },
                             ],
                           },
                         ],
@@ -315,7 +309,7 @@ describe('SdkManagementService', () => {
       expect(blockEntry?.topic[0].topic_id).toBe('topic-1');
     });
 
-    it('clears opposite action list', async () => {
+    it('replaces all existing topic-list entries with single current action', async () => {
       mockProfileList.mockResolvedValue({
         ai_profiles: [
           {
@@ -335,11 +329,11 @@ describe('SdkManagementService', () => {
                         'topic-list': [
                           {
                             action: 'allow',
-                            topic: [{ topic_id: 'old-allow', topic_name: 'Old', revision: 1 }],
+                            topic: [{ topic_id: 'old-allow', topic_name: 'Old' }],
                           },
                           {
                             action: 'block',
-                            topic: [{ topic_id: 'old-block', topic_name: 'Old', revision: 1 }],
+                            topic: [{ topic_id: 'old-block', topic_name: 'Old' }],
                           },
                         ],
                       },
@@ -356,10 +350,10 @@ describe('SdkManagementService', () => {
       await service.assignTopicToProfile('test-profile', 'topic-1', 'Weapons', 'block');
 
       const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
-      const allowEntry = tg['topic-list'].find((tl) => tl.action === 'allow');
-      expect(allowEntry?.topic).toEqual([]);
-      const blockEntry = tg['topic-list'].find((tl) => tl.action === 'block');
-      expect(blockEntry?.topic).toHaveLength(1);
+      // Only one entry — the current action
+      expect(tg['topic-list']).toHaveLength(1);
+      expect(tg['topic-list'][0].action).toBe('block');
+      expect(tg['topic-list'][0].topic).toHaveLength(1);
     });
 
     it('works with action=allow', async () => {
@@ -373,13 +367,12 @@ describe('SdkManagementService', () => {
       await service.assignTopicToProfile('test-profile', 'topic-1', 'Safe Topic', 'allow');
 
       const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
-      const allowEntry = tg['topic-list'].find((tl) => tl.action === 'allow');
-      expect(allowEntry?.topic).toEqual([
-        { topic_id: 'topic-1', topic_name: 'Safe Topic', revision: 1 },
+      // Only one entry for the allow action
+      expect(tg['topic-list']).toHaveLength(1);
+      expect(tg['topic-list'][0].action).toBe('allow');
+      expect(tg['topic-list'][0].topic).toEqual([
+        { topic_id: 'topic-1', topic_name: 'Safe Topic' },
       ]);
-      // Block list should be empty
-      const blockEntry = tg['topic-list'].find((tl) => tl.action === 'block');
-      expect(blockEntry?.topic).toEqual([]);
     });
 
     it('always sets guardrail-level action to block', async () => {

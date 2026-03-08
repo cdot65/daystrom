@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.1.2
+
+### Bug Fixes
+
+- **Fix profile topic-list payload**: AIRS rejects empty `topic-list` entries. The `assignTopicToProfile` method was sending two entries (one for the action, one empty for the opposite), causing a 400 error on profile update. Now sends a single entry containing only the active topic. Also removed unnecessary `revision` field from topic entries.
+
 ## v1.1.1
 
 ### Bug Fixes
