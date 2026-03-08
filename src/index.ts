@@ -77,3 +77,17 @@ export type {
 // Persistence — save/load/list run state as JSON for resume & reporting
 // ---------------------------------------------------------------------------
 export { JsonFileStore } from './persistence/store.js';
+
+// ---------------------------------------------------------------------------
+// Reports — structured evaluation report generation (JSON/HTML)
+// ---------------------------------------------------------------------------
+export { buildReportHtml } from './report/html.js';
+export { buildReportJson } from './report/json.js';
+export type {
+  IterationSummary,
+  MetricsDelta,
+  ReportOutput,
+  RunDiff,
+  RunSummary,
+  TestDetail,
+} from './report/types.js';

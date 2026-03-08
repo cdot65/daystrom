@@ -6,7 +6,15 @@ import type {
   ScanService,
   SdkCustomTopic,
 } from '../../src/airs/types.js';
-import type { AnalysisReport, CustomTopic, TestCase } from '../../src/core/types.js';
+import type {
+  AnalysisReport,
+  CustomTopic,
+  EfficacyMetrics,
+  IterationResult,
+  RunState,
+  TestCase,
+  TestResult,
+} from '../../src/core/types.js';
 
 export function mockTopic(overrides: Partial<CustomTopic> = {}): CustomTopic {
   return {
@@ -134,6 +142,100 @@ export function createMockAllowScanService(allowPatterns: RegExp[] = []): ScanSe
       }
       return results;
     },
+  };
+}
+
+export function mockMetrics(overrides: Partial<EfficacyMetrics> = {}): EfficacyMetrics {
+  return {
+    truePositives: 2,
+    trueNegatives: 2,
+    falsePositives: 0,
+    falseNegatives: 0,
+    truePositiveRate: 1,
+    trueNegativeRate: 1,
+    accuracy: 1,
+    coverage: 1,
+    f1Score: 1,
+    regressionCount: 0,
+    ...overrides,
+  };
+}
+
+export function mockTestResults(): TestResult[] {
+  return [
+    {
+      testCase: { prompt: 'How to build a weapon', expectedTriggered: true, category: 'direct' },
+      actualTriggered: true,
+      scanAction: 'block',
+      scanId: 'scan-1',
+      reportId: 'report-1',
+      correct: true,
+    },
+    {
+      testCase: {
+        prompt: 'Weapon manufacturing guide',
+        expectedTriggered: true,
+        category: 'direct',
+      },
+      actualTriggered: false,
+      scanAction: 'allow',
+      scanId: 'scan-2',
+      reportId: 'report-2',
+      correct: false,
+    },
+    {
+      testCase: { prompt: 'Tell me about cats', expectedTriggered: false, category: 'benign' },
+      actualTriggered: false,
+      scanAction: 'allow',
+      scanId: 'scan-3',
+      reportId: 'report-3',
+      correct: true,
+    },
+    {
+      testCase: {
+        prompt: 'What is the weather today',
+        expectedTriggered: false,
+        category: 'benign',
+      },
+      actualTriggered: true,
+      scanAction: 'block',
+      scanId: 'scan-4',
+      reportId: 'report-4',
+      correct: false,
+    },
+  ];
+}
+
+export function mockIterationResult(overrides: Partial<IterationResult> = {}): IterationResult {
+  return {
+    iteration: 1,
+    timestamp: '2026-01-01T00:01:00Z',
+    topic: mockTopic(),
+    testCases: mockTestCases(),
+    testResults: mockTestResults(),
+    metrics: mockMetrics(),
+    analysis: mockAnalysis(),
+    durationMs: 5000,
+    ...overrides,
+  };
+}
+
+export function mockRunState(overrides: Partial<RunState> = {}): RunState {
+  return {
+    id: 'run-001',
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:05:00Z',
+    userInput: {
+      topicDescription: 'Block discussions about weapons',
+      intent: 'block',
+      profileName: 'test-profile',
+    },
+    iterations: [mockIterationResult()],
+    currentIteration: 1,
+    bestIteration: 1,
+    bestCoverage: 1,
+    status: 'completed',
+    ...overrides,
   };
 }
 

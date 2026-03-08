@@ -5,6 +5,7 @@ import type {
   EfficacyMetrics,
   IterationResult,
   RunState,
+  TestResult,
 } from '../core/types.js';
 import type { RunStateSummary } from '../persistence/types.js';
 
@@ -71,6 +72,18 @@ export function renderAnalysis(analysis: AnalysisReport): void {
     for (const p of analysis.falseNegativePatterns) {
       console.log(`      ${chalk.dim('•')} ${p}`);
     }
+  }
+}
+
+/** Render per-test-case results table. */
+export function renderTestResults(results: TestResult[]): void {
+  console.log(chalk.bold('\n  Test Results:'));
+  for (const r of results) {
+    const icon = r.correct ? chalk.green('✓') : chalk.red('✗');
+    const expected = r.testCase.expectedTriggered ? 'triggered' : 'safe';
+    const actual = r.actualTriggered ? 'triggered' : 'safe';
+    const status = r.correct ? '' : chalk.red(` (expected ${expected}, got ${actual})`);
+    console.log(`    ${icon} ${r.testCase.prompt}${status}`);
   }
 }
 

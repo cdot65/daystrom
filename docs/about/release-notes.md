@@ -1,5 +1,20 @@
 # Release Notes
 
+## v1.5.0
+
+### Features
+
+- **Structured evaluation reports**: `daystrom report` now supports `--format json` and `--format html` for machine-readable and shareable report export.
+- **Per-test-case details**: `--tests` flag includes individual test results (prompt, expected/actual outcome, pass/fail, category, source) in all output formats.
+- **Run comparison**: `--diff <runId>` compares two runs side-by-side with metric deltas (coverage, TPR, TNR, accuracy, F1).
+- **Self-contained HTML reports**: HTML output includes embedded CSS with run summary, iteration trends, metrics tables, test result tables, and diff sections. No external dependencies.
+- **JSON export**: Clean structured JSON to stdout for CI/CD pipelines and programmatic consumption.
+- **New report module**: `buildReportJson()` and `buildReportHtml()` exported as library functions for custom integrations.
+
+### Tests
+
+- 298 tests across 21 spec files (up from 272)
+
 ## v1.4.0
 
 ### Features
