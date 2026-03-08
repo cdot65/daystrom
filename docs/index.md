@@ -73,6 +73,14 @@ Daystrom is a CLI tool that takes a plain-English description of what you want t
 
     Evaluate all topics in a security profile at once. Per-topic metrics, composite scores, and cross-topic conflict detection via `daystrom audit`.
 
+-   :material-shield-lock:{ .lg .middle } **Model Security**
+
+    ---
+
+    Manage ML model supply chain security — security groups, rules, scans, evaluations, violations, and labels via `daystrom model-security`.
+
+    [:octicons-arrow-right-24: Model Security](features/model-security.md)
+
 </div>
 
 ---

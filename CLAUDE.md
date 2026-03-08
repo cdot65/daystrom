@@ -41,15 +41,16 @@ TypeScript ESM, Node 20+, pnpm. LangChain.js w/ structured output (Zod). `@cdot6
 
 ```
 src/
-├── cli/                   # CLI entry, 6 command groups, interactive prompts, renderer
-│   ├── index.ts           # Commander program — registers generate/resume/report/list/audit/redteam
+├── cli/                   # CLI entry, 7 command groups, interactive prompts, renderer
+│   ├── index.ts           # Commander program — registers generate/resume/report/list/audit/redteam/model-security
 │   ├── commands/
 │   │   ├── generate.ts    # Main loop orchestration, wires all services
 │   │   ├── resume.ts      # Resume paused/failed run from disk
 │   │   ├── report.ts      # View run results by ID
 │   │   ├── list.ts        # List all saved runs
 │   │   ├── audit.ts       # Profile-level multi-topic evaluation
-│   │   └── redteam.ts     # Red team operations (scan, targets CRUD, prompt-sets CRUD, prompts CRUD, properties)
+│   │   ├── redteam.ts     # Red team operations (scan, targets CRUD, prompt-sets CRUD, prompts CRUD, properties)
+│   │   └── modelsecurity.ts # Model security operations (groups, rules, rule-instances, scans, labels, pypi-auth)
 │   ├── prompts.ts         # Inquirer interactive input collection
 │   └── renderer.ts        # Terminal output (chalk)
 ├── config/
@@ -70,7 +71,8 @@ src/
 │   ├── management.ts      # SdkManagementService — topic CRUD + profile linking
 │   ├── promptsets.ts      # SdkPromptSetService — custom prompt set CRUD via RedTeamClient
 │   ├── redteam.ts         # SdkRedTeamService — red team scan CRUD, polling, reports
-│   └── types.ts           # ScanResult, ScanService, ManagementService, PromptSetService, RedTeamService
+│   ├── modelsecurity.ts   # SdkModelSecurityService — security groups, rules, scans, labels
+│   └── types.ts           # ScanResult, ScanService, ManagementService, PromptSetService, RedTeamService, ModelSecurityService
 ├── memory/
 │   ├── store.ts           # MemoryStore — file-based persistence, keyword category matching (≥50% overlap)
 │   ├── extractor.ts       # LearningExtractor — post-loop LLM extraction, merge/corroboration
@@ -95,8 +97,8 @@ src/
 └── index.ts               # Library exports
 
 tests/
-├── unit/                  # 22 spec files
-│   ├── airs/              # scanner.spec.ts, management.spec.ts
+├── unit/                  # 23 spec files
+│   ├── airs/              # scanner.spec.ts, management.spec.ts, modelsecurity.spec.ts
 │   ├── audit/             # evaluator.spec.ts, runner.spec.ts, report.spec.ts
 │   ├── config/            # schema.spec.ts, loader.spec.ts
 │   ├── core/              # loop.spec.ts, metrics.spec.ts, constraints.spec.ts
@@ -145,6 +147,14 @@ tests/
 - `waitForCompletion()` polls with configurable interval, throws on FAILED
 - Target create/update accept `{ validate: true }` to validate connection before saving (SDK v0.6.0)
 - CLI subcommand groups: `targets {list,get,create,update,delete,probe,profile,update-profile}`, `prompt-sets {list,get,create,update,archive,download,upload}`, `prompts {list,get,add,update,delete}`, `properties {list,create,values,add-value}`
+
+### Model Security (`src/airs/modelsecurity.ts`)
+- `SdkModelSecurityService` wraps `ModelSecurityClient` for security groups, rules, scans, labels, PyPI auth
+- snake_case (SDK) → camelCase (daystrom) normalization via `normalizeGroup()`, `normalizeRule()`, etc.
+- CLI: `daystrom model-security {groups,rules,rule-instances,scans,labels,pypi-auth}`
+- Groups: CRUD per source type (LOCAL, S3, GCS, AZURE, HUGGING_FACE)
+- Rule instances: state = BLOCKING | ALLOWING | DISABLED
+- Scans: create/list/get with evaluations, violations, files sub-queries
 
 ### LLM Service (`src/llm/`)
 - 6 providers: `claude-api` (default), `claude-vertex`, `claude-bedrock`, `gemini-api`, `gemini-vertex`, `gemini-bedrock`
