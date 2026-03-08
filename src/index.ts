@@ -18,6 +18,7 @@ export { AirsScanService } from './airs/scanner.js';
 export type {
   RedTeamAttack,
   RedTeamCategory,
+  RedTeamCustomAttack,
   RedTeamCustomReport,
   RedTeamJob,
   RedTeamService,

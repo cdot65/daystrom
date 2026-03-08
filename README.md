@@ -69,6 +69,30 @@ daystrom generate \
 | `daystrom resume <runId>` | Resume a paused or failed run |
 | `daystrom report <runId>` | View results for a saved run |
 | `daystrom list` | List all saved runs |
+| `daystrom redteam scan` | Launch a red team scan against a target |
+| `daystrom redteam status <jobId>` | Check scan progress |
+| `daystrom redteam report <jobId>` | View scan results |
+| `daystrom redteam list` | List recent scans |
+
+### Red Team Scanning
+
+```bash
+# List available targets
+daystrom redteam targets
+
+# Launch a custom scan with a daystrom-generated prompt set
+daystrom redteam scan \
+  --target <uuid> \
+  --name "Topic Validation" \
+  --type CUSTOM \
+  --prompt-sets <prompt-set-uuid>
+
+# Check scan progress
+daystrom redteam status <jobId>
+
+# View report with attack details
+daystrom redteam report <jobId> --attacks
+```
 
 ## Development
 
@@ -78,7 +102,7 @@ cd daystrom
 pnpm install
 cp .env.example .env   # edit with your credentials
 pnpm run generate      # run via tsx
-pnpm test              # 255 tests
+pnpm test              # 258 tests
 pnpm run lint          # biome check
 ```
 
