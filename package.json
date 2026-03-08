@@ -24,6 +24,7 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
+    "format:check": "biome format .",
     "docker:build": "docker build -t daystrom:local .",
     "docker:build:amd64": "docker buildx build --platform linux/amd64 --load -t daystrom:local-amd64 .",
     "docker:build:arm64": "docker buildx build --platform linux/arm64 --load -t daystrom:local-arm64 .",
