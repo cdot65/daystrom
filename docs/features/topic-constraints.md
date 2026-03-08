@@ -9,7 +9,7 @@ Palo Alto Prisma AIRS enforces hard limits on custom topic definitions. Daystrom
 | **Name** | 100 characters |
 | **Description** | 250 characters |
 | **Each example** | 250 characters |
-| **Max examples** | 5 |
+| **Examples** | 2--5 |
 | **Combined** (description + all examples) | 1000 characters |
 
 !!! warning "UTF-8 Byte Length"

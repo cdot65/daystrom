@@ -117,5 +117,44 @@ Two events are defined in the type union but not yielded by the loop:
 
 **Rationale:** Fine-grained events enable rich progress reporting (the CLI shows per-test scan progress), clean separation of concerns (renderer knows nothing about LLM calls), and future extensibility (logging, metrics dashboards, web UIs) without modifying the core loop.
 
+## 9. Intent-Aware Refinement
+
+The `analyzeResults()` and `improveTopic()` LLM calls receive the guardrail intent (`"block"` or `"allow"`) as a prompt variable.
+
+**Rationale:** Block and allow guardrails have opposite error priorities:
+
+| Intent | High Severity Error | Strategy |
+|--------|-------------------|----------|
+| `block` (blacklist) | False Negatives — dangerous content slipping through | Widen coverage, broaden examples |
+| `allow` (whitelist) | False Positives — blocking legitimate conversations | Tighten precision, sharpen description |
+
+Without intent context, the LLM defaults to block-style refinement (catch more), which actively harms allow guardrails by making them over-trigger.
+
+### Allow-Intent Signal Inversion
+
+AIRS reports topic detection differently for allow vs block intent:
+
+| Intent | Prompt matches topic | `triggered` | `action` |
+|--------|---------------------|-------------|----------|
+| Block | Yes (violating content) | `true` | `block` |
+| Block | No (benign content) | `false` | `allow` |
+| Allow | Yes (permitted content) | `false` | `allow` |
+| Allow | No (non-permitted content) | `false` | `block` |
+
+For allow intent, `triggered` is never `true` — AIRS uses the `action` field to signal whether content matched. The loop derives `actualTriggered` from `action === 'allow'` for allow intent, and from `triggered` for block intent.
+
+### Variable Example Count (2-5)
+
+The LLM is instructed to vary example count between 2-5 across iterations. The AIRS API requires a minimum of 2 examples. The description field carries the most weight in AIRS topic matching, so fewer, sharper examples often outperform many broad ones. The memory system tracks example count per iteration and extracts learnings about which counts correlate with better efficacy.
+
+## 10. Optional Test Accumulation
+
+When `accumulateTests` is enabled, test prompts carry forward across iterations instead of being regenerated fresh each time. New tests take priority during deduplication (case-insensitive, by prompt text). An optional `maxAccumulatedTests` cap limits growth.
+
+**Rationale:** Fresh test generation each iteration can miss regression detection — a fix for false negatives might introduce new false positives that go undetected because the triggering prompts were only present in the previous iteration's test set. Accumulation ensures previously-failing prompts remain in the test pool.
+
+!!! tip "Cap Behavior"
+    When `maxAccumulatedTests` is set, the newest tests are kept and oldest are dropped. This prevents unbounded growth while preserving the most relevant test cases.
+
 !!! abstract "Summary"
     The common thread across these decisions is **separation of concerns**: the loop generates events, the renderer displays them, the memory system persists learnings, and the config system resolves settings. Each subsystem is independently testable and replaceable.

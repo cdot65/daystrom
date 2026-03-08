@@ -51,6 +51,8 @@ All environment variables used by Daystrom, grouped by category. See `.env.examp
 | `PROPAGATION_DELAY_MS` | `10000` | >=0 | Wait after topic deploy (ms) |
 | `MAX_MEMORY_CHARS` | `3000` | 500--10000 | Memory injection character budget |
 | `MEMORY_ENABLED` | `true` | -- | Enable/disable memory system |
+| `ACCUMULATE_TESTS` | `false` | -- | Carry forward test prompts across iterations |
+| `MAX_ACCUMULATED_TESTS` | unlimited | >=1 | Cap on accumulated test count |
 
 !!! warning
     `SCAN_CONCURRENCY` above 5 may trigger AIRS rate limits. Increase with caution.

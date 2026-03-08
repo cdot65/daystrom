@@ -144,3 +144,16 @@ export function renderMemoryLoaded(learningCount: number): void {
 export function renderMemoryExtracted(learningCount: number): void {
   console.log(chalk.cyan(`  Memory: extracted ${learningCount} learnings from this run`));
 }
+
+/** Render accumulated test count with optional dropped info. */
+export function renderTestsAccumulated(
+  newCount: number,
+  totalCount: number,
+  droppedCount: number,
+): void {
+  let msg = `  Tests: ${newCount} new, ${totalCount} total (accumulated)`;
+  if (droppedCount > 0) {
+    msg += chalk.yellow(` (${droppedCount} dropped by cap)`);
+  }
+  console.log(chalk.dim(msg));
+}

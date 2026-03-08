@@ -1,5 +1,24 @@
 # Release Notes
 
+## v1.1.0
+
+### Bug Fixes
+
+- **Fix allow-intent detection (P0)**: AIRS never sets `triggered: true` for allow-intent topics — the loop now derives detection from the `action` field (`action === 'allow'` = topic matched). This fixes 0% TPR on all allow guardrails.
+
+### Features
+
+- **Intent-aware refinement**: `analyzeResults()` and `improveTopic()` now receive the guardrail intent (`block`/`allow`), enabling the LLM to prioritize the correct error type during refinement — FN reduction for block guardrails, FP reduction for allow guardrails
+- **Intent-specific test generation**: test prompts now use different strategies and category taxonomies for block vs allow guardrails, with asymmetric ratios (~15 positive / ~25 negative for allow)
+- **Variable example count (2-5)**: LLM now varies example count between iterations to find optimal configuration. Memory system tracks example count correlation with efficacy.
+- **Test accumulation**: new `--accumulate-tests` flag carries test prompts forward across iterations with case-insensitive deduplication for regression detection
+- **Max accumulated tests cap**: `--max-accumulated-tests <n>` limits growth of accumulated test pool
+- **`tests:accumulated` event**: new loop event reports new/total/dropped test counts when accumulation is active
+
+### Tests
+
+- 209 tests across 17 spec files (up from 192)
+
 ## v1.0.8
 
 ### Documentation

@@ -55,6 +55,21 @@ export async function collectUserInput(): Promise<UserInput> {
       max: 100,
     })) ?? 90;
 
+  const accumulateTests = await confirm({
+    message: 'Accumulate test prompts across iterations?',
+    default: false,
+  });
+
+  let maxAccumulatedTests: number | undefined;
+  if (accumulateTests) {
+    const cap = await number({
+      message: 'Max accumulated tests (0 = no limit):',
+      default: 0,
+      min: 0,
+    });
+    maxAccumulatedTests = cap && cap > 0 ? cap : undefined;
+  }
+
   return {
     topicDescription,
     intent,
@@ -62,6 +77,8 @@ export async function collectUserInput(): Promise<UserInput> {
     seedExamples,
     maxIterations,
     targetCoverage: targetCoverageRaw / 100,
+    accumulateTests,
+    maxAccumulatedTests,
   };
 }
 

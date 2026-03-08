@@ -23,6 +23,8 @@ daystrom generate [options]
 | `--intent <block\|allow>` | `block` | Whether matching prompts are blocked or allowed |
 | `--max-iterations <n>` | `20` | Maximum refinement iterations |
 | `--target-coverage <n>` | `90` | Coverage percentage to stop at |
+| `--accumulate-tests` | off | Carry forward test prompts across iterations |
+| `--max-accumulated-tests <n>` | unlimited | Cap on accumulated test count |
 | `--no-memory` | memory on | Disable cross-run learning |
 
 !!! tip "Non-interactive mode"
@@ -38,6 +40,8 @@ When flags are omitted, Inquirer prompts collect:
 - Seed examples (optional)
 - Max iterations
 - Target coverage %
+- Accumulate tests across iterations (yes/no)
+- Max accumulated tests (if accumulation enabled)
 
 ### Examples
 

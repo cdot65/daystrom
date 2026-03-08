@@ -38,6 +38,7 @@ describe('prompt templates', () => {
     expect(vars).toContain('topicName');
     expect(vars).toContain('topicDescription');
     expect(vars).toContain('topicExamples');
+    expect(vars).toContain('exampleCount');
     expect(vars).toContain('intent');
     expect(vars).toContain('memorySection');
   });
@@ -46,8 +47,10 @@ describe('prompt templates', () => {
     const vars = analyzeResultsPrompt.inputVariables;
     expect(vars).toContain('topicName');
     expect(vars).toContain('topicDescription');
+    expect(vars).toContain('exampleCount');
     expect(vars).toContain('falsePositives');
     expect(vars).toContain('falseNegatives');
+    expect(vars).toContain('intent');
     expect(vars).toContain('memorySection');
   });
 
@@ -56,7 +59,9 @@ describe('prompt templates', () => {
     expect(vars).toContain('currentName');
     expect(vars).toContain('currentDescription');
     expect(vars).toContain('currentExamples');
+    expect(vars).toContain('exampleCount');
     expect(vars).toContain('iteration');
+    expect(vars).toContain('intent');
     expect(vars).toContain('memorySection');
   });
 });

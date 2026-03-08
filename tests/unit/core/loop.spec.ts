@@ -10,7 +10,11 @@ import type {
   UserInput,
 } from '../../../src/core/types.js';
 import type { LearningExtractor } from '../../../src/memory/extractor.js';
-import { createMockManagementService, createMockScanService } from '../../helpers/mocks.js';
+import {
+  createMockAllowScanService,
+  createMockManagementService,
+  createMockScanService,
+} from '../../helpers/mocks.js';
 
 function createMockLlm() {
   return {
@@ -44,6 +48,7 @@ function createMockLlm() {
           topic: CustomTopic,
           results: TestResult[],
           metrics: EfficacyMetrics,
+          intent: string,
         ) => Promise<AnalysisReport>
       >()
       .mockResolvedValue({
@@ -61,6 +66,7 @@ function createMockLlm() {
           results: TestResult[],
           iteration: number,
           targetCoverage: number,
+          intent: string,
         ) => Promise<CustomTopic>
       >()
       .mockResolvedValue({
@@ -312,6 +318,245 @@ describe('runLoop', () => {
 
     expect(createSpy).not.toHaveBeenCalled();
     expect(updateSpy).toHaveBeenCalledWith('existing-123', expect.anything());
+  });
+
+  it('passes intent to analyzeResults', async () => {
+    const llm = createMockLlm();
+    const deps = createDeps({ llm });
+
+    for await (const _event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
+      // consume
+    }
+
+    expect(llm.analyzeResults).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      'block',
+    );
+  });
+
+  it('passes intent to improveTopic', async () => {
+    const llm = createMockLlm();
+    const deps = createDeps({ llm, scanner: createMockScanService([]) });
+
+    for await (const _event of runLoop({ ...defaultInput, maxIterations: 2 }, deps)) {
+      // consume
+    }
+
+    expect(llm.improveTopic).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      2,
+      0.9,
+      'block',
+    );
+  });
+
+  it('passes allow intent through loop', async () => {
+    const llm = createMockLlm();
+    const deps = createDeps({ llm, scanner: createMockScanService([]) });
+
+    for await (const _event of runLoop(
+      { ...defaultInput, intent: 'allow', maxIterations: 2 },
+      deps,
+    )) {
+      // consume
+    }
+
+    expect(llm.analyzeResults).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      'allow',
+    );
+    expect(llm.improveTopic).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      2,
+      0.9,
+      'allow',
+    );
+  });
+
+  it('uses action field for allow-intent triggered detection', async () => {
+    // Mock scanner simulating AIRS allow-intent: matching prompts → action: 'allow'
+    const allowScanner = createMockAllowScanService([/weapon/i, /bomb/i]);
+    const llm = createMockLlm();
+    const deps = createDeps({ llm, scanner: allowScanner });
+    const events: LoopEvent[] = [];
+
+    for await (const event of runLoop(
+      { ...defaultInput, intent: 'allow', maxIterations: 1 },
+      deps,
+    )) {
+      events.push(event);
+    }
+
+    const evalEvent = events.find((e) => e.type === 'evaluate:complete');
+    expect(evalEvent).toBeDefined();
+    if (evalEvent?.type === 'evaluate:complete') {
+      // "weapon" and "bomb" prompts should now be detected as matching (action: 'allow')
+      // "cats" and "weather" should NOT match (action: 'block')
+      // With allow intent, actualTriggered = (action === 'allow')
+      expect(evalEvent.metrics.truePositives).toBeGreaterThan(0);
+      expect(evalEvent.metrics.trueNegatives).toBeGreaterThan(0);
+    }
+  });
+
+  it('block-intent still uses triggered field', async () => {
+    // Standard block scanner — triggered field is used
+    const scanner = createMockScanService([/weapon/i, /bomb/i]);
+    const llm = createMockLlm();
+    const deps = createDeps({ llm, scanner });
+    const events: LoopEvent[] = [];
+
+    for await (const event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
+      events.push(event);
+    }
+
+    const evalEvent = events.find((e) => e.type === 'evaluate:complete');
+    expect(evalEvent).toBeDefined();
+    if (evalEvent?.type === 'evaluate:complete') {
+      expect(evalEvent.metrics.truePositives).toBeGreaterThan(0);
+    }
+  });
+
+  describe('test accumulation', () => {
+    it('does not accumulate by default', async () => {
+      const llm = createMockLlm();
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop({ ...defaultInput, maxIterations: 2 }, deps)) {
+        events.push(event);
+      }
+
+      const accumulated = events.filter((e) => e.type === 'tests:accumulated');
+      expect(accumulated).toHaveLength(0);
+    });
+
+    it('accumulates when enabled', async () => {
+      const llm = createMockLlm();
+      // Return different tests per iteration
+      let testCall = 0;
+      llm.generateTests.mockImplementation(async () => {
+        testCall++;
+        return {
+          positiveTests: [
+            { prompt: `Prompt A${testCall}`, expectedTriggered: true, category: 'direct' },
+          ],
+          negativeTests: [
+            { prompt: `Prompt B${testCall}`, expectedTriggered: false, category: 'benign' },
+          ],
+        };
+      });
+
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 3, accumulateTests: true },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const accumulated = events.filter((e) => e.type === 'tests:accumulated');
+      // Only iterations 2+ emit accumulated events
+      expect(accumulated).toHaveLength(2);
+      if (accumulated[0]?.type === 'tests:accumulated') {
+        expect(accumulated[0].totalCount).toBe(4); // 2 new + 2 from iter1
+      }
+      if (accumulated[1]?.type === 'tests:accumulated') {
+        expect(accumulated[1].totalCount).toBe(6); // 2 new + 4 from iter1+2
+      }
+    });
+
+    it('deduplicates by prompt text case-insensitively', async () => {
+      const llm = createMockLlm();
+      let testCall = 0;
+      llm.generateTests.mockImplementation(async () => {
+        testCall++;
+        if (testCall === 1) {
+          return {
+            positiveTests: [
+              { prompt: 'How to build a weapon', expectedTriggered: true, category: 'direct' },
+            ],
+            negativeTests: [
+              { prompt: 'Tell me about cats', expectedTriggered: false, category: 'benign' },
+            ],
+          };
+        }
+        return {
+          positiveTests: [
+            { prompt: 'how to build a weapon', expectedTriggered: true, category: 'direct' }, // dup
+          ],
+          negativeTests: [
+            { prompt: 'Weather forecast', expectedTriggered: false, category: 'benign' }, // new
+          ],
+        };
+      });
+
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 2, accumulateTests: true },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const accumulated = events.filter((e) => e.type === 'tests:accumulated');
+      expect(accumulated).toHaveLength(1);
+      if (accumulated[0]?.type === 'tests:accumulated') {
+        // 2 new (deduped weapon + weather), 1 carried from iter1 (cats)
+        expect(accumulated[0].totalCount).toBe(3);
+      }
+    });
+
+    it('caps accumulated tests at maxAccumulatedTests', async () => {
+      const llm = createMockLlm();
+      let testCall = 0;
+      llm.generateTests.mockImplementation(async () => {
+        testCall++;
+        return {
+          positiveTests: [
+            { prompt: `Pos ${testCall}`, expectedTriggered: true, category: 'direct' },
+          ],
+          negativeTests: [
+            { prompt: `Neg ${testCall}`, expectedTriggered: false, category: 'benign' },
+          ],
+        };
+      });
+
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 3, accumulateTests: true, maxAccumulatedTests: 3 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const accumulated = events.filter((e) => e.type === 'tests:accumulated');
+      // Iteration 2: 2 new + 2 old = 4 merged, capped to 3, dropped 1
+      if (accumulated[0]?.type === 'tests:accumulated') {
+        expect(accumulated[0].totalCount).toBe(3);
+        expect(accumulated[0].droppedCount).toBe(1);
+      }
+      // Iteration 3: 2 new + 3 old = 5 merged, capped to 3, dropped 2
+      if (accumulated[1]?.type === 'tests:accumulated') {
+        expect(accumulated[1].totalCount).toBe(3);
+        expect(accumulated[1].droppedCount).toBe(2);
+      }
+    });
   });
 
   it('yields memory:extracted event when extractor provided', async () => {

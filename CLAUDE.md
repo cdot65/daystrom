@@ -98,14 +98,17 @@ tests/
 
 ### Core Loop (`src/core/loop.ts`)
 - `runLoop()` async generator yields typed `LoopEvent` discriminated unions
-- Events yielded by `runLoop()`: `iteration:start`, `generate:complete`, `apply:complete`, `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete`, `memory:extracted` (if memory enabled), `loop:complete`
+- Events yielded by `runLoop()`: `iteration:start`, `generate:complete`, `apply:complete`, `tests:accumulated` (if accumulation enabled, iter 2+), `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete`, `memory:extracted` (if memory enabled), `loop:complete`
 - Events defined in `LoopEvent` union but **not yielded** by `runLoop()`: `loop:paused` (reserved for future use), `memory:loaded` (emitted by CLI before loop starts)
 - `apply:complete` is yielded but intentionally unhandled in CLI commands (no user-facing output needed)
 - Topic name **locked after iteration 1** — only description+examples change thereafter
+- `analyzeResults()` and `improveTopic()` receive intent param — prioritizes FN for block, FP for allow
+- Optional test accumulation (`accumulateTests`) carries tests across iterations with case-insensitive dedup; `maxAccumulatedTests` caps growth
 - Stop: `coverage >= targetCoverage` (default 0.9). Coverage = `min(TPR, TNR)`
 
 ### AIRS Integration (`src/airs/`)
 - **Scanner**: `Scanner.syncScan()` via SDK, detection = `prompt_detected.topic_violation` (fallback: `topic_guardrails_details`)
+- **Allow-intent signal inversion**: For allow topics, AIRS never sets `triggered: true` — the loop derives `actualTriggered` from `action === 'allow'` instead
 - **Management**: `ManagementClient` for topic CRUD + profile linking via OAuth2
 - Profile updates create **new revisions with new UUIDs** — always reference profiles by name, never ID
 - Topics must be added to profile's `model-protection` → `topic-guardrails` → `topic-list`

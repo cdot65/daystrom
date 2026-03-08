@@ -126,7 +126,11 @@ export class LangChainLlmService implements LlmService {
         const raw = await chain.invoke({
           topicName: topic.name,
           topicDescription: topic.description,
-          topicExamples: topic.examples.map((e, i) => `${i + 1}. ${e}`).join('\n'),
+          topicExamples:
+            topic.examples.length > 0
+              ? topic.examples.map((e, i) => `${i + 1}. ${e}`).join('\n')
+              : 'None (description-only mode)',
+          exampleCount: topic.examples.length,
           intent,
           memorySection: this.memorySection,
         });
@@ -144,6 +148,7 @@ export class LangChainLlmService implements LlmService {
     topic: CustomTopic,
     results: TestResult[],
     metrics: EfficacyMetrics,
+    intent: string,
   ): Promise<AnalysisReport> {
     const structured = this.model.withStructuredOutput(AnalysisReportSchema);
     const chain = analyzeResultsPrompt.pipe(structured);
@@ -156,7 +161,9 @@ export class LangChainLlmService implements LlmService {
         const raw = await chain.invoke({
           topicName: topic.name,
           topicDescription: topic.description,
-          topicExamples: topic.examples.join(', '),
+          topicExamples:
+            topic.examples.length > 0 ? topic.examples.join(', ') : 'None (description-only)',
+          exampleCount: topic.examples.length,
           tpr: `${(metrics.truePositiveRate * 100).toFixed(1)}%`,
           tnr: `${(metrics.trueNegativeRate * 100).toFixed(1)}%`,
           accuracy: `${(metrics.accuracy * 100).toFixed(1)}%`,
@@ -169,6 +176,7 @@ export class LangChainLlmService implements LlmService {
             fns.length > 0
               ? fns.map((r) => `- "${r.testCase.prompt}" (${r.testCase.category})`).join('\n')
               : 'None',
+          intent,
           memorySection: this.memorySection,
         });
         return raw as unknown as AnalysisReportOutput;
@@ -188,6 +196,7 @@ export class LangChainLlmService implements LlmService {
     results: TestResult[],
     iteration: number,
     targetCoverage: number,
+    intent: string,
   ): Promise<CustomTopic> {
     const structured = this.model.withStructuredOutput(CustomTopicSchema);
     const chain = improveTopicPrompt.pipe(structured);
@@ -200,7 +209,9 @@ export class LangChainLlmService implements LlmService {
         const raw = await chain.invoke({
           currentName: topic.name,
           currentDescription: topic.description,
-          currentExamples: topic.examples.join(', '),
+          currentExamples:
+            topic.examples.length > 0 ? topic.examples.join(', ') : 'None (description-only)',
+          exampleCount: topic.examples.length,
           iteration,
           coverage: `${(metrics.coverage * 100).toFixed(1)}%`,
           targetCoverage: `${(targetCoverage * 100).toFixed(1)}%`,
@@ -213,6 +224,7 @@ export class LangChainLlmService implements LlmService {
           specificFPs: fps.map((r) => `- "${r.testCase.prompt}"`).join('\n') || 'None',
           specificFNs: fns.map((r) => `- "${r.testCase.prompt}"`).join('\n') || 'None',
           suggestions: analysis.suggestions.join('; '),
+          intent,
           memorySection: this.memorySection,
         });
         const result = clampTopic(raw as unknown as CustomTopicOutput);

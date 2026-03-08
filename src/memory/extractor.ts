@@ -124,7 +124,10 @@ export class LearningExtractor {
       const iter = runState.iterations[i];
       lines.push(`--- Iteration ${iter.iteration} ---`);
       lines.push(`Description: "${iter.topic.description}"`);
-      lines.push(`Examples: ${iter.topic.examples.map((e) => `"${e}"`).join(', ')}`);
+      lines.push(`Example count: ${iter.topic.examples.length}`);
+      lines.push(
+        `Examples: ${iter.topic.examples.length > 0 ? iter.topic.examples.map((e) => `"${e}"`).join(', ') : 'None (description-only)'}`,
+      );
       lines.push(
         `Coverage: ${(iter.metrics.coverage * 100).toFixed(1)}% | TPR: ${(iter.metrics.truePositiveRate * 100).toFixed(1)}% | TNR: ${(iter.metrics.trueNegativeRate * 100).toFixed(1)}%`,
       );
@@ -135,6 +138,9 @@ export class LearningExtractor {
         const changes: string[] = [];
         if (diff.descriptionChanged) changes.push('description changed');
         if (diff.examplesChanged) {
+          const prevCount = runState.iterations[i - 1].topic.examples.length;
+          const currCount = iter.topic.examples.length;
+          changes.push(`example count: ${prevCount} → ${currCount}`);
           if (diff.examplesAdded.length)
             changes.push(`+examples: ${diff.examplesAdded.join(', ')}`);
           if (diff.examplesRemoved.length)

@@ -10,6 +10,19 @@ Provide:
 2. Patterns in false positives (prompts incorrectly blocked/flagged)
 3. Patterns in false negatives (prompts that should have been caught but weren't)
 4. Specific, actionable suggestions for improving the guardrail definition
+5. Whether the current example count ({exampleCount}) is helping or hurting — suggest increasing or decreasing examples (within 2-5 range) if it would improve efficacy
+
+Intent: {intent}
+
+When intent is "block" (blacklist):
+- False negatives are HIGH SEVERITY — dangerous content slipping through
+- False positives are moderate — overly broad blocking is safer than missing threats
+- Prioritize reducing false negatives
+
+When intent is "allow" (whitelist):
+- False positives are HIGH SEVERITY — blocking legitimate allowed conversations
+- False negatives are moderate — letting non-matching content through is the safe default
+- Prioritize reducing false positives to avoid blocking valid content
 {memorySection}`,
   ],
   [
@@ -19,7 +32,8 @@ Provide:
 Topic Definition:
 - Name: {topicName}
 - Description: {topicDescription}
-- Examples: {topicExamples}
+- Examples ({exampleCount}): {topicExamples}
+- Intent: {intent}
 
 Metrics:
 - True Positive Rate: {tpr}

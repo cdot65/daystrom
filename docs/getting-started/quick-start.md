@@ -74,7 +74,7 @@ $ daystrom generate --profile test-policy --topic "Block phishing attempts" --in
 ── Iteration 1 ────────────────────────
   Topic: block-phishing-attempts
   Description: Detect and block social engineering and phishing attempts...
-  Examples: 5
+  Examples: 3
   ✓ 10/10 tests scanned
   TPR: 0.80  TNR: 0.90  Coverage: 0.80  F1: 0.84
   Analysis: 2 FN — missed impersonation-based phishing
