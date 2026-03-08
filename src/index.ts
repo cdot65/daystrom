@@ -26,6 +26,23 @@ export type {
   RedTeamTarget,
 } from './airs/types.js';
 // ---------------------------------------------------------------------------
+// Audit — profile-level multi-topic evaluation and conflict detection
+// ---------------------------------------------------------------------------
+export {
+  computeCompositeMetrics,
+  computeTopicAuditResults,
+  detectConflicts,
+} from './audit/evaluator.js';
+export { buildAuditReportHtml, buildAuditReportJson } from './audit/report.js';
+export { runAudit } from './audit/runner.js';
+export type {
+  AuditEvent,
+  AuditResult,
+  ConflictPair,
+  ProfileTopic,
+  TopicAuditResult,
+} from './audit/types.js';
+// ---------------------------------------------------------------------------
 // Config — cascading config loader (CLI > env > file > Zod defaults)
 // ---------------------------------------------------------------------------
 export { loadConfig } from './config/loader.js';
@@ -54,13 +71,11 @@ export type {
   TestResult,
   UserInput,
 } from './core/types.js';
-
 // ---------------------------------------------------------------------------
 // LLM — provider factory and structured-output service for topic generation
 // ---------------------------------------------------------------------------
 export { createLlmProvider } from './llm/provider.js';
 export { LangChainLlmService } from './llm/service.js';
-
 // ---------------------------------------------------------------------------
 // Memory — cross-run learning persistence, extraction, and prompt injection
 // ---------------------------------------------------------------------------
@@ -72,7 +87,6 @@ export type {
   Learning,
   TopicMemory,
 } from './memory/types.js';
-
 // ---------------------------------------------------------------------------
 // Persistence — save/load/list run state as JSON for resume & reporting
 // ---------------------------------------------------------------------------

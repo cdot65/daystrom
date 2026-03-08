@@ -425,4 +425,151 @@ describe('SdkManagementService', () => {
       expect((tg as Record<string, unknown>).action).toBe('block');
     });
   });
+
+  describe('getProfileTopics', () => {
+    it('throws when profile not found', async () => {
+      mockProfileList.mockResolvedValue({ ai_profiles: [] });
+      await expect(service.getProfileTopics('missing')).rejects.toThrow(
+        'Profile "missing" not found',
+      );
+    });
+
+    it('returns empty array for profile with no topic-guardrails', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          { profile_id: 'p-1', profile_name: 'test-profile', active: true, policy: {} },
+        ],
+      });
+      const topics = await service.getProfileTopics('test-profile');
+      expect(topics).toEqual([]);
+    });
+
+    it('returns empty array for profile with empty topic-list', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          {
+            profile_id: 'p-1',
+            profile_name: 'test-profile',
+            active: true,
+            policy: {
+              'ai-security-profiles': [
+                {
+                  'model-configuration': {
+                    'model-protection': [{ name: 'topic-guardrails', 'topic-list': [] }],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      });
+      const topics = await service.getProfileTopics('test-profile');
+      expect(topics).toEqual([]);
+    });
+
+    it('returns topics with full details from listTopics cross-reference', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          {
+            profile_id: 'p-1',
+            profile_name: 'test-profile',
+            active: true,
+            policy: {
+              'ai-security-profiles': [
+                {
+                  'model-configuration': {
+                    'model-protection': [
+                      {
+                        name: 'topic-guardrails',
+                        'topic-list': [
+                          {
+                            action: 'block',
+                            topic: [{ topic_id: 't1', topic_name: 'Weapons' }],
+                          },
+                          {
+                            action: 'allow',
+                            topic: [{ topic_id: 't2', topic_name: 'Education' }],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      });
+      mockList.mockResolvedValue({
+        custom_topics: [
+          {
+            topic_id: 't1',
+            topic_name: 'Weapons',
+            description: 'Block weapons',
+            examples: ['gun talk'],
+          },
+          {
+            topic_id: 't2',
+            topic_name: 'Education',
+            description: 'Allow education',
+            examples: ['teach me'],
+          },
+        ],
+      });
+
+      const topics = await service.getProfileTopics('test-profile');
+      expect(topics).toHaveLength(2);
+      expect(topics[0]).toEqual({
+        topicId: 't1',
+        topicName: 'Weapons',
+        action: 'block',
+        description: 'Block weapons',
+        examples: ['gun talk'],
+      });
+      expect(topics[1]).toEqual({
+        topicId: 't2',
+        topicName: 'Education',
+        action: 'allow',
+        description: 'Allow education',
+        examples: ['teach me'],
+      });
+    });
+
+    it('handles topic in profile but missing from topic list', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          {
+            profile_id: 'p-1',
+            profile_name: 'test-profile',
+            active: true,
+            policy: {
+              'ai-security-profiles': [
+                {
+                  'model-configuration': {
+                    'model-protection': [
+                      {
+                        name: 'topic-guardrails',
+                        'topic-list': [
+                          {
+                            action: 'block',
+                            topic: [{ topic_id: 't-gone', topic_name: 'Deleted' }],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      });
+      mockList.mockResolvedValue({ custom_topics: [] });
+
+      const topics = await service.getProfileTopics('test-profile');
+      expect(topics).toHaveLength(1);
+      expect(topics[0].description).toBe('');
+      expect(topics[0].examples).toEqual([]);
+    });
+  });
 });

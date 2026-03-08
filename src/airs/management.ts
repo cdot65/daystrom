@@ -4,6 +4,7 @@ import {
   type ManagementClientOptions,
   type CustomTopic as SdkCustomTopic,
 } from '@cdot65/prisma-airs-sdk';
+import type { ProfileTopic } from '../audit/types.js';
 import type { ManagementService } from './types.js';
 
 /**
@@ -95,6 +96,61 @@ export class SdkManagementService implements ManagementService {
       profile_name: profile.profile_name,
       active: profile.active,
       policy,
+    });
+  }
+
+  async getProfileTopics(profileName: string): Promise<ProfileTopic[]> {
+    const { ai_profiles } = await this.client.profiles.list();
+    const profile = ai_profiles.find((p) => p.profile_name === profileName);
+    if (!profile?.profile_id) {
+      throw new Error(`Profile "${profileName}" not found`);
+    }
+
+    // Extract topic entries from profile policy
+    const policy = profile.policy ?? {};
+    const aiProfiles = (policy as Record<string, unknown[]>)['ai-security-profiles'] ?? [];
+    const modelConfig =
+      (aiProfiles[0] as Record<string, Record<string, unknown>> | undefined)?.[
+        'model-configuration'
+      ] ?? {};
+    const modelProtection = (modelConfig['model-protection'] as Record<string, unknown>[]) ?? [];
+    const topicGuardrails = modelProtection.find((mp) => mp.name === 'topic-guardrails');
+
+    if (!topicGuardrails) return [];
+
+    const topicList =
+      (topicGuardrails['topic-list'] as Array<{
+        action: string;
+        topic: Array<{ topic_id: string; topic_name: string }>;
+      }>) ?? [];
+
+    // Flatten entries into topic refs with action
+    const topicRefs: Array<{ topicId: string; topicName: string; action: 'allow' | 'block' }> = [];
+    for (const entry of topicList) {
+      for (const t of entry.topic ?? []) {
+        topicRefs.push({
+          topicId: t.topic_id,
+          topicName: t.topic_name,
+          action: entry.action as 'allow' | 'block',
+        });
+      }
+    }
+
+    if (topicRefs.length === 0) return [];
+
+    // Fetch full topic details
+    const allTopics = await this.listTopics();
+    const topicMap = new Map(allTopics.map((t) => [t.topic_id, t]));
+
+    return topicRefs.map((ref) => {
+      const full = topicMap.get(ref.topicId);
+      return {
+        topicId: ref.topicId,
+        topicName: ref.topicName,
+        action: ref.action,
+        description: full?.description ?? '',
+        examples: full?.examples ?? [],
+      };
     });
   }
 }

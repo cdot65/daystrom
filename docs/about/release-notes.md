@@ -1,5 +1,20 @@
 # Release Notes
 
+## v1.6.0
+
+### Features
+
+- **`daystrom audit <profileName>`**: New command evaluates all topics in an AIRS security profile. Generates tests per topic, scans them, computes per-topic and composite metrics (TPR, TNR, coverage, accuracy, F1), and detects cross-topic conflicts.
+- **Per-topic metrics**: Each topic gets its own efficacy breakdown, enabling identification of weak guardrails within a profile.
+- **Conflict detection**: Identifies cross-topic interference — prompts that are false negatives for one topic and false positives for another.
+- **Audit reports**: `--format json` and `--format html` export audit results with per-topic metrics tables, conflict sections, and composite scores.
+- **`getProfileTopics()`**: New `ManagementService` method extracts enriched topic entries from profile policy structure.
+- **`TestCase.targetTopic`**: New optional field for audit topic attribution (backward-compatible with existing loop).
+
+### Tests
+
+- 333 tests across 24 spec files (up from 298)
+
 ## v1.5.0
 
 ### Features

@@ -2,7 +2,7 @@
 
 Binary: `daystrom` (or `pnpm run dev` during development).
 
-Five command groups manage the full guardrail lifecycle.
+Six command groups manage the full guardrail lifecycle.
 
 ---
 
@@ -141,6 +141,42 @@ daystrom list
 ```
 
 Displays a summary table with run ID, status, coverage, and iteration count.
+
+---
+
+## audit
+
+Evaluate all topics in an AIRS security profile. Generates tests per topic, scans them, computes per-topic and composite metrics, and detects cross-topic conflicts.
+
+```bash
+daystrom audit <profileName> [options]
+```
+
+### Options
+
+| Flag | Default | What it does |
+|------|---------|-------------|
+| `--max-tests-per-topic <n>` | `40` | Max test cases generated per topic |
+| `--format <fmt>` | `terminal` | Output format: `terminal`, `json`, `html` |
+| `--output <path>` | `<profile>-audit.html` | Output file path (html format only) |
+| `--provider <name>` | `claude-api` | LLM provider |
+| `--model <name>` | per-provider | Override default model |
+
+### Examples
+
+```bash
+# Audit all topics in a profile
+daystrom audit my-security-profile
+
+# JSON export
+daystrom audit my-security-profile --format json
+
+# HTML report
+daystrom audit my-security-profile --format html --output audit-report.html
+
+# Limit test generation
+daystrom audit my-security-profile --max-tests-per-topic 20
+```
 
 ---
 

@@ -36,6 +36,8 @@ export interface TestCase {
   category: string;
   /** How this test entered the suite. Default: 'generated'. */
   source?: 'generated' | 'carried-fp' | 'carried-fn' | 'regression';
+  /** Which topic this test targets (used by audit). */
+  targetTopic?: string;
 }
 
 /** Per-category error breakdown from a previous iteration's results. */
