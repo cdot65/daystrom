@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.0.8
+
+### Documentation
+
+- Sync remaining docs pages with v1.0.7 changes: fix event table in design-decisions.md, add `format:check` to contributing.md and local-setup.md
+
 ## v1.0.7
 
 ### Dependencies
