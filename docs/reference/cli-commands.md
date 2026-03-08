@@ -229,6 +229,16 @@ List configured red team targets.
 daystrom redteam targets
 ```
 
+### redteam prompt-sets
+
+List custom prompt sets with their UUIDs.
+
+```bash
+daystrom redteam prompt-sets
+```
+
+Use this to find the UUID of a prompt set created by `--create-prompt-set` during `daystrom generate`.
+
 ### redteam categories
 
 List available attack categories.
