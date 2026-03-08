@@ -10,13 +10,24 @@
 // ---------------------------------------------------------------------------
 export { SdkManagementService } from './airs/management.js';
 export { SdkPromptSetService } from './airs/promptsets.js';
+export { SdkRedTeamService } from './airs/redteam.js';
 export { AirsScanService } from './airs/scanner.js';
-
+// ---------------------------------------------------------------------------
+// Core loop & metrics — the main generate→test→evaluate→improve cycle
+// ---------------------------------------------------------------------------
+export type {
+  RedTeamAttack,
+  RedTeamCategory,
+  RedTeamCustomReport,
+  RedTeamJob,
+  RedTeamService,
+  RedTeamStaticReport,
+  RedTeamTarget,
+} from './airs/types.js';
 // ---------------------------------------------------------------------------
 // Config — cascading config loader (CLI > env > file > Zod defaults)
 // ---------------------------------------------------------------------------
 export { loadConfig } from './config/loader.js';
-
 // ---------------------------------------------------------------------------
 // AIRS constraints — validation helpers enforcing Prisma AIRS topic limits
 // ---------------------------------------------------------------------------
@@ -27,10 +38,6 @@ export {
   validateName,
   validateTopic,
 } from './core/constraints.js';
-
-// ---------------------------------------------------------------------------
-// Core loop & metrics — the main generate→test→evaluate→improve cycle
-// ---------------------------------------------------------------------------
 export type { LlmService, LoopDependencies } from './core/loop.js';
 export { runLoop } from './core/loop.js';
 export { computeMetrics } from './core/metrics.js';

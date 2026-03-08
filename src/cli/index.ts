@@ -4,6 +4,7 @@ import 'dotenv/config';
 import { Command } from 'commander';
 import { registerGenerateCommand } from './commands/generate.js';
 import { registerListCommand } from './commands/list.js';
+import { registerRedteamCommand } from './commands/redteam.js';
 import { registerReportCommand } from './commands/report.js';
 import { registerResumeCommand } from './commands/resume.js';
 
@@ -18,5 +19,6 @@ registerGenerateCommand(program);
 registerResumeCommand(program);
 registerReportCommand(program);
 registerListCommand(program);
+registerRedteamCommand(program);
 
 program.parse();

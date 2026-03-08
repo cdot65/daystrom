@@ -2,7 +2,7 @@
 
 Binary: `daystrom` (or `pnpm run dev` during development).
 
-Four commands manage the full guardrail lifecycle.
+Five command groups manage the full guardrail lifecycle.
 
 ---
 
@@ -128,3 +128,96 @@ daystrom list
 ```
 
 Displays a summary table with run ID, status, coverage, and iteration count.
+
+---
+
+## redteam
+
+AI Red Team scan operations. All subcommands share the `redteam` prefix.
+
+### redteam scan
+
+Execute a red team scan against a target.
+
+```bash
+daystrom redteam scan [options]
+```
+
+| Flag | Default | What it does |
+|------|---------|-------------|
+| `--target <uuid>` | _(required)_ | Target UUID to scan |
+| `--name <name>` | _(required)_ | Scan name |
+| `--type <type>` | `STATIC` | Job type: `STATIC`, `DYNAMIC`, or `CUSTOM` |
+| `--categories <json>` | all | Category filter JSON (STATIC scans) |
+| `--prompt-sets <uuids>` | — | Comma-separated prompt set UUIDs (CUSTOM scans) |
+| `--no-wait` | wait | Submit without waiting for completion |
+
+```bash
+# Static scan with all categories
+daystrom redteam scan --target abc-123 --name "Full Scan"
+
+# Custom scan with prompt sets
+daystrom redteam scan --target abc-123 --name "Custom" \
+  --type CUSTOM --prompt-sets ps-1,ps-2
+```
+
+### redteam status
+
+Check scan status.
+
+```bash
+daystrom redteam status <jobId>
+```
+
+### redteam report
+
+View scan report.
+
+```bash
+daystrom redteam report <jobId> [options]
+```
+
+| Flag | Default | What it does |
+|------|---------|-------------|
+| `--attacks` | off | Include individual attack list |
+| `--severity <level>` | all | Filter attacks by severity |
+| `--limit <n>` | `20` | Max attacks to show |
+
+### redteam list
+
+List recent scans.
+
+```bash
+daystrom redteam list [options]
+```
+
+| Flag | Default | What it does |
+|------|---------|-------------|
+| `--status <status>` | all | Filter: QUEUED, RUNNING, COMPLETED, FAILED, ABORTED |
+| `--type <type>` | all | Filter: STATIC, DYNAMIC, CUSTOM |
+| `--target <uuid>` | all | Filter by target UUID |
+| `--limit <n>` | `10` | Max results |
+
+### redteam targets
+
+List configured red team targets.
+
+```bash
+daystrom redteam targets
+```
+
+### redteam categories
+
+List available attack categories.
+
+```bash
+daystrom redteam categories
+```
+
+### redteam abort
+
+Abort a running scan.
+
+```bash
+daystrom redteam abort <jobId>
+```
