@@ -11,11 +11,8 @@ export const MAX_EXAMPLE_LENGTH = 250;
 export const MAX_EXAMPLES = 5;
 export const MAX_COMBINED_LENGTH = 1000;
 
-/** @deprecated Use MAX_EXAMPLES */
-const MAX_EXAMPLES_COUNT = MAX_EXAMPLES;
-
 /** UTF-8 byte length — AIRS API enforces limits in bytes, not JS characters. */
-function byteLen(s: string): number {
+export function byteLen(s: string): number {
   return Buffer.byteLength(s, 'utf8');
 }
 
@@ -57,10 +54,10 @@ export function validateExample(example: string, index: number): ValidationError
 
 export function validateExamples(examples: string[]): ValidationError[] {
   const errors: ValidationError[] = [];
-  if (examples.length > MAX_EXAMPLES_COUNT) {
+  if (examples.length > MAX_EXAMPLES) {
     errors.push({
       field: 'examples',
-      message: `At most ${MAX_EXAMPLES_COUNT} examples allowed`,
+      message: `At most ${MAX_EXAMPLES} examples allowed`,
     });
   }
   for (let i = 0; i < examples.length; i++) {

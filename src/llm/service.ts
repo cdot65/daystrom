@@ -1,5 +1,6 @@
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import {
+  byteLen,
   MAX_COMBINED_LENGTH,
   MAX_DESCRIPTION_LENGTH,
   MAX_EXAMPLE_LENGTH,
@@ -37,11 +38,6 @@ function sliceToBytes(s: string, maxBytes: number): string {
     s = s.slice(0, -1);
   }
   return s;
-}
-
-/** UTF-8 byte length of a string. */
-function byteLen(s: string): number {
-  return Buffer.byteLength(s, 'utf8');
 }
 
 /** Clamp topic fields to fit Prisma AIRS constraints (byte-aware, including combined limit) */
