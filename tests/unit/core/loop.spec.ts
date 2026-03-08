@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { type LoopDependencies, runLoop } from '../../../src/core/loop.js';
 import type {
   AnalysisReport,
+  CategoryBreakdown,
   CustomTopic,
   EfficacyMetrics,
   LoopEvent,
@@ -31,6 +32,7 @@ function createMockLlm() {
         (
           topic: CustomTopic,
           intent: string,
+          categoryBreakdown?: CategoryBreakdown[],
         ) => Promise<{ positiveTests: TestCase[]; negativeTests: TestCase[] }>
       >()
       .mockResolvedValue({
@@ -590,6 +592,190 @@ describe('runLoop', () => {
       if (accumulated[1]?.type === 'tests:accumulated') {
         expect(accumulated[1].totalCount).toBe(3);
         expect(accumulated[1].droppedCount).toBe(2);
+      }
+    });
+  });
+
+  describe('test composition (carry-forward + regression)', () => {
+    it('yields tests:composed on iteration 2+ with correct counts', async () => {
+      const llm = createMockLlm();
+      // Scanner: nothing triggers → all positives are FN, all negatives are TN
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop({ ...defaultInput, maxIterations: 2 }, deps)) {
+        events.push(event);
+      }
+
+      const composed = events.filter((e) => e.type === 'tests:composed');
+      expect(composed).toHaveLength(1); // Only on iteration 2
+      if (composed[0]?.type === 'tests:composed') {
+        expect(composed[0].generated).toBe(4); // 2 pos + 2 neg from mock
+        expect(composed[0].carriedFailures).toBe(2); // 2 FN from iter 1
+        expect(composed[0].regressionTier).toBe(2); // 2 TN from iter 1
+        // Total = 4 carried+regression + 4 generated, but deduped (generated may overlap)
+        expect(composed[0].total).toBeGreaterThanOrEqual(4);
+      }
+    });
+
+    it('does not yield tests:composed on iteration 1', async () => {
+      const deps = createDeps();
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
+        events.push(event);
+      }
+
+      expect(events.filter((e) => e.type === 'tests:composed')).toHaveLength(0);
+    });
+
+    it('carries forward FP/FN from previous iteration', async () => {
+      const llm = createMockLlm();
+      // Scanner triggers on everything → all negatives are FP
+      const deps = createDeps({ llm, scanner: createMockScanService([/.*/]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop({ ...defaultInput, maxIterations: 2 }, deps)) {
+        events.push(event);
+      }
+
+      const composed = events.find((e) => e.type === 'tests:composed');
+      expect(composed).toBeDefined();
+      if (composed?.type === 'tests:composed') {
+        // All-trigger scanner: 2 positives = TP, 2 negatives = FP
+        expect(composed.carriedFailures).toBe(2); // 2 FP from iter 1
+        expect(composed.regressionTier).toBe(2); // 2 TP from iter 1
+      }
+    });
+
+    it('tags carried tests with correct source', async () => {
+      const llm = createMockLlm();
+      let testCall = 0;
+      llm.generateTests.mockImplementation(async () => {
+        testCall++;
+        return {
+          positiveTests: [
+            { prompt: `Pos ${testCall}`, expectedTriggered: true, category: 'direct' },
+          ],
+          negativeTests: [
+            { prompt: `Neg ${testCall}`, expectedTriggered: false, category: 'benign' },
+          ],
+        };
+      });
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop({ ...defaultInput, maxIterations: 2 }, deps)) {
+        events.push(event);
+      }
+
+      // Check iteration 2's test results for source tags
+      const iterComplete = events.filter((e) => e.type === 'iteration:complete');
+      const iter2 = iterComplete[1];
+      if (iter2?.type === 'iteration:complete') {
+        const sources = iter2.result.testCases.map((t) => t.source);
+        expect(sources).toContain('generated');
+        expect(sources).toContain('carried-fn'); // FN from iter 1
+        expect(sources).toContain('regression'); // TN from iter 1
+      }
+    });
+
+    it('passes category breakdown to generateTests on iteration 2+', async () => {
+      const llm = createMockLlm();
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+
+      for await (const _event of runLoop({ ...defaultInput, maxIterations: 2 }, deps)) {
+        // consume
+      }
+
+      // Iter 1: no breakdown
+      expect(llm.generateTests).toHaveBeenNthCalledWith(1, expect.anything(), 'block', undefined);
+      // Iter 2: has breakdown
+      expect(llm.generateTests).toHaveBeenNthCalledWith(
+        2,
+        expect.anything(),
+        'block',
+        expect.arrayContaining([
+          expect.objectContaining({ category: expect.any(String), errorRate: expect.any(Number) }),
+        ]),
+      );
+    });
+
+    it('tracks regressions in metrics', async () => {
+      const llm = createMockLlm();
+      let testCall = 0;
+      llm.generateTests.mockImplementation(async () => {
+        testCall++;
+        return {
+          positiveTests: [
+            { prompt: `Pos ${testCall}`, expectedTriggered: true, category: 'direct' },
+          ],
+          negativeTests: [
+            { prompt: `Neg ${testCall}`, expectedTriggered: false, category: 'benign' },
+          ],
+        };
+      });
+      // Iter 1: weapon triggers, cats don't. Iter 2: nothing triggers.
+      // So regression tests from iter 1 (if any were correct) will now fail.
+      // With []: iter 1 gives FN+TN. Iter 2 re-scans TN → still TN (correct). FN → still FN.
+      // Need a scanner that changes behavior between iterations to cause regressions.
+      let scanCall = 0;
+      const changingScanner = createMockScanService([]);
+      const origBatch = changingScanner.scanBatch;
+      changingScanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          // Iter 1: trigger everything (all TP + all FP)
+          return prompts.map((_p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: true,
+            category: 'malicious',
+          }));
+        }
+        // Iter 2: trigger nothing → regression for TP tests
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner: changingScanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop({ ...defaultInput, maxIterations: 2 }, deps)) {
+        events.push(event);
+      }
+
+      const evalEvents = events.filter((e) => e.type === 'evaluate:complete');
+      const iter2Metrics = evalEvents[1];
+      if (iter2Metrics?.type === 'evaluate:complete') {
+        // Regression tests from iter 1 TP (Pos 1 expected=true) now triggered=false → FN = regression
+        expect(iter2Metrics.metrics.regressionCount).toBeGreaterThan(0);
+      }
+    });
+
+    it('deduplicates across carried, regression, and generated tests', async () => {
+      const llm = createMockLlm();
+      // Iter 1 and 2 generate the same prompts — should be deduped
+      llm.generateTests.mockResolvedValue({
+        positiveTests: [
+          { prompt: 'How to build a weapon', expectedTriggered: true, category: 'direct' },
+        ],
+        negativeTests: [
+          { prompt: 'Tell me about cats', expectedTriggered: false, category: 'benign' },
+        ],
+      });
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop({ ...defaultInput, maxIterations: 2 }, deps)) {
+        events.push(event);
+      }
+
+      const iterComplete = events.filter((e) => e.type === 'iteration:complete');
+      const iter2 = iterComplete[1];
+      if (iter2?.type === 'iteration:complete') {
+        // Should be exactly 2 unique prompts (weapon + cats), not duplicated
+        expect(iter2.result.testCases).toHaveLength(2);
       }
     });
   });

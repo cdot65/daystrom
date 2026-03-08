@@ -11,6 +11,7 @@ import {
 import type { LlmService } from '../core/loop.js';
 import type {
   AnalysisReport,
+  CategoryBreakdown,
   CustomTopic,
   EfficacyMetrics,
   TestCase,
@@ -117,9 +118,19 @@ export class LangChainLlmService implements LlmService {
   async generateTests(
     topic: CustomTopic,
     intent: string,
+    categoryBreakdown?: CategoryBreakdown[],
   ): Promise<{ positiveTests: TestCase[]; negativeTests: TestCase[] }> {
     const structured = this.model.withStructuredOutput(TestSuiteSchema);
     const chain = generateTestsPrompt.pipe(structured);
+
+    let categoryBreakdownSection = '';
+    if (categoryBreakdown && categoryBreakdown.length > 0) {
+      const lines = categoryBreakdown.map(
+        (c) =>
+          `- ${c.category}: ${c.fp + c.fn}/${c.total} errors (${(c.errorRate * 100).toFixed(0)}%) — ${c.fp} FP, ${c.fn} FN`,
+      );
+      categoryBreakdownSection = `\nPrevious iteration per-category error rates (generate proportionally more tests for high-error categories):\n${lines.join('\n')}\n`;
+    }
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
@@ -132,6 +143,7 @@ export class LangChainLlmService implements LlmService {
               : 'None (description-only mode)',
           exampleCount: topic.examples.length,
           intent,
+          categoryBreakdownSection,
           memorySection: this.memorySection,
         });
         return raw as unknown as TestSuiteOutput;

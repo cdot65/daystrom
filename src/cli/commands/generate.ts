@@ -26,6 +26,7 @@ import {
   renderMetrics,
   renderTestProgress,
   renderTestsAccumulated,
+  renderTestsComposed,
   renderTopic,
 } from '../renderer.js';
 
@@ -148,6 +149,14 @@ export function registerGenerateCommand(program: Command): void {
               break;
             case 'generate:complete':
               renderTopic(event.topic);
+              break;
+            case 'tests:composed':
+              renderTestsComposed(
+                event.generated,
+                event.carriedFailures,
+                event.regressionTier,
+                event.total,
+              );
               break;
             case 'tests:accumulated':
               renderTestsAccumulated(event.newCount, event.totalCount, event.droppedCount);

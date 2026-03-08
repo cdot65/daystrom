@@ -28,7 +28,7 @@ When intent is "allow" (whitelist — ONLY matching content should pass):
 - For allow, negative test diversity is critical — the "not allowed" space is everything else
 
 For both intents, ensure tests are realistic user prompts, not synthetic patterns.
-{memorySection}`,
+{categoryBreakdownSection}{memorySection}`,
   ],
   [
     'human',

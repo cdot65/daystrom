@@ -1,10 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { computeMetrics } from '../../../src/core/metrics.js';
+import { computeCategoryBreakdown, computeMetrics } from '../../../src/core/metrics.js';
 import type { TestResult } from '../../../src/core/types.js';
 
-function makeResult(expected: boolean, actual: boolean): TestResult {
+function makeResult(
+  expected: boolean,
+  actual: boolean,
+  opts?: { category?: string; source?: 'generated' | 'carried-fp' | 'carried-fn' | 'regression' },
+): TestResult {
   return {
-    testCase: { prompt: 'test', expectedTriggered: expected, category: 'test' },
+    testCase: {
+      prompt: 'test',
+      expectedTriggered: expected,
+      category: opts?.category ?? 'test',
+      source: opts?.source,
+    },
     actualTriggered: actual,
     scanAction: actual ? 'block' : 'allow',
     scanId: 'scan-1',
@@ -32,6 +41,7 @@ describe('metrics', () => {
       expect(m.accuracy).toBe(1);
       expect(m.coverage).toBe(1);
       expect(m.f1Score).toBe(1);
+      expect(m.regressionCount).toBe(0);
     });
 
     it('computes zero scores for all-wrong results', () => {
@@ -51,6 +61,7 @@ describe('metrics', () => {
       expect(m.accuracy).toBe(0);
       expect(m.coverage).toBe(0);
       expect(m.f1Score).toBe(0);
+      expect(m.regressionCount).toBe(0);
     });
 
     it('handles mixed results correctly', () => {
@@ -78,6 +89,7 @@ describe('metrics', () => {
       expect(m.accuracy).toBe(0);
       expect(m.coverage).toBe(0);
       expect(m.f1Score).toBe(0);
+      expect(m.regressionCount).toBe(0);
     });
 
     it('handles only positives (no negatives)', () => {
@@ -113,6 +125,82 @@ describe('metrics', () => {
       expect(m.falseNegatives).toBe(0);
       expect(m.accuracy).toBe(1);
       expect(m.f1Score).toBe(1);
+    });
+
+    it('counts regressions from regression-sourced failures', () => {
+      const results: TestResult[] = [
+        makeResult(true, true, { source: 'regression' }), // regression TP — not a regression
+        makeResult(true, false, { source: 'regression' }), // regression FN — IS a regression
+        makeResult(false, true, { source: 'regression' }), // regression FP — IS a regression
+        makeResult(false, false, { source: 'generated' }), // generated TN
+      ];
+      const m = computeMetrics(results);
+      expect(m.regressionCount).toBe(2);
+    });
+
+    it('returns zero regressions when no regression-sourced tests', () => {
+      const results: TestResult[] = [
+        makeResult(true, false, { source: 'generated' }),
+        makeResult(false, true, { source: 'carried-fp' }),
+      ];
+      const m = computeMetrics(results);
+      expect(m.regressionCount).toBe(0);
+    });
+
+    it('returns zero regressions when all regression tests pass', () => {
+      const results: TestResult[] = [
+        makeResult(true, true, { source: 'regression' }),
+        makeResult(false, false, { source: 'regression' }),
+      ];
+      const m = computeMetrics(results);
+      expect(m.regressionCount).toBe(0);
+    });
+  });
+
+  describe('computeCategoryBreakdown', () => {
+    it('groups results by category', () => {
+      const results: TestResult[] = [
+        makeResult(true, true, { category: 'direct' }),
+        makeResult(true, false, { category: 'direct' }),
+        makeResult(false, false, { category: 'benign' }),
+        makeResult(false, true, { category: 'benign' }),
+      ];
+      const breakdown = computeCategoryBreakdown(results);
+      expect(breakdown).toHaveLength(2);
+
+      const direct = breakdown.find((b) => b.category === 'direct');
+      expect(direct).toEqual({ category: 'direct', total: 2, fp: 0, fn: 1, errorRate: 0.5 });
+
+      const benign = breakdown.find((b) => b.category === 'benign');
+      expect(benign).toEqual({ category: 'benign', total: 2, fp: 1, fn: 0, errorRate: 0.5 });
+    });
+
+    it('returns empty array for empty results', () => {
+      expect(computeCategoryBreakdown([])).toEqual([]);
+    });
+
+    it('sorts by error rate descending', () => {
+      const results: TestResult[] = [
+        makeResult(true, true, { category: 'good' }), // 0% error
+        makeResult(true, false, { category: 'bad' }), // 100% error
+        makeResult(true, true, { category: 'mixed' }),
+        makeResult(true, false, { category: 'mixed' }), // 50% error
+      ];
+      const breakdown = computeCategoryBreakdown(results);
+      expect(breakdown[0].category).toBe('bad');
+      expect(breakdown[1].category).toBe('mixed');
+      expect(breakdown[2].category).toBe('good');
+    });
+
+    it('computes error rate correctly with all correct', () => {
+      const results: TestResult[] = [
+        makeResult(true, true, { category: 'direct' }),
+        makeResult(false, false, { category: 'direct' }),
+      ];
+      const breakdown = computeCategoryBreakdown(results);
+      expect(breakdown[0].errorRate).toBe(0);
+      expect(breakdown[0].fp).toBe(0);
+      expect(breakdown[0].fn).toBe(0);
     });
   });
 });

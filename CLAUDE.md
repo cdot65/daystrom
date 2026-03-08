@@ -106,7 +106,9 @@ tests/
 - `apply:complete` is yielded but intentionally unhandled in CLI commands (no user-facing output needed)
 - Topic name **locked after iteration 1** — only description+examples change thereafter
 - `analyzeResults()` and `improveTopic()` receive intent param — prioritizes FN for block, FP for allow
-- Optional test accumulation (`accumulateTests`) carries tests across iterations with case-insensitive dedup; `maxAccumulatedTests` caps growth
+- **Test composition** (always-on, iter 2+): carried FP/FN failures + regression tier (TP/TN re-scanned) + fresh LLM tests. `TestCase.source` tags each test's origin. `EfficacyMetrics.regressionCount` tracks regression-tier failures.
+- **Weighted category generation** (always-on, iter 2+): `computeCategoryBreakdown()` passes per-category error rates to the LLM prompt, biasing test generation toward weak areas
+- Optional test accumulation (`accumulateTests`) carries full test pool across iterations with case-insensitive dedup; `maxAccumulatedTests` caps growth
 - Stop: `coverage >= targetCoverage` (default 0.9). Coverage = `min(TPR, TNR)`
 
 ### AIRS Integration (`src/airs/`)

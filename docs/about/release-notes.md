@@ -1,5 +1,22 @@
 # Release Notes
 
+## v1.4.0
+
+### Features
+
+- **Carry forward failures**: FP and FN test cases from each iteration are automatically carried into the next iteration's test suite. Failed tests are re-scanned to verify whether topic refinement fixed them.
+- **Regression tier**: TP and TN (correct) test cases from the previous iteration are re-scanned as regression tests. If a previously-correct test now fails after topic refinement, it's counted as a regression.
+- **Weighted category generation**: Per-category error rates from the previous iteration are passed to the LLM test generator, which produces proportionally more tests for high-error categories.
+- **`tests:composed` event**: New loop event reports test composition breakdown (generated, carried failures, regression tier, total) on iterations 2+.
+- **`regressionCount` metric**: `EfficacyMetrics` now includes the count of regression-tier tests that failed.
+- **`CategoryBreakdown` type**: New exported type for per-category FP/FN/error-rate breakdown.
+- **`computeCategoryBreakdown()` helper**: New exported function to compute per-category error rates from test results.
+- **Test source tagging**: `TestCase.source` field tracks how each test entered the suite (`'generated'`, `'carried-fp'`, `'carried-fn'`, `'regression'`).
+
+### Tests
+
+- 272 tests across 19 spec files (up from 265)
+
 ## v1.3.1
 
 ### Documentation

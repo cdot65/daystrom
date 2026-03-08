@@ -1,9 +1,10 @@
 import { nanoid } from 'nanoid';
 import type { ManagementService, PromptSetService, ScanService } from '../airs/types.js';
 import type { LearningExtractor } from '../memory/extractor.js';
-import { computeMetrics } from './metrics.js';
+import { computeCategoryBreakdown, computeMetrics } from './metrics.js';
 import type {
   AnalysisReport,
+  CategoryBreakdown,
   CustomTopic,
   EfficacyMetrics,
   IterationResult,
@@ -22,6 +23,7 @@ export interface LlmService {
   generateTests(
     topic: CustomTopic,
     intent: string,
+    categoryBreakdown?: CategoryBreakdown[],
   ): Promise<{ positiveTests: TestCase[]; negativeTests: TestCase[] }>;
   /** Analyze scan results to identify false positive/negative patterns. */
   analyzeResults(
@@ -176,21 +178,52 @@ export async function* runLoop(
       await delay(propagationDelay);
     }
 
-    // Step 3: Generate test cases
-    const { positiveTests, negativeTests } = await deps.llm.generateTests(topic, input.intent);
-    const newTests = [...positiveTests, ...negativeTests];
+    // Step 3: Generate test cases (with category breakdown for weighted generation)
+    const prevItResults = i > 1 ? runState.iterations[runState.iterations.length - 1] : undefined;
+    const categoryBreakdown = prevItResults
+      ? computeCategoryBreakdown(prevItResults.testResults)
+      : undefined;
+    const { positiveTests, negativeTests } = await deps.llm.generateTests(
+      topic,
+      input.intent,
+      categoryBreakdown,
+    );
+    const newTests: TestCase[] = [...positiveTests, ...negativeTests].map((t) => ({
+      ...t,
+      source: 'generated' as const,
+    }));
 
-    let allTests: TestCase[];
-    if (input.accumulateTests && i > 1) {
-      const seen = new Set<string>();
-      const merged: TestCase[] = [];
-      for (const t of newTests) {
+    // Build carried failures + regression tier from previous iteration
+    let carriedFailures: TestCase[] = [];
+    let regressionTier: TestCase[] = [];
+    if (i > 1 && prevItResults) {
+      carriedFailures = prevItResults.testResults
+        .filter((r) => !r.correct)
+        .map((r) => {
+          const source: 'carried-fn' | 'carried-fp' =
+            r.testCase.expectedTriggered && !r.actualTriggered ? 'carried-fn' : 'carried-fp';
+          return { ...r.testCase, source };
+        });
+      regressionTier = prevItResults.testResults
+        .filter((r) => r.correct)
+        .map((r) => ({ ...r.testCase, source: 'regression' as const }));
+    }
+
+    // Merge: carried failures > regression > generated (dedup by prompt text)
+    const seen = new Set<string>();
+    const merged: TestCase[] = [];
+    for (const pool of [carriedFailures, regressionTier, newTests]) {
+      for (const t of pool) {
         const key = t.prompt.toLowerCase().trim();
         if (!seen.has(key)) {
           seen.add(key);
           merged.push(t);
         }
       }
+    }
+
+    // Also merge old accumulated tests if accumulation enabled
+    if (input.accumulateTests && i > 1) {
       for (const t of accumulatedTests) {
         const key = t.prompt.toLowerCase().trim();
         if (!seen.has(key)) {
@@ -198,18 +231,32 @@ export async function* runLoop(
           merged.push(t);
         }
       }
-      // Apply max cap — keep newest first (already ordered: new then old)
-      const maxCap = input.maxAccumulatedTests;
-      const preCapCount = merged.length;
-      allTests = maxCap && merged.length > maxCap ? merged.slice(0, maxCap) : merged;
+    }
+
+    // Apply max cap
+    const maxCap = input.maxAccumulatedTests;
+    const preCapCount = merged.length;
+    const allTests = maxCap && merged.length > maxCap ? merged.slice(0, maxCap) : merged;
+
+    // Emit composition event on iteration 2+
+    if (i > 1) {
+      yield {
+        type: 'tests:composed',
+        generated: newTests.length,
+        carriedFailures: carriedFailures.length,
+        regressionTier: regressionTier.length,
+        total: allTests.length,
+      };
+    }
+
+    // Emit legacy accumulated event when accumulation enabled
+    if (input.accumulateTests && i > 1) {
       yield {
         type: 'tests:accumulated',
         newCount: newTests.length,
         totalCount: allTests.length,
         droppedCount: preCapCount - allTests.length,
       };
-    } else {
-      allTests = newTests;
     }
     accumulatedTests = allTests;
 
