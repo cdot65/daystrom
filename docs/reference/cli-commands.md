@@ -205,32 +205,19 @@ daystrom redteam scan [options]
 # Static scan with all categories
 daystrom redteam scan --target <uuid> --name "Full Scan"
 
-# Static scan — specific categories only
-daystrom redteam scan --target <uuid> --name "PI Scan" \
-  --categories '{"prompt_injection": {}}'
-
 # Custom scan with a daystrom-generated prompt set
 daystrom redteam scan \
-  --target bff3b6ca-8be7-441c-823e-c36f1a61d41e \
-  --name "Explosives Topic Validation" \
-  --type CUSTOM \
-  --prompt-sets 7829805d-6479-4ce1-866b-2bff66a3c766
-
-# Submit and return immediately (don't wait for completion)
-daystrom redteam scan --target <uuid> --name "Async" --no-wait
+  --target <uuid> --name "Topic Validation" \
+  --type CUSTOM --prompt-sets <uuid1>,<uuid2>
 ```
 
 ### redteam status
-
-Check scan status.
 
 ```bash
 daystrom redteam status <jobId>
 ```
 
 ### redteam report
-
-View scan report.
 
 ```bash
 daystrom redteam report <jobId> [options]
@@ -243,8 +230,6 @@ daystrom redteam report <jobId> [options]
 | `--limit <n>` | `20` | Max attacks to show |
 
 ### redteam list
-
-List recent scans.
 
 ```bash
 daystrom redteam list [options]
@@ -259,21 +244,87 @@ daystrom redteam list [options]
 
 ### redteam targets
 
-List configured red team targets.
+Manage red team targets — full CRUD with connection validation.
 
 ```bash
-daystrom redteam targets
+daystrom redteam targets list                          # List all targets
+daystrom redteam targets get <uuid>                    # Get target details
+daystrom redteam targets create --config target.json   # Create from JSON file
+daystrom redteam targets create --config t.json --validate  # Create + validate connection
+daystrom redteam targets update <uuid> --config u.json # Update target
+daystrom redteam targets update <uuid> --config u.json --validate
+daystrom redteam targets delete <uuid>                 # Delete target
+daystrom redteam targets probe --config conn.json      # Test connection
+daystrom redteam targets profile <uuid>                # View target profile
+daystrom redteam targets update-profile <uuid> --config p.json
 ```
+
+| Subcommand | Flags |
+|------------|-------|
+| `list` | — |
+| `get <uuid>` | — |
+| `create` | `--config <path>` (required), `--validate` |
+| `update <uuid>` | `--config <path>` (required), `--validate` |
+| `delete <uuid>` | — |
+| `probe` | `--config <path>` (required) |
+| `profile <uuid>` | — |
+| `update-profile <uuid>` | `--config <path>` (required) |
 
 ### redteam prompt-sets
 
-List custom prompt sets with their UUIDs.
+Manage custom prompt sets — CRUD, CSV upload/download, archive.
 
 ```bash
-daystrom redteam prompt-sets
+daystrom redteam prompt-sets list                          # List all sets
+daystrom redteam prompt-sets get <uuid>                    # Details + version info
+daystrom redteam prompt-sets create --name "My Set"        # Create
+daystrom redteam prompt-sets update <uuid> --name "New"    # Update
+daystrom redteam prompt-sets archive <uuid>                # Archive
+daystrom redteam prompt-sets archive <uuid> --unarchive    # Unarchive
+daystrom redteam prompt-sets download <uuid>               # Download CSV template
+daystrom redteam prompt-sets upload <uuid> prompts.csv     # Upload CSV
 ```
 
-Use this to find the UUID of a prompt set created by `--create-prompt-set` during `daystrom generate`.
+| Subcommand | Flags |
+|------------|-------|
+| `list` | — |
+| `get <uuid>` | — |
+| `create` | `--name` (required), `--description` |
+| `update <uuid>` | `--name`, `--description` |
+| `archive <uuid>` | `--unarchive` |
+| `download <uuid>` | `--output <path>` |
+| `upload <uuid> <file>` | — |
+
+### redteam prompts
+
+Manage individual prompts within prompt sets.
+
+```bash
+daystrom redteam prompts list <setUuid>                        # List prompts
+daystrom redteam prompts get <setUuid> <promptUuid>            # Get prompt
+daystrom redteam prompts add <setUuid> --prompt "text"         # Add prompt
+daystrom redteam prompts update <setUuid> <promptUuid> --prompt "new"  # Update
+daystrom redteam prompts delete <setUuid> <promptUuid>         # Delete
+```
+
+| Subcommand | Flags |
+|------------|-------|
+| `list <setUuid>` | `--limit <n>` (default 50) |
+| `get <setUuid> <promptUuid>` | — |
+| `add <setUuid>` | `--prompt` (required), `--goal` |
+| `update <setUuid> <promptUuid>` | `--prompt`, `--goal` |
+| `delete <setUuid> <promptUuid>` | — |
+
+### redteam properties
+
+Manage custom attack property names and values.
+
+```bash
+daystrom redteam properties list                               # List names
+daystrom redteam properties create --name "category"           # Create name
+daystrom redteam properties values category                    # List values
+daystrom redteam properties add-value --name cat --value sec   # Add value
+```
 
 ### redteam categories
 

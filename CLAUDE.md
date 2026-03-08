@@ -49,7 +49,7 @@ src/
 │   │   ├── report.ts      # View run results by ID
 │   │   ├── list.ts        # List all saved runs
 │   │   ├── audit.ts       # Profile-level multi-topic evaluation
-│   │   └── redteam.ts     # Red team scan operations (7 subcommands)
+│   │   └── redteam.ts     # Red team operations (scan, targets CRUD, prompt-sets CRUD, prompts CRUD, properties)
 │   ├── prompts.ts         # Inquirer interactive input collection
 │   └── renderer.ts        # Terminal output (chalk)
 ├── config/
@@ -135,14 +135,16 @@ tests/
 - Guardrail-level `action` must always be `'block'` to enforce violations
 - Topics can't be deleted while referenced by any profile revision
 
-### Red Team (`src/airs/redteam.ts`)
-- `SdkRedTeamService` wraps `RedTeamClient` for scan CRUD, polling, reports
+### Red Team (`src/airs/redteam.ts`, `src/airs/promptsets.ts`)
+- `SdkRedTeamService` wraps `RedTeamClient` for scan CRUD, polling, reports, **target CRUD**
+- `SdkPromptSetService` wraps `RedTeamClient.customAttacks` for prompt set CRUD, prompt CRUD, CSV upload, properties
 - 3 scan types: STATIC (attack library), DYNAMIC (agent-driven), CUSTOM (prompt sets)
 - `custom_prompt_sets` must be an array of UUID strings (not `{ uuid }` objects) — AIRS API returns 422 otherwise
 - ASR/score/threatRate from AIRS API are percentages (0-100), not ratios — render directly, don't multiply by 100
 - `listCustomAttacks()` uses `customAttackReports.listCustomAttacks()` for prompt-level results on CUSTOM scans
 - `waitForCompletion()` polls with configurable interval, throws on FAILED
-- CLI: `daystrom redteam {scan,status,report,list,targets,categories,abort}`
+- Target create/update accept `{ validate: true }` to validate connection before saving (SDK v0.6.0)
+- CLI subcommand groups: `targets {list,get,create,update,delete,probe,profile,update-profile}`, `prompt-sets {list,get,create,update,archive,download,upload}`, `prompts {list,get,add,update,delete}`, `properties {list,create,values,add-value}`
 
 ### LLM Service (`src/llm/`)
 - 6 providers: `claude-api` (default), `claude-vertex`, `claude-bedrock`, `gemini-api`, `gemini-vertex`, `gemini-bedrock`

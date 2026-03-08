@@ -8,6 +8,10 @@ import type {
   RedTeamService,
   RedTeamStaticReport,
   RedTeamTarget,
+  RedTeamTargetCreateRequest,
+  RedTeamTargetDetail,
+  RedTeamTargetUpdateRequest,
+  TargetOperationOptions,
 } from './types.js';
 
 const TERMINAL_STATUSES = new Set(['COMPLETED', 'PARTIALLY_COMPLETE', 'FAILED', 'ABORTED']);
@@ -27,6 +31,21 @@ function normalizeJob(raw: Record<string, unknown>): RedTeamJob {
     total: raw.total as number | null | undefined,
     completed: raw.completed as number | null | undefined,
     createdAt: raw.created_at as string | null | undefined,
+  };
+}
+
+/** Normalize an SDK target response into a RedTeamTargetDetail. */
+function normalizeTargetDetail(raw: Record<string, unknown>): RedTeamTargetDetail {
+  return {
+    uuid: raw.uuid as string,
+    name: raw.name as string,
+    status: raw.status as string,
+    targetType: raw.target_type as string | undefined,
+    active: raw.active as boolean,
+    connectionParams: raw.connection_params as Record<string, unknown> | undefined,
+    background: raw.background as RedTeamTargetDetail['background'],
+    additionalContext: raw.additional_context as RedTeamTargetDetail['additionalContext'],
+    metadata: raw.metadata as RedTeamTargetDetail['metadata'],
   };
 }
 
@@ -50,6 +69,50 @@ export class SdkRedTeamService implements RedTeamService {
       targetType: t.target_type as string | undefined,
       active: t.active as boolean,
     }));
+  }
+
+  async getTarget(uuid: string): Promise<RedTeamTargetDetail> {
+    const response = await this.client.targets.get(uuid);
+    return normalizeTargetDetail(response as unknown as Record<string, unknown>);
+  }
+
+  async createTarget(
+    request: RedTeamTargetCreateRequest,
+    opts?: TargetOperationOptions,
+  ): Promise<RedTeamTargetDetail> {
+    const response = await this.client.targets.create(request as never, opts);
+    return normalizeTargetDetail(response as unknown as Record<string, unknown>);
+  }
+
+  async updateTarget(
+    uuid: string,
+    request: RedTeamTargetUpdateRequest,
+    opts?: TargetOperationOptions,
+  ): Promise<RedTeamTargetDetail> {
+    const response = await this.client.targets.update(uuid, request as never, opts);
+    return normalizeTargetDetail(response as unknown as Record<string, unknown>);
+  }
+
+  async deleteTarget(uuid: string): Promise<void> {
+    await this.client.targets.delete(uuid);
+  }
+
+  async probeTarget(request: Record<string, unknown>): Promise<Record<string, unknown>> {
+    const response = await this.client.targets.probe(request as never);
+    return response as unknown as Record<string, unknown>;
+  }
+
+  async getTargetProfile(uuid: string): Promise<Record<string, unknown>> {
+    const response = await this.client.targets.getProfile(uuid);
+    return response as unknown as Record<string, unknown>;
+  }
+
+  async updateTargetProfile(
+    uuid: string,
+    request: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    const response = await this.client.targets.updateProfile(uuid, request as never);
+    return response as unknown as Record<string, unknown>;
   }
 
   async createScan(request: {
