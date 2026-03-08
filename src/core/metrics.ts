@@ -1,16 +1,19 @@
-import type { EfficacyMetrics, TestResult } from './types.js';
+import type { CategoryBreakdown, EfficacyMetrics, TestResult } from './types.js';
 
 export function computeMetrics(results: TestResult[]): EfficacyMetrics {
   let truePositives = 0;
   let trueNegatives = 0;
   let falsePositives = 0;
   let falseNegatives = 0;
+  let regressionCount = 0;
 
   for (const r of results) {
     if (r.testCase.expectedTriggered && r.actualTriggered) truePositives++;
     else if (!r.testCase.expectedTriggered && !r.actualTriggered) trueNegatives++;
     else if (!r.testCase.expectedTriggered && r.actualTriggered) falsePositives++;
     else if (r.testCase.expectedTriggered && !r.actualTriggered) falseNegatives++;
+
+    if (r.testCase.source === 'regression' && !r.correct) regressionCount++;
   }
 
   const totalPositives = truePositives + falseNegatives;
@@ -37,5 +40,30 @@ export function computeMetrics(results: TestResult[]): EfficacyMetrics {
     accuracy,
     coverage,
     f1Score,
+    regressionCount,
   };
+}
+
+/** Compute per-category error breakdown from test results. Sorted by error rate descending. */
+export function computeCategoryBreakdown(results: TestResult[]): CategoryBreakdown[] {
+  const map = new Map<string, { total: number; fp: number; fn: number }>();
+
+  for (const r of results) {
+    const cat = r.testCase.category;
+    const entry = map.get(cat) ?? { total: 0, fp: 0, fn: 0 };
+    entry.total++;
+    if (!r.testCase.expectedTriggered && r.actualTriggered) entry.fp++;
+    if (r.testCase.expectedTriggered && !r.actualTriggered) entry.fn++;
+    map.set(cat, entry);
+  }
+
+  return [...map.entries()]
+    .map(([category, { total, fp, fn }]) => ({
+      category,
+      total,
+      fp,
+      fn,
+      errorRate: total > 0 ? (fp + fn) / total : 0,
+    }))
+    .sort((a, b) => b.errorRate - a.errorRate);
 }

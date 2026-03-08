@@ -1,7 +1,7 @@
 {
   "name": "@cdot65/daystrom",
   "packageManager": "pnpm@10.6.5",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "Automated Prisma AIRS custom topic guardrail generator with iterative refinement",
   "type": "module",
   "main": "dist/index.js",
@@ -28,7 +28,8 @@
     "docker:build": "docker build -t daystrom:local .",
     "docker:build:amd64": "docker buildx build --platform linux/amd64 --load -t daystrom:local-amd64 .",
     "docker:build:arm64": "docker buildx build --platform linux/arm64 --load -t daystrom:local-arm64 .",
-    "docker:run": "docker run --rm -v ~/.daystrom:/root/.daystrom daystrom:local"
+    "docker:run": "docker run --rm -v ~/.daystrom:/root/.daystrom daystrom:local",
+    "docker:push:arm64": "./scripts/docker-push-arm64.sh"
   },
   "engines": {
     "node": ">=20.0.0"

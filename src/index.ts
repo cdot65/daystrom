@@ -41,9 +41,10 @@ export {
 } from './core/constraints.js';
 export type { LlmService, LoopDependencies } from './core/loop.js';
 export { runLoop } from './core/loop.js';
-export { computeMetrics } from './core/metrics.js';
+export { computeCategoryBreakdown, computeMetrics } from './core/metrics.js';
 export type {
   AnalysisReport,
+  CategoryBreakdown,
   CustomTopic,
   EfficacyMetrics,
   IterationResult,

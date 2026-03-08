@@ -34,6 +34,17 @@ export interface TestCase {
   prompt: string;
   expectedTriggered: boolean;
   category: string;
+  /** How this test entered the suite. Default: 'generated'. */
+  source?: 'generated' | 'carried-fp' | 'carried-fn' | 'regression';
+}
+
+/** Per-category error breakdown from a previous iteration's results. */
+export interface CategoryBreakdown {
+  category: string;
+  total: number;
+  fp: number;
+  fn: number;
+  errorRate: number;
 }
 
 export interface TestResult {
@@ -58,6 +69,8 @@ export interface EfficacyMetrics {
   accuracy: number;
   coverage: number;
   f1Score: number;
+  /** Count of regression-tier tests that failed (previously correct, now wrong). */
+  regressionCount: number;
 }
 
 export interface AnalysisReport {
@@ -102,6 +115,13 @@ export type LoopEvent =
   | { type: 'apply:complete'; topicId: string }
   | { type: 'test:progress'; completed: number; total: number }
   | { type: 'tests:accumulated'; newCount: number; totalCount: number; droppedCount: number }
+  | {
+      type: 'tests:composed';
+      generated: number;
+      carriedFailures: number;
+      regressionTier: number;
+      total: number;
+    }
   | { type: 'evaluate:complete'; metrics: EfficacyMetrics }
   | { type: 'analyze:complete'; analysis: AnalysisReport }
   | { type: 'iteration:complete'; result: IterationResult }

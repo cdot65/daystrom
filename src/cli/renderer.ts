@@ -49,11 +49,11 @@ export function renderMetrics(metrics: EfficacyMetrics): void {
   console.log(`    TPR:       ${(metrics.truePositiveRate * 100).toFixed(1)}%`);
   console.log(`    TNR:       ${(metrics.trueNegativeRate * 100).toFixed(1)}%`);
   console.log(`    F1 Score:  ${metrics.f1Score.toFixed(3)}`);
-  console.log(
-    chalk.dim(
-      `    TP: ${metrics.truePositives}  TN: ${metrics.trueNegatives}  FP: ${metrics.falsePositives}  FN: ${metrics.falseNegatives}`,
-    ),
-  );
+  let countsLine = `    TP: ${metrics.truePositives}  TN: ${metrics.trueNegatives}  FP: ${metrics.falsePositives}  FN: ${metrics.falseNegatives}`;
+  if (metrics.regressionCount > 0) {
+    countsLine += chalk.red(`  Regressions: ${metrics.regressionCount}`);
+  }
+  console.log(chalk.dim(countsLine));
 }
 
 /** Render analysis summary with FP/FN pattern details. */
@@ -442,6 +442,20 @@ export function renderScanProgress(job: {
 // ---------------------------------------------------------------------------
 // Guardrail loop rendering
 // ---------------------------------------------------------------------------
+
+/** Render test composition summary (carried failures + regression + generated). */
+export function renderTestsComposed(
+  generated: number,
+  carriedFailures: number,
+  regressionTier: number,
+  total: number,
+): void {
+  console.log(
+    chalk.dim(
+      `  Tests: ${generated} generated, ${carriedFailures} carried failures, ${regressionTier} regression, ${total} total`,
+    ),
+  );
+}
 
 /** Render accumulated test count with optional dropped info. */
 export function renderTestsAccumulated(

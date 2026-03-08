@@ -37,6 +37,7 @@ The generator yields events at each stage. Consumers (like the CLI renderer) ite
 | `iteration:start` | iteration number | Start of each iteration |
 | `generate:complete` | `CustomTopic` | After LLM generates or improves topic |
 | `apply:complete` | topic ID | After topic deployed to AIRS (yielded but intentionally unhandled in CLI) |
+| `tests:composed` | generated, carried failures, regression tier, total | After test suite composed from generated + carried FP/FN + regression tier (iteration 2+) |
 | `tests:accumulated` | new count, total count, dropped count | After test accumulation merges new + old tests (only when `accumulateTests` enabled, iteration 2+) |
 | `test:progress` | completed count, total | Per-test scan completion |
 | `evaluate:complete` | `EfficacyMetrics` | After metrics computed |
@@ -88,9 +89,29 @@ Each iteration makes up to four LLM calls, all using `withStructuredOutput(ZodSc
 3. **Analyze Results** -- examines false positives and false negatives for patterns (intent-aware: prioritizes FN reduction for block, FP reduction for allow)
 4. *(Post-loop)* **Extract Learnings** -- distills iteration history into reusable memory entries
 
-## Test Accumulation
+## Test Composition
 
-By default, test prompts are regenerated fresh each iteration. When `accumulateTests` is enabled in `UserInput`, tests carry forward across iterations:
+On iteration 2+, the test suite is automatically composed from three sources:
+
+1. **Carried failures** (always-on): FP and FN test cases from the previous iteration are re-tested to verify whether topic refinement resolved them. Tagged with `source: 'carried-fp'` or `'carried-fn'`.
+2. **Regression tier** (always-on): TP and TN (correct) test cases from the previous iteration are re-scanned. If they now fail, that's a regression. Tagged with `source: 'regression'`.
+3. **Fresh generated tests**: New tests from the LLM, informed by per-category error rates from the previous iteration (weighted generation). Tagged with `source: 'generated'`.
+
+All three pools are deduplicated case-insensitively by prompt text. Priority: carried failures > regression > generated.
+
+The `tests:composed` event reports the breakdown on each iteration 2+.
+
+### Weighted Category Generation
+
+On iteration 2+, `computeCategoryBreakdown()` computes per-category FP/FN error rates from the previous iteration's results. This breakdown is injected into the LLM test generation prompt, instructing it to generate proportionally more tests for weak categories.
+
+### Regression Tracking
+
+`EfficacyMetrics.regressionCount` counts regression-tier tests that failed (previously correct, now wrong after topic refinement). Regressions also count in the normal FP/FN tallies — the separate counter surfaces _how many_ failures were caused by topic changes vs. being new failures.
+
+## Test Accumulation (Legacy)
+
+The `accumulateTests` flag enables additional full-pool accumulation on top of the composition logic. When enabled, tests from all prior iterations are also merged (not just the previous iteration's failures and regressions):
 
 - **Deduplication**: case-insensitive by prompt text, new tests take priority over old
 - **Max cap**: optional `maxAccumulatedTests` limits total count, keeping newest first
@@ -103,6 +124,3 @@ const input: UserInput = {
   maxAccumulatedTests: 50, // optional cap
 };
 ```
-
-!!! info "Regression Detection"
-    Accumulation ensures prompts that triggered false positives/negatives in earlier iterations remain in the test pool, enabling regression detection when the topic definition changes.
