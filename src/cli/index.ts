@@ -14,7 +14,9 @@ const program = new Command();
 
 program
   .name('daystrom')
-  .description('CLI and library for Palo Alto Prisma AIRS — guardrail refinement, AI red teaming, model security scanning')
+  .description(
+    'CLI and library for Palo Alto Prisma AIRS — guardrail refinement, AI red teaming, model security scanning',
+  )
   .version('1.7.2');
 
 registerGenerateCommand(program);
