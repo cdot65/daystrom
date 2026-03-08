@@ -71,7 +71,7 @@
 }
 
 [data-md-color-scheme="slate"] .hero-logo {
-  filter: drop-shadow(0 4px 12px rgba(126, 87, 194, 0.4));
+  filter: drop-shadow(0 4px 12px rgba(126, 87, 194, 0.4)) invert(1) brightness(2);
 }
 
 /* ── Admonition accent colors ─────────────────────────────────────── */
