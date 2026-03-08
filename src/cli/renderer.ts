@@ -851,10 +851,17 @@ export function renderMsScanList(scans: ModelSecurityScan[]): void {
   }
   console.log(chalk.bold('\n  Model Security Scans:\n'));
   for (const s of scans) {
-    const statusColor =
-      s.status === 'COMPLETED' ? chalk.green : s.status === 'FAILED' ? chalk.red : chalk.yellow;
+    const outcomeColor =
+      s.evalOutcome === 'ALLOWED'
+        ? chalk.green
+        : s.evalOutcome === 'BLOCKED'
+          ? chalk.red
+          : chalk.yellow;
     console.log(`  ${chalk.dim(s.uuid)}`);
-    console.log(`    ${statusColor(s.status)}  ${chalk.dim(s.createdAt)}`);
+    console.log(
+      `    ${outcomeColor(s.evalOutcome)}  ${chalk.dim(s.scanOrigin)}  ${chalk.dim(s.createdAt)}`,
+    );
+    if (s.modelUri) console.log(`    ${chalk.dim(s.modelUri)}`);
     if (s.evalSummary) {
       const { rulesPassed, rulesFailed, totalRules } = s.evalSummary;
       console.log(
@@ -868,16 +875,24 @@ export function renderMsScanList(scans: ModelSecurityScan[]): void {
 /** Render full scan detail. */
 export function renderMsScanDetail(scan: ModelSecurityScan): void {
   console.log(chalk.bold('\n  Scan Detail:\n'));
-  console.log(`    UUID:    ${chalk.dim(scan.uuid)}`);
-  const statusColor =
-    scan.status === 'COMPLETED' ? chalk.green : scan.status === 'FAILED' ? chalk.red : chalk.yellow;
-  console.log(`    Status:  ${statusColor(scan.status)}`);
-  console.log(`    Created: ${chalk.dim(scan.createdAt)}`);
-  console.log(`    Updated: ${chalk.dim(scan.updatedAt)}`);
+  console.log(`    UUID:       ${chalk.dim(scan.uuid)}`);
+  const outcomeColor =
+    scan.evalOutcome === 'ALLOWED'
+      ? chalk.green
+      : scan.evalOutcome === 'BLOCKED'
+        ? chalk.red
+        : chalk.yellow;
+  console.log(`    Outcome:    ${outcomeColor(scan.evalOutcome)}`);
+  if (scan.modelUri) console.log(`    Model URI:  ${scan.modelUri}`);
+  console.log(`    Origin:     ${scan.scanOrigin}`);
+  console.log(`    Source:     ${scan.sourceType}`);
+  console.log(`    Group:      ${scan.securityGroupName}`);
+  console.log(`    Created:    ${chalk.dim(scan.createdAt)}`);
+  console.log(`    Updated:    ${chalk.dim(scan.updatedAt)}`);
   if (scan.evalSummary) {
     const { rulesPassed, rulesFailed, totalRules } = scan.evalSummary;
     console.log(
-      `    Rules:   ${chalk.green(`${rulesPassed} passed`)}  ${chalk.red(`${rulesFailed} failed`)}  / ${totalRules} total`,
+      `    Rules:      ${chalk.green(`${rulesPassed} passed`)}  ${chalk.red(`${rulesFailed} failed`)}  / ${totalRules} total`,
     );
   }
   if (scan.labels.length > 0) {
@@ -902,13 +917,9 @@ export function renderEvaluationList(evaluations: ModelSecurityEvaluation[]): vo
   console.log(chalk.bold('\n  Rule Evaluations:\n'));
   for (const e of evaluations) {
     const color =
-      e.evalOutcome === 'ALLOWED'
-        ? chalk.green
-        : e.evalOutcome === 'BLOCKED'
-          ? chalk.red
-          : chalk.yellow;
+      e.result === 'PASSED' ? chalk.green : e.result === 'FAILED' ? chalk.red : chalk.yellow;
     console.log(`  ${chalk.dim(e.uuid)}`);
-    console.log(`    ${e.ruleName}  ${color(e.evalOutcome)}`);
+    console.log(`    ${e.ruleName}  ${color(e.result)}  ${chalk.dim(e.ruleInstanceState)}`);
   }
   console.log();
 }
@@ -916,17 +927,19 @@ export function renderEvaluationList(evaluations: ModelSecurityEvaluation[]): vo
 /** Render a single evaluation detail. */
 export function renderEvaluationDetail(evaluation: ModelSecurityEvaluation): void {
   console.log(chalk.bold('\n  Evaluation Detail:\n'));
-  console.log(`    UUID:      ${chalk.dim(evaluation.uuid)}`);
-  console.log(`    Rule:      ${evaluation.ruleName}`);
-  console.log(`    Rule UUID: ${chalk.dim(evaluation.securityRuleUuid)}`);
+  console.log(`    UUID:           ${chalk.dim(evaluation.uuid)}`);
+  console.log(`    Rule:           ${evaluation.ruleName}`);
+  console.log(`    Description:    ${chalk.dim(evaluation.ruleDescription)}`);
+  console.log(`    Instance UUID:  ${chalk.dim(evaluation.ruleInstanceUuid)}`);
+  console.log(`    Instance State: ${evaluation.ruleInstanceState}`);
   const color =
-    evaluation.evalOutcome === 'ALLOWED'
+    evaluation.result === 'PASSED'
       ? chalk.green
-      : evaluation.evalOutcome === 'BLOCKED'
+      : evaluation.result === 'FAILED'
         ? chalk.red
         : chalk.yellow;
-  console.log(`    Outcome:   ${color(evaluation.evalOutcome)}`);
-  console.log(`    Result:    ${evaluation.result}`);
+  console.log(`    Result:         ${color(evaluation.result)}`);
+  console.log(`    Violations:     ${evaluation.violationCount}`);
   console.log();
 }
 
@@ -943,8 +956,9 @@ export function renderViolationList(violations: ModelSecurityViolation[]): void 
   console.log(chalk.bold('\n  Violations:\n'));
   for (const v of violations) {
     console.log(`  ${chalk.dim(v.uuid)}`);
-    console.log(`    ${chalk.red(v.ruleName)}  ${chalk.dim(v.filePath)}`);
+    console.log(`    ${chalk.red(v.ruleName)}  ${chalk.dim(v.file)}`);
     console.log(`    ${v.description}`);
+    console.log(`    Threat: ${chalk.dim(v.threat)}`);
   }
   console.log();
 }
@@ -954,8 +968,11 @@ export function renderViolationDetail(violation: ModelSecurityViolation): void {
   console.log(chalk.bold('\n  Violation Detail:\n'));
   console.log(`    UUID:        ${chalk.dim(violation.uuid)}`);
   console.log(`    Rule:        ${chalk.red(violation.ruleName)}`);
-  console.log(`    File:        ${violation.filePath}`);
-  console.log(`    Description: ${violation.description}`);
+  console.log(`    Description: ${violation.ruleDescription}`);
+  console.log(`    State:       ${violation.ruleInstanceState}`);
+  console.log(`    File:        ${violation.file}`);
+  console.log(`    Threat:      ${violation.threat}`);
+  console.log(`    Detail:      ${violation.description}`);
   console.log();
 }
 
@@ -972,8 +989,9 @@ export function renderFileList(files: ModelSecurityFile[]): void {
   console.log(chalk.bold('\n  Scanned Files:\n'));
   for (const f of files) {
     const color =
-      f.result === 'PASSED' ? chalk.green : f.result === 'FAILED' ? chalk.red : chalk.yellow;
-    console.log(`    ${color(f.result)}  ${f.type}  ${chalk.dim(f.filePath)}`);
+      f.result === 'SUCCESS' ? chalk.green : f.result === 'SKIPPED' ? chalk.yellow : chalk.red;
+    const formats = f.formats.length > 0 ? chalk.dim(` [${f.formats.join(', ')}]`) : '';
+    console.log(`    ${color(f.result)}  ${f.type}  ${f.path}${formats}`);
   }
   console.log();
 }

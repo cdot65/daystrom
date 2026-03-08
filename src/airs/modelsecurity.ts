@@ -80,7 +80,11 @@ function normalizeScan(raw: Record<string, unknown>): ModelSecurityScan {
   const summary = raw.eval_summary as Record<string, unknown> | null;
   return {
     uuid: raw.uuid as string,
-    status: raw.status as string,
+    evalOutcome: (raw.eval_outcome ?? '') as string,
+    modelUri: (raw.model_uri ?? '') as string,
+    scanOrigin: (raw.scan_origin ?? '') as string,
+    sourceType: (raw.source_type ?? '') as string,
+    securityGroupName: (raw.security_group_name ?? '') as string,
     evalSummary: summary
       ? {
           rulesFailed: (summary.rules_failed ?? 0) as number,
@@ -98,10 +102,12 @@ function normalizeScan(raw: Record<string, unknown>): ModelSecurityScan {
 function normalizeEvaluation(raw: Record<string, unknown>): ModelSecurityEvaluation {
   return {
     uuid: raw.uuid as string,
-    evalOutcome: raw.eval_outcome as string,
     result: raw.result as string,
-    securityRuleUuid: raw.security_rule_uuid as string,
+    violationCount: (raw.violation_count ?? 0) as number,
+    ruleInstanceUuid: (raw.rule_instance_uuid ?? '') as string,
     ruleName: raw.rule_name as string,
+    ruleDescription: (raw.rule_description ?? '') as string,
+    ruleInstanceState: (raw.rule_instance_state ?? '') as string,
   };
 }
 
@@ -109,17 +115,23 @@ function normalizeEvaluation(raw: Record<string, unknown>): ModelSecurityEvaluat
 function normalizeViolation(raw: Record<string, unknown>): ModelSecurityViolation {
   return {
     uuid: raw.uuid as string,
-    ruleName: raw.rule_name as string,
-    filePath: raw.file_path as string,
     description: raw.description as string,
+    threat: (raw.threat ?? '') as string,
+    threatDescription: (raw.threat_description ?? '') as string,
+    file: (raw.file ?? '') as string,
+    ruleName: raw.rule_name as string,
+    ruleDescription: (raw.rule_description ?? '') as string,
+    ruleInstanceState: (raw.rule_instance_state ?? '') as string,
   };
 }
 
 /** Normalize an SDK file response. */
 function normalizeFile(raw: Record<string, unknown>): ModelSecurityFile {
   return {
-    filePath: raw.file_path as string,
+    uuid: raw.uuid as string,
+    path: (raw.path ?? '') as string,
     type: raw.type as string,
+    formats: (raw.formats ?? []) as string[],
     result: raw.result as string,
   };
 }
