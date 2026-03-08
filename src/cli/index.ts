@@ -14,8 +14,10 @@ const program = new Command();
 
 program
   .name('daystrom')
-  .description('Automated Prisma AIRS custom topic guardrail generator')
-  .version('0.1.0');
+  .description(
+    'CLI and library for Palo Alto Prisma AIRS — guardrail refinement, AI red teaming, model security scanning',
+  )
+  .version('1.7.2');
 
 registerGenerateCommand(program);
 registerResumeCommand(program);
