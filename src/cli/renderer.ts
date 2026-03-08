@@ -435,6 +435,24 @@ export function renderCategories(
   }
 }
 
+/** Render prompt set list. */
+export function renderPromptSetList(
+  promptSets: Array<{ uuid: string; name: string; active: boolean }>,
+): void {
+  if (promptSets.length === 0) {
+    console.log(chalk.dim('  No prompt sets found.\n'));
+    return;
+  }
+  console.log(chalk.bold('\n  Prompt Sets:\n'));
+  for (const ps of promptSets) {
+    console.log(`  ${chalk.dim(ps.uuid)}`);
+    console.log(
+      `    ${ps.name}  ${statusColor(ps.active ? 'COMPLETED' : 'FAILED')(ps.active ? 'active' : 'inactive')}`,
+    );
+  }
+  console.log();
+}
+
 /** Render polling progress inline. */
 export function renderScanProgress(job: {
   status: string;

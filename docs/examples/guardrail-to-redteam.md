@@ -75,12 +75,30 @@ When the loop completes, Daystrom:
 2. Creates a custom prompt set named `pokemon-guardrail-tests` in AI Red Team
 3. Prints the prompt set name and prompt count
 
-Note the prompt set name — you'll need its UUID for Step 3.
+## Step 2: Find Your Prompt Set UUID
 
-!!! tip "Finding prompt set UUIDs"
-    Find your prompt set UUID in the Prisma AIRS console under **AI Red Team → Custom Attacks**. Copy the UUID from the prompt set detail page.
+Use `daystrom redteam prompt-sets` to list all custom prompt sets and find the UUID for the one you just created:
 
-## Step 2: Find Your Red Team Target
+```bash
+daystrom redteam prompt-sets
+```
+
+```
+  Prompt Sets:
+
+  c820d9b8-4342-4d9a-b0b4-6b2d9f5e04fb
+    pokemon-guardrail-tests  active
+  7829805d-6479-4ce1-866b-2bff66a3c766
+    daystrom-Explosives and Bomb-Making Discussions-ZdeHhCW  active
+  d68a14f5-cea3-4047-bedb-ae5726ba20d2
+    Saffron  inactive
+  a5847628-242b-43bb-a922-fa185a45011f
+    Recipes  inactive
+```
+
+Copy the UUID for `pokemon-guardrail-tests` — you'll pass it to the scan command in Step 4.
+
+## Step 3: Find Your Red Team Target
 
 List available targets to get the UUID for your AI application:
 
@@ -101,9 +119,9 @@ daystrom redteam targets
 
 Copy the target UUID for the next step.
 
-## Step 3: Launch a Custom Red Team Scan
+## Step 4: Launch a Custom Red Team Scan
 
-Run a CUSTOM scan using the prompt set UUID from Step 1 against your target.
+Run a CUSTOM scan using the prompt set UUID from Step 2 against your target from Step 3.
 
 By default, the CLI polls until the scan completes. Add `--no-wait` to submit and return immediately:
 
@@ -129,9 +147,9 @@ daystrom redteam scan \
   Run `daystrom redteam status <jobId>` to check progress.
 ```
 
-## Step 4: Check Scan Status
+## Step 5: Check Scan Status
 
-Poll progress using the job ID from Step 3:
+Poll progress using the job ID from Step 4:
 
 ```bash
 daystrom redteam status 304becf3-7090-413a-aa41-2cd327b7f0c5
@@ -167,7 +185,7 @@ daystrom redteam list --type CUSTOM --limit 3
     2026-03-08T10:37:56.654621Z
 ```
 
-## Step 5: View the Report
+## Step 6: View the Report
 
 Once the scan reaches `COMPLETED`, view the summary report:
 
@@ -232,7 +250,7 @@ Each prompt shows:
 - **ASR** — attack success rate across multiple attempts
 - **Goal** — the expected guardrail behavior (from Daystrom's test case generation)
 
-## Step 6: Iterate
+## Step 7: Iterate
 
 If the ASR is too high (meaning the target is vulnerable), you can:
 
@@ -265,8 +283,11 @@ daystrom generate \
   --create-prompt-set \
   --prompt-set-name "$PROMPT_SET_NAME"
 
-# 2. Find the prompt set UUID (from AIRS console or API)
-PROMPT_SET_UUID="<uuid-from-airs-console>"
+# 2. Find the prompt set UUID
+daystrom redteam prompt-sets
+# Copy the UUID for your prompt set from the output
+
+PROMPT_SET_UUID="<uuid-from-prompt-sets-output>"
 
 # 3. Find target UUID
 daystrom redteam targets

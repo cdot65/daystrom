@@ -1,4 +1,5 @@
 import type { Command } from 'commander';
+import { SdkPromptSetService } from '../../airs/promptsets.js';
 import { SdkRedTeamService } from '../../airs/redteam.js';
 import { loadConfig } from '../../config/loader.js';
 import {
@@ -7,6 +8,7 @@ import {
   renderCustomAttackList,
   renderCustomReport,
   renderError,
+  renderPromptSetList,
   renderRedteamHeader,
   renderScanList,
   renderScanProgress,
@@ -205,6 +207,30 @@ export function registerRedteamCommand(program: Command): void {
         const service = await createService();
         const categories = await service.getCategories();
         renderCategories(categories);
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  // -----------------------------------------------------------------------
+  // redteam prompt-sets — list custom prompt sets
+  // -----------------------------------------------------------------------
+  redteam
+    .command('prompt-sets')
+    .description('List custom prompt sets')
+    .action(async () => {
+      try {
+        renderRedteamHeader();
+        const config = await loadConfig();
+        const service = new SdkPromptSetService({
+          clientId: config.mgmtClientId,
+          clientSecret: config.mgmtClientSecret,
+          tsgId: config.mgmtTsgId,
+          tokenEndpoint: config.mgmtTokenEndpoint,
+        });
+        const sets = await service.listPromptSets();
+        renderPromptSetList(sets);
       } catch (err) {
         renderError(err instanceof Error ? err.message : String(err));
         process.exit(1);
