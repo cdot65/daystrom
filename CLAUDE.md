@@ -41,13 +41,14 @@ TypeScript ESM, Node 20+, pnpm. LangChain.js w/ structured output (Zod). `@cdot6
 
 ```
 src/
-├── cli/                   # CLI entry, 4 commands, interactive prompts, renderer
-│   ├── index.ts           # Commander program — registers generate/resume/report/list
+├── cli/                   # CLI entry, 5 command groups, interactive prompts, renderer
+│   ├── index.ts           # Commander program — registers generate/resume/report/list/redteam
 │   ├── commands/
 │   │   ├── generate.ts    # Main loop orchestration, wires all services
 │   │   ├── resume.ts      # Resume paused/failed run from disk
 │   │   ├── report.ts      # View run results by ID
-│   │   └── list.ts        # List all saved runs
+│   │   ├── list.ts        # List all saved runs
+│   │   └── redteam.ts     # Red team scan operations (7 subcommands)
 │   ├── prompts.ts         # Inquirer interactive input collection
 │   └── renderer.ts        # Terminal output (chalk)
 ├── config/
@@ -67,7 +68,8 @@ src/
 │   ├── scanner.ts         # AirsScanService + DebugScanService — syncScan + scanBatch
 │   ├── management.ts      # SdkManagementService — topic CRUD + profile linking
 │   ├── promptsets.ts      # SdkPromptSetService — custom prompt set CRUD via RedTeamClient
-│   └── types.ts           # ScanResult, ScanService, ManagementService, PromptSetService
+│   ├── redteam.ts         # SdkRedTeamService — red team scan CRUD, polling, reports
+│   └── types.ts           # ScanResult, ScanService, ManagementService, PromptSetService, RedTeamService
 ├── memory/
 │   ├── store.ts           # MemoryStore — file-based persistence, keyword category matching (≥50% overlap)
 │   ├── extractor.ts       # LearningExtractor — post-loop LLM extraction, merge/corroboration
@@ -118,6 +120,12 @@ tests/
 - AIRS rejects empty `topic-list` entries — only include entries with topics (no empty opposite-action entry)
 - Guardrail-level `action` must always be `'block'` to enforce violations
 - Topics can't be deleted while referenced by any profile revision
+
+### Red Team (`src/airs/redteam.ts`)
+- `SdkRedTeamService` wraps `RedTeamClient` for scan CRUD, polling, reports
+- 3 scan types: STATIC (attack library), DYNAMIC (agent-driven), CUSTOM (prompt sets)
+- `waitForCompletion()` polls with configurable interval, throws on FAILED
+- CLI: `daystrom redteam {scan,status,report,list,targets,categories,abort}`
 
 ### LLM Service (`src/llm/`)
 - 6 providers: `claude-api` (default), `claude-vertex`, `claude-bedrock`, `gemini-api`, `gemini-vertex`, `gemini-bedrock`

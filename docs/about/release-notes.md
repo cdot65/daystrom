@@ -1,5 +1,17 @@
 # Release Notes
 
+## v1.2.0
+
+### Features
+
+- **`daystrom redteam` command group**: Full AI Red Team scan operations — launch static/dynamic/custom scans, poll for completion, view reports with severity breakdowns and attack details, list targets and categories, abort running scans.
+- **`SdkRedTeamService`**: New service wrapping `RedTeamClient` for programmatic red team operations. Normalizes all SDK responses into clean TypeScript interfaces.
+- **7 subcommands**: `scan`, `status`, `report`, `list`, `targets`, `categories`, `abort`.
+
+### Tests
+
+- 255 tests across 19 spec files (up from 230), 100% coverage on new code.
+
 ## v1.1.2
 
 ### Bug Fixes

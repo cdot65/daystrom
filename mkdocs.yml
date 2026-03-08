@@ -87,6 +87,7 @@ nav:
       - Metrics & Evaluation: features/metrics.md
       - Topic Constraints: features/topic-constraints.md
       - Resumable Runs: features/resumable-runs.md
+      - Red Team Scanning: features/red-team.md
   - Reference:
       - CLI Commands: reference/cli-commands.md
       - Configuration Options: reference/configuration.md

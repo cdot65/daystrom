@@ -1,6 +1,6 @@
 /**
  * AIRS integration types — scan results and service interfaces for the
- * Prisma AIRS scanner and topic management APIs.
+ * Prisma AIRS scanner, topic management, and red team APIs.
  */
 
 import type {
@@ -57,6 +57,149 @@ export interface PromptSetService {
   /** List all custom prompt sets. */
   listPromptSets(): Promise<Array<{ uuid: string; name: string; active: boolean }>>;
 }
+
+// ---------------------------------------------------------------------------
+// Red Team types — normalized shapes for red team scan operations
+// ---------------------------------------------------------------------------
+
+/** Normalized red team job/scan info. */
+export interface RedTeamJob {
+  uuid: string;
+  name: string;
+  status: string;
+  jobType: string;
+  targetId: string;
+  targetName?: string;
+  score?: number | null;
+  asr?: number | null;
+  total?: number | null;
+  completed?: number | null;
+  createdAt?: string | null;
+}
+
+/** Normalized red team target info. */
+export interface RedTeamTarget {
+  uuid: string;
+  name: string;
+  status: string;
+  targetType?: string;
+  active: boolean;
+}
+
+/** Normalized attack category with subcategories. */
+export interface RedTeamCategory {
+  id: string;
+  displayName: string;
+  description?: string;
+  subCategories: Array<{
+    id: string;
+    displayName: string;
+    description?: string;
+  }>;
+}
+
+/** Normalized static report summary. */
+export interface RedTeamStaticReport {
+  score?: number | null;
+  asr?: number | null;
+  severityBreakdown: Array<{
+    severity: string;
+    successful: number;
+    failed: number;
+  }>;
+  reportSummary?: string | null;
+  categories: Array<{
+    id: string;
+    displayName: string;
+    asr: number;
+    successful: number;
+    failed: number;
+    total: number;
+  }>;
+}
+
+/** Normalized custom attack report summary. */
+export interface RedTeamCustomReport {
+  totalPrompts: number;
+  totalAttacks: number;
+  totalThreats: number;
+  failedAttacks: number;
+  score: number;
+  asr: number;
+  promptSets: Array<{
+    promptSetId: string;
+    promptSetName: string;
+    totalPrompts: number;
+    totalAttacks: number;
+    totalThreats: number;
+    threatRate: number;
+  }>;
+}
+
+/** Normalized attack list item. */
+export interface RedTeamAttack {
+  id: string;
+  name: string;
+  severity?: string;
+  category?: string;
+  subCategory?: string;
+  successful: boolean;
+}
+
+/** Contract for AI Red Team scan operations. */
+export interface RedTeamService {
+  /** List configured red team targets. */
+  listTargets(): Promise<RedTeamTarget[]>;
+
+  /** Create a red team scan job. */
+  createScan(request: {
+    name: string;
+    targetUuid: string;
+    jobType: string;
+    categories?: Record<string, unknown>;
+    customPromptSets?: string[];
+  }): Promise<RedTeamJob>;
+
+  /** Get scan status by job ID. */
+  getScan(jobId: string): Promise<RedTeamJob>;
+
+  /** List recent scans with optional filters. */
+  listScans(opts?: {
+    status?: string;
+    jobType?: string;
+    targetId?: string;
+    limit?: number;
+  }): Promise<RedTeamJob[]>;
+
+  /** Abort a running scan. */
+  abortScan(jobId: string): Promise<void>;
+
+  /** Get static scan report. */
+  getStaticReport(jobId: string): Promise<RedTeamStaticReport>;
+
+  /** Get custom attack report. */
+  getCustomReport(jobId: string): Promise<RedTeamCustomReport>;
+
+  /** List attacks from a scan. */
+  listAttacks(
+    jobId: string,
+    opts?: { severity?: string; limit?: number },
+  ): Promise<RedTeamAttack[]>;
+
+  /** List available attack categories. */
+  getCategories(): Promise<RedTeamCategory[]>;
+
+  /** Poll until scan completes. Calls onProgress for status updates. */
+  waitForCompletion(
+    jobId: string,
+    onProgress?: (job: RedTeamJob) => void,
+    intervalMs?: number,
+  ): Promise<RedTeamJob>;
+}
+
+// ---------------------------------------------------------------------------
+// Management service interface
+// ---------------------------------------------------------------------------
 
 /** Contract for AIRS topic CRUD and profile linking operations. */
 export interface ManagementService {
