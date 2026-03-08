@@ -44,6 +44,20 @@ export interface ScanService {
   ): Promise<ScanResult[]>;
 }
 
+/** Contract for custom prompt set operations in AI Red Team. */
+export interface PromptSetService {
+  /** Create a new custom prompt set. */
+  createPromptSet(name: string, description?: string): Promise<{ uuid: string; name: string }>;
+  /** Add a prompt to an existing prompt set. */
+  addPrompt(
+    promptSetId: string,
+    prompt: string,
+    goal?: string,
+  ): Promise<{ uuid: string; prompt: string }>;
+  /** List all custom prompt sets. */
+  listPromptSets(): Promise<Array<{ uuid: string; name: string; active: boolean }>>;
+}
+
 /** Contract for AIRS topic CRUD and profile linking operations. */
 export interface ManagementService {
   /** Create a new custom topic. */

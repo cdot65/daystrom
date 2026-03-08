@@ -1,6 +1,7 @@
 import type {
   CreateCustomTopicRequest,
   ManagementService,
+  PromptSetService,
   ScanResult,
   ScanService,
   SdkCustomTopic,
@@ -133,5 +134,21 @@ export function createMockAllowScanService(allowPatterns: RegExp[] = []): ScanSe
       }
       return results;
     },
+  };
+}
+
+export function createMockPromptSetService(): PromptSetService {
+  let promptSetCounter = 0;
+  let promptCounter = 0;
+  return {
+    createPromptSet: async (name: string) => ({
+      uuid: `ps-${++promptSetCounter}`,
+      name,
+    }),
+    addPrompt: async (_setId: string, prompt: string) => ({
+      uuid: `prompt-${++promptCounter}`,
+      prompt,
+    }),
+    listPromptSets: async () => [],
   };
 }

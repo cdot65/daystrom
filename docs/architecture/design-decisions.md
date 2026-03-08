@@ -100,12 +100,12 @@ const chain = llm.withStructuredOutput(TopicSchema, {
 
 ## 8. Event-Driven Architecture
 
-The `LoopEvent` union defines 11 event types. Of these, 9 are yielded by `runLoop()`:
+The `LoopEvent` union defines 12 event types. Of these, 10 are yielded by `runLoop()`:
 
 | Phase | Events |
 |-------|--------|
 | Per-iteration | `iteration:start`, `generate:complete`, `apply:complete`, `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete` |
-| Post-loop | `memory:extracted` (if memory enabled) |
+| Post-loop | `memory:extracted` (if memory enabled), `promptset:created` (if `--create-prompt-set`) |
 | Terminal | `loop:complete` |
 
 Two events are defined in the type union but not yielded by the loop:
@@ -155,6 +155,14 @@ When `accumulateTests` is enabled, test prompts carry forward across iterations 
 
 !!! tip "Cap Behavior"
     When `maxAccumulatedTests` is set, the newest tests are kept and oldest are dropped. This prevents unbounded growth while preserving the most relevant test cases.
+
+## 11. Custom Prompt Set Export
+
+When `--create-prompt-set` is passed, the loop auto-creates a custom prompt set in AI Runtime Security's Red Team module using the best iteration's test cases.
+
+**Rationale:** The test prompts generated during refinement are high-quality, topic-specific attack and benign prompts. Exporting them as a reusable prompt set closes the loop — Daystrom generates guardrails AND the test assets to validate them in production. This also validates the Management SDK's `RedTeamClient.customAttacks` API end-to-end.
+
+**Implementation:** After `loop:complete` is determined but before the event is yielded, the loop creates a prompt set via `PromptSetService.createPromptSet()`, then adds each test case as a prompt with a goal indicating whether it should trigger the guardrail.
 
 !!! abstract "Summary"
     The common thread across these decisions is **separation of concerns**: the loop generates events, the renderer displays them, the memory system persists learnings, and the config system resolves settings. Each subsystem is independently testable and replaceable.

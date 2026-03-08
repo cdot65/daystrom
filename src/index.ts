@@ -9,6 +9,7 @@
 // AIRS integration — scan prompts and manage topics/profiles via SDK
 // ---------------------------------------------------------------------------
 export { SdkManagementService } from './airs/management.js';
+export { SdkPromptSetService } from './airs/promptsets.js';
 export { AirsScanService } from './airs/scanner.js';
 
 // ---------------------------------------------------------------------------

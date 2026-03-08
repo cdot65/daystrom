@@ -64,9 +64,10 @@ src/
 │   ├── schemas.ts         # Zod output schemas for structured LLM responses
 │   └── prompts/           # ChatPromptTemplate definitions (4 files)
 ├── airs/
-│   ├── scanner.ts         # AirsScanService — syncScan + scanBatch w/ p-limit concurrency
+│   ├── scanner.ts         # AirsScanService + DebugScanService — syncScan + scanBatch
 │   ├── management.ts      # SdkManagementService — topic CRUD + profile linking
-│   └── types.ts           # ScanResult, ScanService, ManagementService interfaces
+│   ├── promptsets.ts      # SdkPromptSetService — custom prompt set CRUD via RedTeamClient
+│   └── types.ts           # ScanResult, ScanService, ManagementService, PromptSetService
 ├── memory/
 │   ├── store.ts           # MemoryStore — file-based persistence, keyword category matching (≥50% overlap)
 │   ├── extractor.ts       # LearningExtractor — post-loop LLM extraction, merge/corroboration
@@ -98,7 +99,7 @@ tests/
 
 ### Core Loop (`src/core/loop.ts`)
 - `runLoop()` async generator yields typed `LoopEvent` discriminated unions
-- Events yielded by `runLoop()`: `iteration:start`, `generate:complete`, `apply:complete`, `tests:accumulated` (if accumulation enabled, iter 2+), `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete`, `memory:extracted` (if memory enabled), `loop:complete`
+- Events yielded by `runLoop()`: `iteration:start`, `generate:complete`, `apply:complete`, `tests:accumulated` (if accumulation enabled, iter 2+), `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete`, `memory:extracted` (if memory enabled), `promptset:created` (if `--create-prompt-set`), `loop:complete`
 - Events defined in `LoopEvent` union but **not yielded** by `runLoop()`: `loop:paused` (reserved for future use), `memory:loaded` (emitted by CLI before loop starts)
 - `apply:complete` is yielded but intentionally unhandled in CLI commands (no user-facing output needed)
 - Topic name **locked after iteration 1** — only description+examples change thereafter
@@ -110,6 +111,7 @@ tests/
 - **Scanner**: `Scanner.syncScan()` via SDK, detection = `prompt_detected.topic_violation` (fallback: `topic_guardrails_details`), extracts `category` from response
 - **Allow-intent detection via `category`**: For allow topics, AIRS never sets `triggered: true` and `action` is unreliable. The loop uses `category === 'benign'` (topic matched) vs `'malicious'` (no match), falling back to `triggered` when `category` is absent
 - **`DebugScanService`**: Wrapper that appends raw scan responses to a JSONL file when `--debug-scans` is passed
+- **Prompt sets**: `SdkPromptSetService` wraps `RedTeamClient.customAttacks` for custom prompt set CRUD; `--create-prompt-set` auto-creates a prompt set from the best iteration's test cases
 - **Management**: `ManagementClient` for topic CRUD + profile linking via OAuth2
 - Profile updates create **new revisions with new UUIDs** — always reference profiles by name, never ID
 - Topics must be added to profile's `model-protection` → `topic-guardrails` → `topic-list`
