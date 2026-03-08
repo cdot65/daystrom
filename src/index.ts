@@ -9,6 +9,7 @@
 // AIRS integration — scan prompts and manage topics/profiles via SDK
 // ---------------------------------------------------------------------------
 export { SdkManagementService } from './airs/management.js';
+export { SdkModelSecurityService } from './airs/modelsecurity.js';
 export { SdkPromptSetService } from './airs/promptsets.js';
 export { SdkRedTeamService } from './airs/redteam.js';
 export { AirsScanService } from './airs/scanner.js';
@@ -16,6 +17,25 @@ export { AirsScanService } from './airs/scanner.js';
 // Core loop & metrics — the main generate→test→evaluate→improve cycle
 // ---------------------------------------------------------------------------
 export type {
+  ModelSecurityEvaluation,
+  ModelSecurityFile,
+  ModelSecurityFileListOptions,
+  ModelSecurityGroup,
+  ModelSecurityGroupCreateRequest,
+  ModelSecurityGroupListOptions,
+  ModelSecurityGroupUpdateRequest,
+  ModelSecurityLabel,
+  ModelSecurityPyPIAuth,
+  ModelSecurityRule,
+  ModelSecurityRuleEditableField,
+  ModelSecurityRuleInstance,
+  ModelSecurityRuleInstanceListOptions,
+  ModelSecurityRuleInstanceUpdateRequest,
+  ModelSecurityRuleListOptions,
+  ModelSecurityScan,
+  ModelSecurityScanListOptions,
+  ModelSecurityService,
+  ModelSecurityViolation,
   PromptDetail,
   PromptSetDetail,
   PromptSetService,

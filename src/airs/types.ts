@@ -369,6 +369,246 @@ export interface RedTeamService {
 }
 
 // ---------------------------------------------------------------------------
+// Model Security types — normalized shapes for model security operations
+// ---------------------------------------------------------------------------
+
+/** Normalized security group. */
+export interface ModelSecurityGroup {
+  uuid: string;
+  name: string;
+  description: string;
+  sourceType: string;
+  state: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Request to create a security group. */
+export interface ModelSecurityGroupCreateRequest {
+  name: string;
+  sourceType: string;
+  description?: string;
+  ruleConfigurations?: Record<string, Record<string, unknown>>;
+}
+
+/** Request to update a security group. */
+export interface ModelSecurityGroupUpdateRequest {
+  name?: string;
+  description?: string;
+}
+
+/** Filter options for listing security groups. */
+export interface ModelSecurityGroupListOptions {
+  sourceTypes?: string[];
+  searchQuery?: string;
+  sortField?: string;
+  sortDir?: string;
+  enabledRules?: string[];
+  skip?: number;
+  limit?: number;
+}
+
+/** Normalized security rule. */
+export interface ModelSecurityRule {
+  uuid: string;
+  name: string;
+  description: string;
+  ruleType: string;
+  compatibleSources: string[];
+  defaultState: string;
+  remediation: {
+    description: string;
+    steps: string[];
+    url: string;
+  };
+  editableFields: ModelSecurityRuleEditableField[];
+  constantValues: Record<string, unknown>;
+  defaultValues: Record<string, unknown>;
+}
+
+/** Editable field spec for a security rule. */
+export interface ModelSecurityRuleEditableField {
+  attributeName: string;
+  type: string;
+  displayName: string;
+  displayType: string;
+  description?: string;
+  dropdownValues?: Array<{ value: string; label: string }>;
+}
+
+/** Filter options for listing security rules. */
+export interface ModelSecurityRuleListOptions {
+  sourceType?: string;
+  searchQuery?: string;
+  skip?: number;
+  limit?: number;
+}
+
+/** Normalized rule instance within a security group. */
+export interface ModelSecurityRuleInstance {
+  uuid: string;
+  securityGroupUuid: string;
+  securityRuleUuid: string;
+  state: string;
+  createdAt: string;
+  updatedAt: string;
+  rule: Record<string, unknown>;
+  fieldValues: Record<string, unknown>;
+}
+
+/** Filter options for listing rule instances. */
+export interface ModelSecurityRuleInstanceListOptions {
+  securityRuleUuid?: string;
+  state?: string;
+  skip?: number;
+  limit?: number;
+}
+
+/** Request to update a rule instance. */
+export interface ModelSecurityRuleInstanceUpdateRequest {
+  state?: string;
+  fieldValues?: Record<string, unknown>;
+}
+
+/** Normalized model security scan. */
+export interface ModelSecurityScan {
+  uuid: string;
+  status: string;
+  evalSummary: {
+    rulesFailed: number;
+    rulesPassed: number;
+    totalRules: number;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+  labels: Array<{ key: string; value: string }>;
+}
+
+/** Filter options for listing scans. */
+export interface ModelSecurityScanListOptions {
+  evalOutcome?: string;
+  sourceType?: string;
+  scanOrigin?: string;
+  search?: string;
+  skip?: number;
+  limit?: number;
+}
+
+/** Normalized rule evaluation from a scan. */
+export interface ModelSecurityEvaluation {
+  uuid: string;
+  evalOutcome: string;
+  result: string;
+  securityRuleUuid: string;
+  ruleName: string;
+}
+
+/** Normalized violation from a scan. */
+export interface ModelSecurityViolation {
+  uuid: string;
+  ruleName: string;
+  filePath: string;
+  description: string;
+}
+
+/** Normalized scanned file from a scan. */
+export interface ModelSecurityFile {
+  filePath: string;
+  type: string;
+  result: string;
+}
+
+/** Filter options for listing scanned files. */
+export interface ModelSecurityFileListOptions {
+  type?: string;
+  result?: string;
+  skip?: number;
+  limit?: number;
+}
+
+/** Label key-value pair. */
+export interface ModelSecurityLabel {
+  key: string;
+  value: string;
+}
+
+/** PyPI authentication response. */
+export interface ModelSecurityPyPIAuth {
+  url: string;
+  expiresAt: string;
+}
+
+/** Paginated list result. */
+export interface PaginatedResult<T> {
+  totalItems: number;
+  [key: string]: T[] | number;
+}
+
+/** Contract for Model Security operations. */
+export interface ModelSecurityService {
+  listGroups(
+    opts?: ModelSecurityGroupListOptions,
+  ): Promise<{ totalItems: number; groups: ModelSecurityGroup[] }>;
+  getGroup(uuid: string): Promise<ModelSecurityGroup>;
+  createGroup(request: ModelSecurityGroupCreateRequest): Promise<ModelSecurityGroup>;
+  updateGroup(uuid: string, request: ModelSecurityGroupUpdateRequest): Promise<ModelSecurityGroup>;
+  deleteGroup(uuid: string): Promise<void>;
+
+  listRuleInstances(
+    groupUuid: string,
+    opts?: ModelSecurityRuleInstanceListOptions,
+  ): Promise<{ totalItems: number; ruleInstances: ModelSecurityRuleInstance[] }>;
+  getRuleInstance(groupUuid: string, instanceUuid: string): Promise<ModelSecurityRuleInstance>;
+  updateRuleInstance(
+    groupUuid: string,
+    instanceUuid: string,
+    request: ModelSecurityRuleInstanceUpdateRequest,
+  ): Promise<ModelSecurityRuleInstance>;
+
+  listRules(
+    opts?: ModelSecurityRuleListOptions,
+  ): Promise<{ totalItems: number; rules: ModelSecurityRule[] }>;
+  getRule(uuid: string): Promise<ModelSecurityRule>;
+
+  createScan(request: Record<string, unknown>): Promise<ModelSecurityScan>;
+  listScans(
+    opts?: ModelSecurityScanListOptions,
+  ): Promise<{ totalItems: number; scans: ModelSecurityScan[] }>;
+  getScan(uuid: string): Promise<ModelSecurityScan>;
+
+  getEvaluations(
+    scanUuid: string,
+    opts?: { skip?: number; limit?: number },
+  ): Promise<{ totalItems: number; evaluations: ModelSecurityEvaluation[] }>;
+  getEvaluation(uuid: string): Promise<ModelSecurityEvaluation>;
+
+  getViolations(
+    scanUuid: string,
+    opts?: { skip?: number; limit?: number },
+  ): Promise<{ totalItems: number; violations: ModelSecurityViolation[] }>;
+  getViolation(uuid: string): Promise<ModelSecurityViolation>;
+
+  getFiles(
+    scanUuid: string,
+    opts?: ModelSecurityFileListOptions,
+  ): Promise<{ totalItems: number; files: ModelSecurityFile[] }>;
+
+  addLabels(scanUuid: string, labels: ModelSecurityLabel[]): Promise<void>;
+  setLabels(scanUuid: string, labels: ModelSecurityLabel[]): Promise<void>;
+  deleteLabels(scanUuid: string, keys: string[]): Promise<void>;
+  getLabelKeys(opts?: {
+    skip?: number;
+    limit?: number;
+  }): Promise<{ totalItems: number; keys: string[] }>;
+  getLabelValues(
+    key: string,
+    opts?: { skip?: number; limit?: number },
+  ): Promise<{ totalItems: number; values: string[] }>;
+
+  getPyPIAuth(): Promise<ModelSecurityPyPIAuth>;
+}
+
+// ---------------------------------------------------------------------------
 // Management service interface
 // ---------------------------------------------------------------------------
 
