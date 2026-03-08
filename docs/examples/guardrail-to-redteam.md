@@ -77,10 +77,10 @@ When the loop completes, Daystrom:
 
 ## Step 2: Find Your Prompt Set UUID
 
-Use `daystrom redteam prompt-sets` to list all custom prompt sets and find the UUID for the one you just created:
+Use `daystrom redteam prompt-sets list` to list all custom prompt sets and find the UUID for the one you just created:
 
 ```bash
-daystrom redteam prompt-sets
+daystrom redteam prompt-sets list
 ```
 
 ```
@@ -103,7 +103,7 @@ Copy the UUID for `pokemon-guardrail-tests` — you'll pass it to the scan comma
 List available targets to get the UUID for your AI application:
 
 ```bash
-daystrom redteam targets
+daystrom redteam targets list
 ```
 
 ```
@@ -284,13 +284,13 @@ daystrom generate \
   --prompt-set-name "$PROMPT_SET_NAME"
 
 # 2. Find the prompt set UUID
-daystrom redteam prompt-sets
+daystrom redteam prompt-sets list
 # Copy the UUID for your prompt set from the output
 
 PROMPT_SET_UUID="<uuid-from-prompt-sets-output>"
 
 # 3. Find target UUID
-daystrom redteam targets
+daystrom redteam targets list
 
 # 4. Launch red team scan (async)
 daystrom redteam scan \
@@ -309,4 +309,4 @@ daystrom redteam report "$JOB_ID" --attacks
 ```
 
 !!! note "Replace placeholder values"
-    Replace `PROMPT_SET_UUID` and `JOB_ID` with the actual values from your run. Target UUIDs can be found with `daystrom redteam targets`.
+    Replace `PROMPT_SET_UUID` and `JOB_ID` with the actual values from your run. Target UUIDs can be found with `daystrom redteam targets list`.

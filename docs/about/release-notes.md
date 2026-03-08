@@ -1,5 +1,37 @@
 # Release Notes
 
+## v1.7.0
+
+### Features
+
+- **Red team target CRUD**: Full target lifecycle management — `create`, `get`, `update`, `delete` via CLI (`daystrom redteam targets <subcommand>`) and library API (`SdkRedTeamService`).
+- **Target connection validation**: `--validate` flag on `targets create` and `targets update` validates connectivity before saving (SDK v0.6.0 `TargetOperationOptions`).
+- **Target probe**: `daystrom redteam targets probe --config conn.json` tests a target connection without persisting.
+- **Target profile management**: `targets profile <uuid>` and `targets update-profile <uuid>` for target profiling configuration.
+- **Prompt set full CRUD**: `get`, `update`, `archive`/unarchive, `version-info`, CSV template download via `daystrom redteam prompt-sets <subcommand>`.
+- **CSV prompt upload**: `daystrom redteam prompt-sets upload <uuid> file.csv` for bulk prompt ingestion (SDK v0.6.0 `uploadPromptsCsv()`).
+- **Individual prompt CRUD**: `list`, `get`, `add`, `update`, `delete` prompts within sets via `daystrom redteam prompts <subcommand>`.
+- **Property management**: `daystrom redteam properties {list,create,values,add-value}` for custom attack property names and values.
+- **SDK upgrade**: `@cdot65/prisma-airs-sdk` v0.4.0 → v0.6.0 — fully typed target schemas (connection params, background, metadata, additional context), no breaking changes.
+
+### CLI Changes
+
+Existing flat commands refactored to subcommand groups:
+
+| Before (v1.6.0) | After (v1.7.0) |
+|-----------------|----------------|
+| `daystrom redteam targets` | `daystrom redteam targets list` |
+| `daystrom redteam prompt-sets` | `daystrom redteam prompt-sets list` |
+| — | `daystrom redteam targets {get,create,update,delete,probe,profile,update-profile}` |
+| — | `daystrom redteam prompt-sets {get,create,update,archive,download,upload}` |
+| — | `daystrom redteam prompts {list,get,add,update,delete}` |
+| — | `daystrom redteam properties {list,create,values,add-value}` |
+
+### Tests
+
+- 360 tests across 24 spec files (up from 333)
+- 100% coverage on `redteam.ts` and `promptsets.ts`
+
 ## v1.6.0
 
 ### Features

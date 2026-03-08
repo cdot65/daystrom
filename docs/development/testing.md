@@ -16,13 +16,15 @@ Tests live in `tests/`, mirroring the `src/` layout:
 
 ```
 tests/
-├── unit/                  16 spec files
-│   ├── airs/              scanner.spec.ts, management.spec.ts
+├── unit/                  22 spec files
+│   ├── airs/              scanner.spec.ts, management.spec.ts, redteam.spec.ts, promptsets.spec.ts
+│   ├── audit/             evaluator.spec.ts, runner.spec.ts, report.spec.ts
 │   ├── config/            schema.spec.ts, loader.spec.ts
 │   ├── core/              loop.spec.ts, metrics.spec.ts, constraints.spec.ts
 │   ├── llm/               provider.spec.ts, schemas.spec.ts, service.spec.ts, prompts.spec.ts
 │   ├── memory/            store.spec.ts, extractor.spec.ts, injector.spec.ts, diff.spec.ts
-│   └── persistence/       store.spec.ts
+│   ├── persistence/       store.spec.ts
+│   └── report/            json.spec.ts, html.spec.ts
 ├── integration/           loop.integration.spec.ts
 ├── e2e/                   vertex-provider.e2e.spec.ts (opt-in)
 └── helpers/               mocks.ts

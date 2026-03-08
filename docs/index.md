@@ -59,6 +59,20 @@ Daystrom is a CLI tool that takes a plain-English description of what you want t
 
     Optionally carry forward test prompts across iterations with dedup, catching regressions that fresh tests might miss.
 
+-   :material-sword:{ .lg .middle } **AI Red Teaming**
+
+    ---
+
+    Launch static, dynamic, and custom adversarial scans against AI targets. Full CRUD on targets, prompt sets, and prompts via `daystrom redteam`.
+
+    [:octicons-arrow-right-24: Red Team](features/red-team.md)
+
+-   :material-clipboard-check:{ .lg .middle } **Profile Audits**
+
+    ---
+
+    Evaluate all topics in a security profile at once. Per-topic metrics, composite scores, and cross-topic conflict detection via `daystrom audit`.
+
 </div>
 
 ---

@@ -10,9 +10,11 @@ src/
 ├── config/           Zod-validated config schema + cascade loader
 ├── core/             Async generator loop, efficacy metrics, AIRS constraints
 ├── llm/              LangChain provider factory, structured output, prompts
-├── airs/             Scanner (batch scan) and Management (topic CRUD + profiles)
+├── airs/             Scanner, Management (topic CRUD), Red Team (scan CRUD), Prompt Sets
 ├── memory/           Learning store, extractor, budget-aware injector
 ├── persistence/      JSON file store for run state
+├── audit/            Profile-level multi-topic evaluation + conflict detection
+├── report/           Structured evaluation reports (JSON/HTML)
 └── index.ts          Library re-exports
 ```
 
@@ -46,13 +48,15 @@ graph TD
 
 | Module | What it does |
 |--------|-------------|
-| **`cli/`** | Commander CLI with 4 commands (`generate`, `resume`, `report`, `list`), Inquirer prompts, and Chalk terminal output |
+| **`cli/`** | Commander CLI with 6 command groups (`generate`, `resume`, `report`, `list`, `audit`, `redteam`), Inquirer prompts, and Chalk terminal output |
 | **`config/`** | Zod schema with coercion and defaults; cascade loader merges CLI flags, env vars, config file, and defaults |
 | **`core/`** | AsyncGenerator loop that yields typed events, metric computation (TPR/TNR/F1), and AIRS constraint validation |
 | **`llm/`** | Factory for 6 LangChain providers, structured output with Zod schemas, and prompt templates for all 4 LLM calls |
-| **`airs/`** | Scan API with batched concurrency via `p-limit`, Management API for topic CRUD and profile linking via OAuth2 |
+| **`airs/`** | Scan API with batched concurrency via `p-limit`, Management API for topic CRUD and profile linking, Red Team service for scan CRUD/polling/reports, Prompt Set service for custom prompt set management |
 | **`memory/`** | File-based learning store, LLM-driven extraction after each run, and budget-aware injection into future prompts |
 | **`persistence/`** | `JsonFileStore` serializes `RunState` to `~/.daystrom/runs/` for pause/resume support |
+| **`audit/`** | Profile-level multi-topic evaluation — generates tests per topic, computes per-topic and composite metrics, detects cross-topic conflicts |
+| **`report/`** | Structured evaluation report generation — JSON and self-contained HTML output with iteration trends, metrics, and test details |
 
 ## Tech Stack
 
