@@ -2,6 +2,7 @@
 
 import 'dotenv/config';
 import { Command } from 'commander';
+import { registerAuditCommand } from './commands/audit.js';
 import { registerGenerateCommand } from './commands/generate.js';
 import { registerListCommand } from './commands/list.js';
 import { registerRedteamCommand } from './commands/redteam.js';
@@ -20,5 +21,6 @@ registerResumeCommand(program);
 registerReportCommand(program);
 registerListCommand(program);
 registerRedteamCommand(program);
+registerAuditCommand(program);
 
 program.parse();

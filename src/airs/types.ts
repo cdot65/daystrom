@@ -7,6 +7,7 @@ import type {
   CreateCustomTopicRequest,
   CustomTopic as SdkCustomTopic,
 } from '@cdot65/prisma-airs-sdk';
+import type { ProfileTopic } from '../audit/types.js';
 
 // ---------------------------------------------------------------------------
 // SDK re-exports — upstream types used across the AIRS layer
@@ -231,4 +232,6 @@ export interface ManagementService {
     topicName: string,
     action: 'allow' | 'block',
   ): Promise<void>;
+  /** List all topics configured in a profile with full details. */
+  getProfileTopics(profileName: string): Promise<ProfileTopic[]>;
 }

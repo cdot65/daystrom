@@ -41,13 +41,14 @@ TypeScript ESM, Node 20+, pnpm. LangChain.js w/ structured output (Zod). `@cdot6
 
 ```
 src/
-├── cli/                   # CLI entry, 5 command groups, interactive prompts, renderer
-│   ├── index.ts           # Commander program — registers generate/resume/report/list/redteam
+├── cli/                   # CLI entry, 6 command groups, interactive prompts, renderer
+│   ├── index.ts           # Commander program — registers generate/resume/report/list/audit/redteam
 │   ├── commands/
 │   │   ├── generate.ts    # Main loop orchestration, wires all services
 │   │   ├── resume.ts      # Resume paused/failed run from disk
 │   │   ├── report.ts      # View run results by ID
 │   │   ├── list.ts        # List all saved runs
+│   │   ├── audit.ts       # Profile-level multi-topic evaluation
 │   │   └── redteam.ts     # Red team scan operations (7 subcommands)
 │   ├── prompts.ts         # Inquirer interactive input collection
 │   └── renderer.ts        # Terminal output (chalk)
@@ -82,6 +83,11 @@ src/
 ├── persistence/
 │   ├── store.ts           # JsonFileStore — save/load/list RunState as JSON
 │   └── types.ts           # RunStore, RunStateSummary
+├── audit/
+│   ├── types.ts           # ProfileTopic, TopicAuditResult, ConflictPair, AuditResult, AuditEvent
+│   ├── evaluator.ts       # groupResultsByTopic, computeTopicAuditResults, computeCompositeMetrics, detectConflicts
+│   ├── runner.ts          # runAudit() async generator — yields AuditEvent
+│   └── report.ts          # buildAuditReportJson(), buildAuditReportHtml()
 ├── report/
 │   ├── types.ts           # ReportOutput, TestDetail, RunDiff, MetricsDelta
 │   ├── json.ts            # buildReportJson() — RunState → structured ReportOutput
@@ -89,8 +95,9 @@ src/
 └── index.ts               # Library exports
 
 tests/
-├── unit/                  # 19 spec files
+├── unit/                  # 22 spec files
 │   ├── airs/              # scanner.spec.ts, management.spec.ts
+│   ├── audit/             # evaluator.spec.ts, runner.spec.ts, report.spec.ts
 │   ├── config/            # schema.spec.ts, loader.spec.ts
 │   ├── core/              # loop.spec.ts, metrics.spec.ts, constraints.spec.ts
 │   ├── llm/               # provider.spec.ts, schemas.spec.ts, service.spec.ts, prompts.spec.ts
@@ -163,6 +170,13 @@ tests/
 - `buildReportHtml(report)` renders `ReportOutput` → self-contained HTML string
 - `--format json|html|terminal`, `--tests` for per-test details, `--diff <runId>` for run comparison
 - HTML includes embedded CSS, iteration trends table, metrics, test result tables, diff sections
+
+### Audit (`src/audit/`)
+- `runAudit()` async generator yields `AuditEvent` discriminated union: `topics:loaded`, `tests:generated`, `scan:progress`, `evaluate:complete`, `audit:complete`
+- Reads all topics from profile via `getProfileTopics()`, generates tests per topic (tagged with `targetTopic`), batch scans, evaluates per-topic + composite metrics
+- Allow-intent detection uses `category === 'benign'` (topic matched); block uses `triggered`
+- `detectConflicts()` finds FN/FP overlaps between topic pairs — same prompt failing as FN for topic A and FP for topic B
+- `getProfileTopics()` reads profile policy `model-protection → topic-guardrails → topic-list`, cross-references with `listTopics()` for full details
 
 ## AIRS Constraints (`src/core/constraints.ts`)
 
