@@ -1,3 +1,4 @@
+import * as fs from 'node:fs/promises';
 import { Content, init, Scanner } from '@cdot65/prisma-airs-sdk';
 import pLimit from 'p-limit';
 import type { ScanResult, ScanService } from './types.js';
@@ -21,12 +22,14 @@ export class AirsScanService implements ScanService {
     const action = response.action === 'block' ? 'block' : 'allow';
     const detected = response.prompt_detected as Record<string, unknown> | undefined;
     const triggered = !!(detected?.topic_guardrails_details || detected?.topic_violation);
+    const category = (response.category as string) ?? undefined;
 
     return {
       scanId: response.scan_id ?? '',
       reportId: response.report_id ?? '',
       action: action as 'allow' | 'block',
       triggered,
+      category,
       raw: response,
     };
   }
@@ -38,6 +41,42 @@ export class AirsScanService implements ScanService {
     sessionId?: string,
   ): Promise<ScanResult[]> {
     const limit = pLimit(concurrency);
+    return Promise.all(
+      prompts.map((prompt) => limit(() => this.scan(profileName, prompt, sessionId))),
+    );
+  }
+}
+
+/**
+ * Debug wrapper that delegates to an inner ScanService and appends
+ * each raw response + prompt to a JSONL file for offline inspection.
+ */
+export class DebugScanService implements ScanService {
+  constructor(
+    private inner: ScanService,
+    private filePath: string,
+  ) {}
+
+  async scan(profileName: string, prompt: string, sessionId?: string): Promise<ScanResult> {
+    const result = await this.inner.scan(profileName, prompt, sessionId);
+    const entry = JSON.stringify({
+      prompt,
+      profileName,
+      result,
+      raw: result.raw,
+      timestamp: Date.now(),
+    });
+    await fs.appendFile(this.filePath, `${entry}\n`);
+    return result;
+  }
+
+  async scanBatch(
+    profileName: string,
+    prompts: string[],
+    concurrency?: number,
+    sessionId?: string,
+  ): Promise<ScanResult[]> {
+    const limit = pLimit(concurrency ?? 5);
     return Promise.all(
       prompts.map((prompt) => limit(() => this.scan(profileName, prompt, sessionId))),
     );

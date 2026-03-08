@@ -1,6 +1,8 @@
+import * as path from 'node:path';
 import type { Command } from 'commander';
 import { SdkManagementService } from '../../airs/management.js';
-import { AirsScanService } from '../../airs/scanner.js';
+import { AirsScanService, DebugScanService } from '../../airs/scanner.js';
+import type { ScanService } from '../../airs/types.js';
 import { loadConfig } from '../../config/loader.js';
 import { runLoop } from '../../core/loop.js';
 import type { UserInput } from '../../core/types.js';
@@ -42,6 +44,7 @@ export function registerGenerateCommand(program: Command): void {
     .option('--max-accumulated-tests <n>', 'Max accumulated test count cap')
     .option('--memory', 'Enable learning memory (default)')
     .option('--no-memory', 'Disable learning memory')
+    .option('--debug-scans', 'Dump raw AIRS scan responses to JSONL for debugging', false)
     .action(async (opts) => {
       try {
         renderHeader();
@@ -92,7 +95,11 @@ export function registerGenerateCommand(program: Command): void {
 
         const llm = new LangChainLlmService(model, memoryInjector);
         if (!config.airsApiKey) throw new Error('PANW_AI_SEC_API_KEY is required');
-        const scanner = new AirsScanService(config.airsApiKey);
+        let scanner: ScanService = new AirsScanService(config.airsApiKey);
+        if (opts.debugScans) {
+          const debugPath = path.join(config.dataDir, '..', `debug-scans-${Date.now()}.jsonl`);
+          scanner = new DebugScanService(scanner, debugPath);
+        }
         const management = new SdkManagementService({
           clientId: config.mgmtClientId,
           clientSecret: config.mgmtClientSecret,

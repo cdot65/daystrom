@@ -71,6 +71,7 @@ export function createMockScanService(
         reportId: `report-${Date.now()}`,
         action: triggered ? 'block' : 'allow',
         triggered,
+        category: triggered ? 'malicious' : 'benign',
       };
     },
     scanBatch: async (
@@ -87,6 +88,7 @@ export function createMockScanService(
           reportId: `report-${Date.now()}`,
           action: triggered ? 'block' : 'allow',
           triggered,
+          category: triggered ? 'malicious' : 'benign',
         });
       }
       return results;
@@ -96,8 +98,9 @@ export function createMockScanService(
 
 /**
  * Mock scanner simulating AIRS allow-intent behavior.
- * Matching prompts → action: 'allow', triggered: false (no violation).
- * Non-matching prompts → action: 'block', triggered: false (blocked, no topic_violation).
+ * Matching prompts → category: 'benign' (content matched the allow topic).
+ * Non-matching prompts → category: 'malicious' (content not in allowed set).
+ * triggered is always false for allow topics; action is always 'allow'.
  */
 export function createMockAllowScanService(allowPatterns: RegExp[] = []): ScanService {
   return {
@@ -106,8 +109,9 @@ export function createMockAllowScanService(allowPatterns: RegExp[] = []): ScanSe
       return {
         scanId: `scan-${Date.now()}`,
         reportId: `report-${Date.now()}`,
-        action: matches ? 'allow' : 'block',
+        action: 'allow',
         triggered: false, // AIRS never sets topic_violation for allow-intent topics
+        category: matches ? 'benign' : 'malicious',
       };
     },
     scanBatch: async (
@@ -122,8 +126,9 @@ export function createMockAllowScanService(allowPatterns: RegExp[] = []): ScanSe
         results.push({
           scanId: `scan-${Date.now()}`,
           reportId: `report-${Date.now()}`,
-          action: matches ? 'allow' : 'block',
+          action: 'allow',
           triggered: false,
+          category: matches ? 'benign' : 'malicious',
         });
       }
       return results;

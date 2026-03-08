@@ -225,11 +225,16 @@ export async function* runLoop(
     for (let j = 0; j < allTests.length; j++) {
       const testCase = allTests[j];
       const scanResult = scanResults[j];
-      // For block intent: "triggered" means topic violation detected (matched blocked content).
-      // For allow intent: AIRS inverts the signal — matching allowed content yields action "allow"
-      // (no violation), so we derive "triggered" from the action field instead.
-      const actualTriggered =
-        input.intent === 'allow' ? scanResult.action === 'allow' : scanResult.triggered;
+      // Derive whether the topic guardrail matched this prompt.
+      // For allow intent: AIRS never sets triggered=true; use category field instead
+      // ("benign" = matched the allow topic, "malicious" = did not match).
+      // For block intent: use the triggered flag directly.
+      let actualTriggered: boolean;
+      if (input.intent === 'allow' && scanResult.category) {
+        actualTriggered = scanResult.category === 'benign';
+      } else {
+        actualTriggered = scanResult.triggered;
+      }
       testResults.push({
         testCase,
         actualTriggered,

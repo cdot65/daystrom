@@ -65,13 +65,17 @@ export class SdkManagementService implements ManagementService {
 
     if (!topicGuardrails) {
       topicGuardrails = {
-        action: 'allow',
+        action: 'block',
         name: 'topic-guardrails',
         options: [],
         'topic-list': [],
       };
       modelProtection.push(topicGuardrails);
     }
+
+    // Ensure the guardrail-level action is always 'block' so violations are enforced.
+    // The allow/block distinction is controlled by which topic-list entry the topic is in.
+    topicGuardrails.action = 'block';
 
     // Replace the entire topic-list with only the current topic under the given action.
     // The opposite action gets an empty list to ensure no stale topics remain.

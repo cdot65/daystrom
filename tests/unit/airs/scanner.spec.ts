@@ -1,5 +1,9 @@
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AirsScanService } from '../../../src/airs/scanner.js';
+import { AirsScanService, DebugScanService } from '../../../src/airs/scanner.js';
+import type { ScanResult, ScanService } from '../../../src/airs/types.js';
 
 // Mock the SDK
 const mockSyncScan = vi.fn();
@@ -106,6 +110,31 @@ describe('AirsScanService', () => {
         { sessionId: 'daystrom-abc1234-iter1' },
       );
     });
+
+    it('extracts category from response', async () => {
+      mockSyncScan.mockResolvedValue({
+        scan_id: 's1',
+        report_id: 'r1',
+        action: 'allow',
+        category: 'benign',
+        prompt_detected: {},
+      });
+
+      const result = await service.scan('prof', 'hello');
+      expect(result.category).toBe('benign');
+    });
+
+    it('returns undefined category when not in response', async () => {
+      mockSyncScan.mockResolvedValue({
+        scan_id: 's1',
+        report_id: 'r1',
+        action: 'allow',
+        prompt_detected: {},
+      });
+
+      const result = await service.scan('prof', 'hello');
+      expect(result.category).toBeUndefined();
+    });
   });
 
   describe('scanBatch', () => {
@@ -146,5 +175,81 @@ describe('AirsScanService', () => {
       await service.scanBatch('profile', prompts, 3);
       expect(maxConcurrent).toBeLessThanOrEqual(3);
     });
+  });
+});
+
+describe('DebugScanService', () => {
+  function createMockInner(): ScanService {
+    return {
+      scan: async (): Promise<ScanResult> => ({
+        scanId: 'scan-1',
+        reportId: 'report-1',
+        action: 'allow',
+        triggered: false,
+        category: 'benign',
+        raw: { some: 'data' },
+      }),
+      scanBatch: async (_p: string, prompts: string[]): Promise<ScanResult[]> =>
+        prompts.map(() => ({
+          scanId: 'scan-1',
+          reportId: 'report-1',
+          action: 'allow' as const,
+          triggered: false,
+          category: 'benign',
+          raw: { some: 'data' },
+        })),
+    };
+  }
+
+  it('delegates to inner scanner and returns result', async () => {
+    const tmpFile = path.join(os.tmpdir(), `debug-test-${Date.now()}.jsonl`);
+    const inner = createMockInner();
+    const debug = new DebugScanService(inner, tmpFile);
+
+    const result = await debug.scan('profile', 'hello');
+    expect(result.scanId).toBe('scan-1');
+    expect(result.category).toBe('benign');
+
+    // Clean up
+    await fs.unlink(tmpFile).catch(() => {});
+  });
+
+  it('writes JSONL entries to file', async () => {
+    const tmpFile = path.join(os.tmpdir(), `debug-test-${Date.now()}.jsonl`);
+    const inner = createMockInner();
+    const debug = new DebugScanService(inner, tmpFile);
+
+    await debug.scan('profile', 'prompt one');
+    await debug.scan('profile', 'prompt two');
+
+    const content = await fs.readFile(tmpFile, 'utf-8');
+    const lines = content.trim().split('\n');
+    expect(lines).toHaveLength(2);
+
+    const entry1 = JSON.parse(lines[0]);
+    expect(entry1.prompt).toBe('prompt one');
+    expect(entry1.profileName).toBe('profile');
+    expect(entry1.result).toBeDefined();
+    expect(entry1.timestamp).toBeTypeOf('number');
+
+    const entry2 = JSON.parse(lines[1]);
+    expect(entry2.prompt).toBe('prompt two');
+
+    await fs.unlink(tmpFile).catch(() => {});
+  });
+
+  it('scanBatch delegates through scan and writes entries', async () => {
+    const tmpFile = path.join(os.tmpdir(), `debug-test-${Date.now()}.jsonl`);
+    const inner = createMockInner();
+    const debug = new DebugScanService(inner, tmpFile);
+
+    const results = await debug.scanBatch('profile', ['a', 'b', 'c']);
+    expect(results).toHaveLength(3);
+
+    const content = await fs.readFile(tmpFile, 'utf-8');
+    const lines = content.trim().split('\n');
+    expect(lines).toHaveLength(3);
+
+    await fs.unlink(tmpFile).catch(() => {});
   });
 });
