@@ -28,6 +28,7 @@ export interface LlmService {
     topic: CustomTopic,
     results: TestResult[],
     metrics: EfficacyMetrics,
+    intent: string,
   ): Promise<AnalysisReport>;
   /** Refine a topic definition based on metrics and analysis from the previous iteration. */
   improveTopic(
@@ -37,6 +38,7 @@ export interface LlmService {
     results: TestResult[],
     iteration: number,
     targetCoverage: number,
+    intent: string,
   ): Promise<CustomTopic>;
 }
 
@@ -87,6 +89,7 @@ export async function* runLoop(
   let currentTopic: CustomTopic | null = null;
   let topicId = '';
   let lockedName = '';
+  let accumulatedTests: TestCase[] = [];
 
   for (let i = 1; i <= maxIterations; i++) {
     const iterationStart = Date.now();
@@ -111,6 +114,7 @@ export async function* runLoop(
         prevIteration.testResults,
         i,
         targetCoverage,
+        input.intent,
       );
       // Force the name to stay consistent across iterations
       currentTopic = { ...currentTopic, name: lockedName };
@@ -172,7 +176,40 @@ export async function* runLoop(
 
     // Step 3: Generate test cases
     const { positiveTests, negativeTests } = await deps.llm.generateTests(topic, input.intent);
-    const allTests = [...positiveTests, ...negativeTests];
+    const newTests = [...positiveTests, ...negativeTests];
+
+    let allTests: TestCase[];
+    if (input.accumulateTests && i > 1) {
+      const seen = new Set<string>();
+      const merged: TestCase[] = [];
+      for (const t of newTests) {
+        const key = t.prompt.toLowerCase().trim();
+        if (!seen.has(key)) {
+          seen.add(key);
+          merged.push(t);
+        }
+      }
+      for (const t of accumulatedTests) {
+        const key = t.prompt.toLowerCase().trim();
+        if (!seen.has(key)) {
+          seen.add(key);
+          merged.push(t);
+        }
+      }
+      // Apply max cap — keep newest first (already ordered: new then old)
+      const maxCap = input.maxAccumulatedTests;
+      const preCapCount = merged.length;
+      allTests = maxCap && merged.length > maxCap ? merged.slice(0, maxCap) : merged;
+      yield {
+        type: 'tests:accumulated',
+        newCount: newTests.length,
+        totalCount: allTests.length,
+        droppedCount: preCapCount - allTests.length,
+      };
+    } else {
+      allTests = newTests;
+    }
+    accumulatedTests = allTests;
 
     // Step 4: Run scans
     const sessionId = `daystrom-${runState.id.slice(0, 7)}-iter${i}`;
@@ -205,7 +242,7 @@ export async function* runLoop(
     yield { type: 'evaluate:complete', metrics };
 
     // Step 6: Analyze
-    const analysis = await deps.llm.analyzeResults(topic, testResults, metrics);
+    const analysis = await deps.llm.analyzeResults(topic, testResults, metrics, input.intent);
     yield { type: 'analyze:complete', analysis };
 
     // Record iteration

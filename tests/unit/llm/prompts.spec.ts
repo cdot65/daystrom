@@ -48,6 +48,7 @@ describe('prompt templates', () => {
     expect(vars).toContain('topicDescription');
     expect(vars).toContain('falsePositives');
     expect(vars).toContain('falseNegatives');
+    expect(vars).toContain('intent');
     expect(vars).toContain('memorySection');
   });
 
@@ -57,6 +58,7 @@ describe('prompt templates', () => {
     expect(vars).toContain('currentDescription');
     expect(vars).toContain('currentExamples');
     expect(vars).toContain('iteration');
+    expect(vars).toContain('intent');
     expect(vars).toContain('memorySection');
   });
 });

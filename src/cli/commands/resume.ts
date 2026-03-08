@@ -15,6 +15,7 @@ import {
   renderLoopComplete,
   renderMetrics,
   renderTestProgress,
+  renderTestsAccumulated,
   renderTopic,
 } from '../renderer.js';
 
@@ -86,6 +87,9 @@ export function registerResumeCommand(program: Command): void {
               break;
             case 'generate:complete':
               renderTopic(event.topic);
+              break;
+            case 'tests:accumulated':
+              renderTestsAccumulated(event.newCount, event.totalCount, event.droppedCount);
               break;
             case 'test:progress':
               renderTestProgress(event.completed, event.total);

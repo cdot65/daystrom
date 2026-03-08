@@ -16,6 +16,12 @@ Focus on improving only the description and examples:
 - Adding examples that cover missed patterns (false negatives)
 - Removing or replacing examples that cause over-matching
 - Using clear, unambiguous language
+
+Intent: {intent}
+
+Refinement strategy:
+- "block" (blacklist): Widen coverage to catch more violating content. Broaden examples for missed patterns. A missed threat (FN) is worse than an over-trigger (FP).
+- "allow" (whitelist): Tighten precision so only truly matching content passes. Sharpen description to reduce false positives. A wrongly blocked conversation (FP) is worse than a miss (FN).
 {memorySection}`,
   ],
   [
@@ -26,6 +32,7 @@ Current Definition:
 - Name: {currentName}
 - Description: {currentDescription}
 - Examples: {currentExamples}
+- Intent: {intent}
 
 Performance (iteration {iteration}):
 - Coverage: {coverage} (target: {targetCoverage})

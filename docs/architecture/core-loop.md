@@ -37,6 +37,7 @@ The generator yields events at each stage of the loop. Consumers (e.g., the CLI 
 | `iteration:start` | iteration number | Start of each iteration |
 | `generate:complete` | `CustomTopic` | After LLM generates or improves topic |
 | `apply:complete` | topic ID | After topic deployed to AIRS (yielded but intentionally unhandled in CLI) |
+| `tests:accumulated` | new count, total count, dropped count | After test accumulation merges new + old tests (only when `accumulateTests` enabled, iteration 2+) |
 | `test:progress` | completed count, total | Per-test scan completion |
 | `evaluate:complete` | `EfficacyMetrics` | After metrics computed |
 | `analyze:complete` | `AnalysisReport` | After FP/FN analysis |
@@ -84,5 +85,24 @@ Each iteration makes up to four LLM calls, all using `withStructuredOutput(ZodSc
 
 1. **Generate / Improve Topic** -- produces a `CustomTopic` (name, description, examples)
 2. **Generate Test Cases** -- produces positive and negative test prompts
-3. **Analyze Results** -- examines false positives and false negatives for patterns
+3. **Analyze Results** -- examines false positives and false negatives for patterns (intent-aware: prioritizes FN reduction for block, FP reduction for allow)
 4. *(Post-loop)* **Extract Learnings** -- distills iteration history into reusable memory entries
+
+## Test Accumulation
+
+By default, test prompts are regenerated fresh each iteration. When `accumulateTests` is enabled in `UserInput`, tests carry forward across iterations:
+
+- **Deduplication**: case-insensitive by prompt text, new tests take priority over old
+- **Max cap**: optional `maxAccumulatedTests` limits total count, keeping newest first
+- **Event**: `tests:accumulated` is yielded on iterations 2+ with new/total/dropped counts
+
+```typescript
+const input: UserInput = {
+  // ...
+  accumulateTests: true,
+  maxAccumulatedTests: 50, // optional cap
+};
+```
+
+!!! info "Regression Detection"
+    Accumulation ensures prompts that triggered false positives/negatives in earlier iterations remain in the test pool, enabling regression detection when the topic definition changes.

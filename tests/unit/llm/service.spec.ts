@@ -194,7 +194,7 @@ describe('LangChainLlmService', () => {
     it('returns analysis report', async () => {
       const model = createMockModel(validAnalysis);
       const service = new LangChainLlmService(model as BaseChatModel);
-      const result = await service.analyzeResults(validTopic, [], metrics);
+      const result = await service.analyzeResults(validTopic, [], metrics, 'block');
       expect(result.summary).toBe('Good performance');
       expect(result.suggestions).toHaveLength(1);
     });
@@ -215,7 +215,7 @@ describe('LangChainLlmService', () => {
         },
       ];
       // Should not throw — verifies FPs/FNs are formatted correctly
-      const result = await service.analyzeResults(validTopic, results, metrics);
+      const result = await service.analyzeResults(validTopic, results, metrics, 'block');
       expect(result.summary).toBe('Good performance');
     });
 
@@ -223,14 +223,21 @@ describe('LangChainLlmService', () => {
       const model = createMockModel(validAnalysis);
       const service = new LangChainLlmService(model as BaseChatModel);
       // Should not throw — verifies 'None' is used for empty FPs/FNs
-      const result = await service.analyzeResults(validTopic, [], metrics);
+      const result = await service.analyzeResults(validTopic, [], metrics, 'block');
+      expect(result.summary).toBe('Good performance');
+    });
+
+    it('passes intent to analyzeResults prompt', async () => {
+      const model = createMockModel(validAnalysis);
+      const service = new LangChainLlmService(model as BaseChatModel);
+      const result = await service.analyzeResults(validTopic, [], metrics, 'allow');
       expect(result.summary).toBe('Good performance');
     });
 
     it('throws after 3 failures', async () => {
       const model = createFailingModel(new Error('analysis fail'));
       const service = new LangChainLlmService(model as BaseChatModel);
-      await expect(service.analyzeResults(validTopic, [], metrics)).rejects.toThrow(
+      await expect(service.analyzeResults(validTopic, [], metrics, 'block')).rejects.toThrow(
         'analysis fail',
       );
     });
@@ -259,7 +266,7 @@ describe('LangChainLlmService', () => {
       const longDesc = 'X'.repeat(300);
       const model = createMockModel({ name: 'Weapons', description: longDesc, examples: ['ex'] });
       const service = new LangChainLlmService(model as BaseChatModel);
-      const result = await service.improveTopic(validTopic, metrics, analysis, [], 2, 0.9);
+      const result = await service.improveTopic(validTopic, metrics, analysis, [], 2, 0.9, 'block');
       expect(result.description.length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH);
     });
 
@@ -277,24 +284,31 @@ describe('LangChainLlmService', () => {
         ),
       };
       const service = new LangChainLlmService(model as BaseChatModel);
-      const result = await service.improveTopic(validTopic, metrics, analysis, [], 2, 0.9);
+      const result = await service.improveTopic(validTopic, metrics, analysis, [], 2, 0.9, 'block');
       expect(result.name).toBe('Weapons');
     });
 
     it('throws after 3 failures', async () => {
       const model = createFailingModel(new Error('improve fail'));
       const service = new LangChainLlmService(model as BaseChatModel);
-      await expect(service.improveTopic(validTopic, metrics, analysis, [], 2, 0.9)).rejects.toThrow(
-        'improve fail',
-      );
+      await expect(
+        service.improveTopic(validTopic, metrics, analysis, [], 2, 0.9, 'block'),
+      ).rejects.toThrow('improve fail');
     });
 
     it('throws after 3 validation failures (empty name survives clamping)', async () => {
       const model = createMockModel({ name: '', description: 'valid', examples: ['ex'] });
       const service = new LangChainLlmService(model as BaseChatModel);
-      await expect(service.improveTopic(validTopic, metrics, analysis, [], 2, 0.9)).rejects.toThrow(
-        'violates constraints',
-      );
+      await expect(
+        service.improveTopic(validTopic, metrics, analysis, [], 2, 0.9, 'block'),
+      ).rejects.toThrow('violates constraints');
+    });
+
+    it('passes intent to improveTopic prompt', async () => {
+      const model = createMockModel(validTopic);
+      const service = new LangChainLlmService(model as BaseChatModel);
+      const result = await service.improveTopic(validTopic, metrics, analysis, [], 2, 0.9, 'allow');
+      expect(result.name).toBe('Weapons');
     });
 
     it('uses "None" when FP/FN patterns are empty', async () => {

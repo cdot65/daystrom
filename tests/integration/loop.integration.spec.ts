@@ -32,14 +32,22 @@ function createDeterministicLlm(): LlmService {
       ],
     }),
 
-    analyzeResults: async () => ({
+    analyzeResults: async (_topic, _results, _metrics, _intent) => ({
       summary: `Iteration analysis: some edge cases need work`,
       falsePositivePatterns: ['Catches "arms" in non-weapon contexts'],
       falseNegativePatterns: ['Misses knife-related content'],
       suggestions: ['Narrow description to exclude non-weapon uses of arms'],
     }),
 
-    improveTopic: async () => {
+    improveTopic: async (
+      _topic,
+      _metrics,
+      _analysis,
+      _results,
+      _iteration,
+      _targetCoverage,
+      _intent,
+    ) => {
       callCount++;
       return {
         name: `Weapons Discussion v${callCount + 1}`,
@@ -139,6 +147,92 @@ describe('Loop Integration', () => {
       expect(evalEvent.metrics.falseNegatives).toBe(3);
       expect(evalEvent.metrics.trueNegatives).toBe(4);
       expect(evalEvent.metrics.falsePositives).toBe(0);
+    }
+  });
+
+  it('threads allow intent through the full loop', async () => {
+    const scanner = createMockScanService([/weapon/i]);
+    const llm = createDeterministicLlm();
+    const deps: LoopDependencies = {
+      llm,
+      management: createMockManagementService(),
+      scanner,
+      propagationDelayMs: 0,
+    };
+    const input: UserInput = {
+      topicDescription: 'Allow only weapons discussions',
+      intent: 'allow',
+      profileName: 'allow-test',
+      maxIterations: 2,
+      targetCoverage: 0.99,
+    };
+    const events: LoopEvent[] = [];
+    for await (const event of runLoop(input, deps)) {
+      events.push(event);
+    }
+    expect(events.some((e) => e.type === 'loop:complete')).toBe(true);
+  });
+
+  it('accumulates tests across 3 iterations with growing count', async () => {
+    let testCall = 0;
+    const llm: LlmService = {
+      generateTopic: async () => ({
+        name: 'Weapons Discussion',
+        description: 'Block weapons',
+        examples: ['weapon example'],
+      }),
+      generateTests: async () => {
+        testCall++;
+        return {
+          positiveTests: [
+            { prompt: `Unique pos ${testCall}`, expectedTriggered: true, category: 'direct' },
+          ],
+          negativeTests: [
+            { prompt: `Unique neg ${testCall}`, expectedTriggered: false, category: 'benign' },
+          ],
+        };
+      },
+      analyzeResults: async () => ({
+        summary: 'Needs improvement',
+        falsePositivePatterns: [],
+        falseNegativePatterns: [],
+        suggestions: ['improve'],
+      }),
+      improveTopic: async () => ({
+        name: 'Weapons Discussion',
+        description: 'Improved weapons block',
+        examples: ['weapon example improved'],
+      }),
+    };
+
+    const deps: LoopDependencies = {
+      llm,
+      management: createMockManagementService(),
+      scanner: createMockScanService([]),
+      propagationDelayMs: 0,
+    };
+
+    const input: UserInput = {
+      topicDescription: 'Block weapons',
+      intent: 'block',
+      profileName: 'accum-test',
+      maxIterations: 3,
+      targetCoverage: 0.99,
+      accumulateTests: true,
+    };
+
+    const events: LoopEvent[] = [];
+    for await (const event of runLoop(input, deps)) {
+      events.push(event);
+    }
+
+    const accumulated = events.filter((e) => e.type === 'tests:accumulated');
+    expect(accumulated).toHaveLength(2); // iter 2 and 3
+    if (accumulated[0]?.type === 'tests:accumulated') {
+      expect(accumulated[0].totalCount).toBe(4); // 2 + 2
+    }
+    if (accumulated[1]?.type === 'tests:accumulated') {
+      expect(accumulated[1].totalCount).toBe(6); // 2 + 4
     }
   });
 });

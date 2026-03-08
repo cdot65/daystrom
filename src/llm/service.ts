@@ -144,6 +144,7 @@ export class LangChainLlmService implements LlmService {
     topic: CustomTopic,
     results: TestResult[],
     metrics: EfficacyMetrics,
+    intent: string,
   ): Promise<AnalysisReport> {
     const structured = this.model.withStructuredOutput(AnalysisReportSchema);
     const chain = analyzeResultsPrompt.pipe(structured);
@@ -169,6 +170,7 @@ export class LangChainLlmService implements LlmService {
             fns.length > 0
               ? fns.map((r) => `- "${r.testCase.prompt}" (${r.testCase.category})`).join('\n')
               : 'None',
+          intent,
           memorySection: this.memorySection,
         });
         return raw as unknown as AnalysisReportOutput;
@@ -188,6 +190,7 @@ export class LangChainLlmService implements LlmService {
     results: TestResult[],
     iteration: number,
     targetCoverage: number,
+    intent: string,
   ): Promise<CustomTopic> {
     const structured = this.model.withStructuredOutput(CustomTopicSchema);
     const chain = improveTopicPrompt.pipe(structured);
@@ -213,6 +216,7 @@ export class LangChainLlmService implements LlmService {
           specificFPs: fps.map((r) => `- "${r.testCase.prompt}"`).join('\n') || 'None',
           specificFNs: fns.map((r) => `- "${r.testCase.prompt}"`).join('\n') || 'None',
           suggestions: analysis.suggestions.join('; '),
+          intent,
           memorySection: this.memorySection,
         });
         const result = clampTopic(raw as unknown as CustomTopicOutput);

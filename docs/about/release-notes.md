@@ -1,5 +1,18 @@
 # Release Notes
 
+## v1.1.0
+
+### Features
+
+- **Intent-aware refinement**: `analyzeResults()` and `improveTopic()` now receive the guardrail intent (`block`/`allow`), enabling the LLM to prioritize the correct error type during refinement — FN reduction for block guardrails, FP reduction for allow guardrails
+- **Test accumulation**: new `--accumulate-tests` flag carries test prompts forward across iterations with case-insensitive deduplication for regression detection
+- **Max accumulated tests cap**: `--max-accumulated-tests <n>` limits growth of accumulated test pool
+- **`tests:accumulated` event**: new loop event reports new/total/dropped test counts when accumulation is active
+
+### Tests
+
+- 206 tests across 17 spec files (up from 192)
+
 ## v1.0.8
 
 ### Documentation

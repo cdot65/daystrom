@@ -22,6 +22,7 @@ import {
   renderMemoryLoaded,
   renderMetrics,
   renderTestProgress,
+  renderTestsAccumulated,
   renderTopic,
 } from '../renderer.js';
 
@@ -37,6 +38,8 @@ export function registerGenerateCommand(program: Command): void {
     .option('--intent <intent>', 'Intent: block or allow')
     .option('--max-iterations <n>', 'Max iterations', '20')
     .option('--target-coverage <n>', 'Target coverage %', '90')
+    .option('--accumulate-tests', 'Carry forward test prompts across iterations', false)
+    .option('--max-accumulated-tests <n>', 'Max accumulated test count cap')
     .option('--memory', 'Enable learning memory (default)')
     .option('--no-memory', 'Disable learning memory')
     .action(async (opts) => {
@@ -58,6 +61,10 @@ export function registerGenerateCommand(program: Command): void {
             profileName: opts.profile,
             maxIterations: Number.parseInt(opts.maxIterations, 10),
             targetCoverage: Number.parseInt(opts.targetCoverage, 10) / 100,
+            accumulateTests: opts.accumulateTests ?? false,
+            maxAccumulatedTests: opts.maxAccumulatedTests
+              ? Number.parseInt(opts.maxAccumulatedTests, 10)
+              : undefined,
           };
         } else {
           userInput = await collectUserInput();
@@ -118,6 +125,9 @@ export function registerGenerateCommand(program: Command): void {
               break;
             case 'generate:complete':
               renderTopic(event.topic);
+              break;
+            case 'tests:accumulated':
+              renderTestsAccumulated(event.newCount, event.totalCount, event.droppedCount);
               break;
             case 'test:progress':
               renderTestProgress(event.completed, event.total);

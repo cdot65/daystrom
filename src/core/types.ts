@@ -21,6 +21,8 @@ export interface UserInput {
   profileName: string;
   maxIterations?: number;
   targetCoverage?: number;
+  accumulateTests?: boolean;
+  maxAccumulatedTests?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -97,6 +99,7 @@ export type LoopEvent =
   | { type: 'generate:complete'; topic: CustomTopic }
   | { type: 'apply:complete'; topicId: string }
   | { type: 'test:progress'; completed: number; total: number }
+  | { type: 'tests:accumulated'; newCount: number; totalCount: number; droppedCount: number }
   | { type: 'evaluate:complete'; metrics: EfficacyMetrics }
   | { type: 'analyze:complete'; analysis: AnalysisReport }
   | { type: 'iteration:complete'; result: IterationResult }
