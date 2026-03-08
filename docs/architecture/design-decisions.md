@@ -100,14 +100,20 @@ const chain = llm.withStructuredOutput(TopicSchema, {
 
 ## 8. Event-Driven Architecture
 
-The loop emits 11 distinct event types covering the full lifecycle:
+The `LoopEvent` union defines 11 event types. Of these, 9 are yielded by `runLoop()`:
 
 | Phase | Events |
 |-------|--------|
-| Setup | `memory:loaded` |
 | Per-iteration | `iteration:start`, `generate:complete`, `apply:complete`, `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete` |
-| Terminal | `loop:complete`, `loop:paused` |
-| Teardown | `memory:extracted` |
+| Post-loop | `memory:extracted` (if memory enabled) |
+| Terminal | `loop:complete` |
+
+Two events are defined in the type union but not yielded by the loop:
+
+| Event | Status |
+|-------|--------|
+| `memory:loaded` | Emitted by CLI command before the loop starts |
+| `loop:paused` | Reserved for future use |
 
 **Rationale:** Fine-grained events enable rich progress reporting (the CLI shows per-test scan progress), clean separation of concerns (renderer knows nothing about LLM calls), and future extensibility (logging, metrics dashboards, web UIs) without modifying the core loop.
 

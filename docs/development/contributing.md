@@ -45,6 +45,7 @@ pnpm run format     # Format all files
     All of the following must pass before merge:
 
     - Biome lint (`pnpm run lint`)
+    - Biome format check (`pnpm run format:check`)
     - TypeScript type-check (`pnpm tsc --noEmit`)
     - Full test suite (`pnpm test`)
     - Docs build (if docs changed)
