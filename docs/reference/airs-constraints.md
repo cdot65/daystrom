@@ -1,27 +1,27 @@
 # AIRS Constraints
 
-Prisma AIRS enforces hard limits on custom topic definitions. Daystrom validates and auto-clamps topics to fit within these boundaries.
+Prisma AIRS enforces hard limits on custom topic definitions. Daystrom validates and auto-clamps topics to fit within these boundaries before every API call.
 
 ---
 
 ## Limits
 
 | Constraint | Limit |
-|-----------|-------|
-| Topic name | 100 characters max |
-| Description | 250 characters max |
-| Each example | 250 characters max |
+|-----------|------:|
+| Topic name | 100 characters |
+| Description | 250 characters |
+| Each example | 250 characters |
 | Number of examples | 2--5 |
-| Combined total (description + all examples) | 1000 characters max |
+| Combined total (description + all examples) | 1000 characters |
 
 !!! warning "Byte length"
-    The combined total is calculated using **UTF-8 byte length**, not character count. Multi-byte characters (emoji, CJK, accented letters) consume more than one unit toward the 1000 limit.
+    The combined total uses **UTF-8 byte length**, not character count. Multi-byte characters (emoji, CJK, accented letters) consume more than one unit toward the 1000 limit.
 
 ---
 
 ## Automatic Clamping
 
-`clampTopic()` in `src/llm/service.ts` enforces limits after every LLM response:
+`clampTopic()` enforces limits after every LLM response:
 
 1. **Truncate name** to 100 characters
 2. **Truncate each example** to 250 characters
@@ -34,7 +34,7 @@ LLM output → clampTopic() → AIRS-compliant topic
 
 ### Why Post-LLM Clamping?
 
-The LLM routinely exceeds the 250-char description limit when generating natural language descriptions. Constraining via Zod schema validation alone would reject otherwise valid responses. Post-processing allows the LLM to generate freely while guaranteeing AIRS compatibility.
+The LLM routinely exceeds the 250-char description limit when writing natural language. Rejecting the entire response via Zod validation would force expensive retries. Post-processing lets the LLM generate freely while guaranteeing AIRS compatibility on every call.
 
 !!! note
     Constraints are defined in `src/core/constraints.ts` and imported by the LLM service and test suites.
@@ -43,7 +43,7 @@ The LLM routinely exceeds the 250-char description limit when generating natural
 
 ## Profile Integration
 
-Topics are deployed into an AIRS security profile following this structure:
+Topics are deployed into an AIRS security profile:
 
 ```
 profile
@@ -56,8 +56,8 @@ profile
 ### Key Behaviors
 
 - **Profile updates create new revisions** with new UUIDs. Always reference profiles by **name**, never by ID.
-- **Topics cannot be deleted** while referenced by any profile revision.
-- After deploying a topic, Daystrom waits `propagationDelayMs` (default: 10 seconds) before scanning to allow AIRS propagation.
+- **Topics can't be deleted** while referenced by any profile revision.
+- After deploying a topic, Daystrom waits `propagationDelayMs` (default: 10s) before scanning.
 
-!!! danger "Do not reference profiles by UUID"
-    Each profile update generates a new revision with a new UUID. Storing or referencing a profile by its UUID will break on the next update. Use the profile **name** as the stable identifier.
+!!! danger "Never reference profiles by UUID"
+    Each profile update generates a new revision with a new UUID. Storing or referencing a profile by UUID will break on the next update. Use the profile **name** as the stable identifier.

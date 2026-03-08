@@ -2,7 +2,7 @@
 
 ## Branch Naming
 
-Prefix personal branches with `cdot65/`:
+Prefix personal branches with your username:
 
 ```bash
 git checkout -b cdot65/feature-name
@@ -10,12 +10,11 @@ git checkout -b cdot65/feature-name
 
 ## Code Style
 
-- **Biome** handles both linting and formatting
-- TypeScript strict mode is enabled project-wide
+Biome handles both linting and formatting. TypeScript strict mode is enabled project-wide.
 
 ```bash
-pnpm run lint       # Check for lint issues
-pnpm run lint:fix   # Auto-fix lint issues
+pnpm run lint       # Check for issues
+pnpm run lint:fix   # Auto-fix
 pnpm run format     # Format all files
 ```
 
@@ -36,27 +35,26 @@ pnpm run format     # Format all files
 
 ## PR Guidelines
 
-- Keep PRs focused on a single change
+- Keep PRs focused — one logical change per PR
 - Include tests for new functionality
-- Ensure all CI checks pass (lint, typecheck, test, docs build)
-- Update documentation if behavior changes
+- Ensure all CI checks pass
+- Update docs if behavior changes
 
-!!! warning "CI Requirements"
-    All of the following must pass before merge:
+!!! warning "CI must pass"
+    All of these are required before merge:
 
-    - Biome lint (`pnpm run lint`)
-    - Biome format check (`pnpm run format:check`)
-    - TypeScript type-check (`pnpm tsc --noEmit`)
-    - Full test suite (`pnpm test`)
+    - `pnpm run lint` — Biome lint
+    - `pnpm run format:check` — Biome format
+    - `pnpm tsc --noEmit` — TypeScript type-check
+    - `pnpm test` — Full test suite
     - Docs build (if docs changed)
 
 ## Commit Messages
 
-- Use concise commit messages
-- Start with a verb: `add`, `fix`, `update`, `refactor`, etc.
+Use concise messages starting with a verb:
 
-| Prefix | Use case |
-|--------|----------|
+| Prefix | When to use |
+|--------|------------|
 | `add` | New feature or file |
 | `fix` | Bug fix |
 | `update` | Enhancement to existing feature |

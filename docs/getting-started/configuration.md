@@ -4,19 +4,21 @@ title: Configuration
 
 # Configuration
 
+Daystrom is designed to work with minimal setup. All settings have sensible defaults — only credentials are strictly required.
+
 ## Config Cascade
 
-Daystrom resolves configuration in priority order:
+Settings are resolved in priority order (highest wins):
 
 ```
 CLI flags  >  Environment variables  >  ~/.daystrom/config.json  >  Zod defaults
 ```
 
-Higher-priority sources override lower ones. All fields have sensible defaults via the Zod schema, so only credentials are strictly required.
+This means a `--provider` flag always beats an env var, which always beats the config file.
 
 ## Config File
 
-Create `~/.daystrom/config.json` for persistent defaults:
+For settings you use across every run, create `~/.daystrom/config.json`:
 
 ```json title="~/.daystrom/config.json"
 {
@@ -42,18 +44,22 @@ Create `~/.daystrom/config.json` for persistent defaults:
 !!! note "Claude Vertex region"
     The `claude-vertex` provider defaults to the `global` region, not `us-central1`. Override with `GOOGLE_CLOUD_LOCATION` if needed.
 
+For detailed provider setup, see [LLM Providers](../providers/overview.md).
+
 ## Tuning Parameters
 
-| Env Var | Config Key | Default | Description |
+These settings control how Daystrom interacts with AIRS and the memory system.
+
+| Env Var | Config Key | Default | What it does |
 |---------|-----------|---------|-------------|
-| `SCAN_CONCURRENCY` | `scanConcurrency` | `5` | Parallel scan requests (1--20) |
-| `PROPAGATION_DELAY_MS` | `propagationDelayMs` | `10000` | Wait after topic deploy (ms) |
-| `MAX_MEMORY_CHARS` | `maxMemoryChars` | `3000` | Memory injection budget (500--10000) |
-| `MEMORY_ENABLED` | `memoryEnabled` | `true` | Enable cross-run learning |
+| `SCAN_CONCURRENCY` | `scanConcurrency` | `5` | Parallel scan requests per batch (1--20) |
+| `PROPAGATION_DELAY_MS` | `propagationDelayMs` | `10000` | Wait time after topic deploy, in ms |
+| `MAX_MEMORY_CHARS` | `maxMemoryChars` | `3000` | Character budget for memory injection (500--10000) |
+| `MEMORY_ENABLED` | `memoryEnabled` | `true` | Toggle cross-run learning on/off |
 | `ACCUMULATE_TESTS` | `accumulateTests` | `false` | Carry forward tests across iterations |
 | `MAX_ACCUMULATED_TESTS` | `maxAccumulatedTests` | unlimited | Cap on accumulated test count |
-| `DATA_DIR` | `dataDir` | `~/.daystrom/runs` | Run state directory |
-| `MEMORY_DIR` | `memoryDir` | `~/.daystrom/memory` | Learning store directory |
+| `DATA_DIR` | `dataDir` | `~/.daystrom/runs` | Where run states are saved |
+| `MEMORY_DIR` | `memoryDir` | `~/.daystrom/memory` | Where learnings are stored |
 
 !!! tip "Concurrency vs. rate limits"
     Keep `scanConcurrency` at 5 or lower to avoid AIRS rate limiting. Increase only if your tenant has elevated quotas.

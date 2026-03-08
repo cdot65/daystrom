@@ -1,6 +1,6 @@
 # Design Decisions
 
-This page documents key architectural decisions in Daystrom and the rationale behind each.
+The "why" behind Daystrom's architecture. Each decision below was made deliberately — this page explains the trade-offs.
 
 ## 1. Async Generator Loop
 

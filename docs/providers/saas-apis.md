@@ -1,6 +1,6 @@
 # SaaS APIs
 
-The SaaS API providers (`claude-api` and `gemini-api`) connect directly to the Anthropic and Google AI Studio APIs. These are the simplest providers to configure -- just an API key.
+The simplest way to get started. The `claude-api` and `gemini-api` providers connect directly to Anthropic and Google AI Studio — all you need is an API key.
 
 ---
 

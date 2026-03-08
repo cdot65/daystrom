@@ -4,13 +4,15 @@ title: Installation
 
 # Installation
 
+Get Daystrom running in under 5 minutes. Choose between npm (recommended) or Docker.
+
 ## Prerequisites
 
-| Requirement | Minimum Version | Notes |
-|------------|----------------|-------|
-| **Node.js** | >= 20 | LTS recommended — verify with `node -v` |
-| **Prisma AIRS access** | -- | Scan API key + Management API OAuth2 credentials |
-| **LLM provider credentials** | -- | At least one supported provider (see [Configuration](configuration.md)) |
+Before you begin, make sure you have:
+
+- **Node.js 20+** (LTS recommended) — check with `node -v`
+- **Prisma AIRS access** — scan API key + management API OAuth2 credentials
+- **LLM provider credentials** — at least one supported provider ([see options](configuration.md#llm-providers))
 
 ## Install from npm
 
@@ -18,24 +20,24 @@ title: Installation
 npm install -g @cdot65/daystrom
 ```
 
-Verify:
+Verify the installation:
 
 ```bash
 daystrom --version
 daystrom --help
 ```
 
-!!! tip "npx"
-    Run without installing globally:
+!!! tip "Try without installing"
+    Run Daystrom once without a global install:
     ```bash
     npx @cdot65/daystrom generate
     ```
 
-## Platform Notes
+## Set Up Credentials
+
+Daystrom needs credentials for both the LLM provider and AIRS APIs. The fastest way is an `.env` file or shell exports.
 
 === "macOS / Linux"
-
-    No additional setup required. Set credentials via environment variables or a `.env` file in your working directory:
 
     ```bash
     export ANTHROPIC_API_KEY=sk-ant-...
@@ -56,7 +58,7 @@ daystrom --help
     ```
 
     !!! note "Windows path length"
-        If you encounter `ENAMETOOLONG` errors, enable long paths in Windows:
+        If you encounter `ENAMETOOLONG` errors, enable long paths:
         ```powershell
         # Run as Administrator
         New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
@@ -75,9 +77,23 @@ daystrom --help
 
 All five credential values are required for a functional run. The LLM key depends on your chosen provider — see the [provider table](configuration.md#llm-providers) for alternatives to `ANTHROPIC_API_KEY`.
 
+---
+
 ## Docker
 
-No Node.js required — just Docker. Multi-arch image supports both amd64 (Intel) and arm64 (Apple Silicon, Graviton).
+No Node.js required — just Docker. The multi-arch image supports both amd64 (Intel) and arm64 (Apple Silicon, Graviton).
+
+First, create a `.env` file with your credentials:
+
+```dotenv title=".env"
+ANTHROPIC_API_KEY=sk-ant-...
+PANW_AI_SEC_API_KEY=your-scan-api-key
+PANW_MGMT_CLIENT_ID=your-client-id
+PANW_MGMT_CLIENT_SECRET=your-client-secret
+PANW_MGMT_TSG_ID=your-tsg-id
+```
+
+Then run Daystrom:
 
 ```bash
 docker run --rm --env-file .env \
@@ -88,23 +104,7 @@ docker run --rm --env-file .env \
   --intent block
 ```
 
-Create a `.env` file with your credentials:
-
-```dotenv title=".env"
-ANTHROPIC_API_KEY=sk-ant-...
-PANW_AI_SEC_API_KEY=your-scan-api-key
-PANW_MGMT_CLIENT_ID=your-client-id
-PANW_MGMT_CLIENT_SECRET=your-client-secret
-PANW_MGMT_TSG_ID=your-tsg-id
-```
-
-The `-v ~/.daystrom:/root/.daystrom` mount persists run state and learnings between containers.
-
-!!! tip "Other commands"
-    ```bash
-    docker run --rm -v ~/.daystrom:/root/.daystrom ghcr.io/cdot65/daystrom list
-    docker run --rm -v ~/.daystrom:/root/.daystrom ghcr.io/cdot65/daystrom report <runId>
-    ```
+The `-v` mount persists run state and learnings between containers.
 
 !!! tip "Shell alias"
     Add to your `.bashrc` / `.zshrc` for convenience:
@@ -113,17 +113,21 @@ The `-v ~/.daystrom:/root/.daystrom` mount persists run state and learnings betw
     ```
     Then use `daystrom generate`, `daystrom list`, etc.
 
-## Data Locations
+---
 
-Daystrom stores config, run state, and learnings under `~/.daystrom/`:
+## Where Data Lives
 
-| Path | Purpose |
-|------|---------|
-| `~/.daystrom/config.json` | Persistent configuration |
-| `~/.daystrom/runs/` | Saved run states (JSON per run) |
-| `~/.daystrom/memory/` | Cross-run learnings (JSON per category) |
+Daystrom stores everything under `~/.daystrom/`:
+
+| Path | What's in it |
+|------|-------------|
+| `~/.daystrom/config.json` | Your persistent settings |
+| `~/.daystrom/runs/` | Saved run states (one JSON per run) |
+| `~/.daystrom/memory/` | Cross-run learnings (one JSON per topic category) |
 
 On Windows, `~` resolves to `%USERPROFILE%` (typically `C:\Users\<username>`).
+
+---
 
 ## Install from Source
 
@@ -138,11 +142,9 @@ cp .env.example .env
 
 Requires **pnpm >= 8** (`corepack enable` to install).
 
-### Build & Run
-
 === "Development"
 
-    Run directly via `tsx` without a build step:
+    Run directly via `tsx` — no build step needed:
 
     ```bash
     pnpm run generate
@@ -150,19 +152,17 @@ Requires **pnpm >= 8** (`corepack enable` to install).
 
 === "Production"
 
-    Compile TypeScript first, then run the built output:
+    Compile TypeScript, then run the output:
 
     ```bash
     pnpm run build
     node dist/cli/index.js generate
     ```
 
-### Verify
+Verify everything works:
 
 ```bash
-pnpm test          # All tests
-pnpm run lint      # Lint
-pnpm tsc --noEmit  # Type-check
+pnpm test          # All tests (no AIRS creds needed)
+pnpm run lint      # Lint check
+pnpm tsc --noEmit  # Type check
 ```
-
-All three should pass cleanly on a fresh clone with no configuration required.

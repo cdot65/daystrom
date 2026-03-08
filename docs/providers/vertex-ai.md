@@ -1,6 +1,6 @@
 # Vertex AI
 
-The Vertex AI providers (`claude-vertex` and `gemini-vertex`) run models through Google Cloud's Vertex AI platform. Both use **Application Default Credentials (ADC)** for authentication.
+Run models through Google Cloud's Vertex AI platform. Both `claude-vertex` and `gemini-vertex` use **Application Default Credentials (ADC)** — no API keys to manage.
 
 ## Prerequisites
 

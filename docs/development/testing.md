@@ -30,19 +30,19 @@ tests/
 
 ## Mocking
 
-- **MSW** (Mock Service Worker) intercepts HTTP requests -- no real AIRS credentials needed
-- Unit and integration tests run fully offline
-- E2E tests require real Vertex AI credentials (opt-in via separate config)
+**MSW** (Mock Service Worker) intercepts all HTTP requests — no real AIRS credentials needed for unit or integration tests.
 
-!!! info "No credentials needed for unit tests"
-    All HTTP calls to AIRS and LLM APIs are intercepted by MSW handlers defined in `tests/helpers/mocks.ts`. You can run the full unit/integration suite without any API keys.
+!!! info "No credentials needed"
+    All HTTP calls to AIRS and LLM APIs are intercepted by MSW handlers in `tests/helpers/mocks.ts`. You can run the full unit/integration suite without any API keys.
+
+E2E tests require real Vertex AI credentials and are opt-in via separate config.
 
 ## Coverage
 
-Coverage is collected via the **V8** provider and excludes files that are not meaningfully testable:
+Coverage is collected via **V8** and excludes files that aren't meaningfully testable:
 
-| Excluded pattern | Reason |
-|-----------------|--------|
+| Excluded pattern | Why |
+|-----------------|-----|
 | `src/cli/**` | Interactive UI (prompts, rendering) |
 | `src/index.ts` | Re-exports only |
 | `**/types.ts` | Type-only files, no runtime code |
@@ -53,13 +53,13 @@ pnpm run test:coverage
 
 ## Running Specific Tests
 
-Run a single test file:
+Single file:
 
 ```bash
 pnpm test -- tests/unit/core/metrics.spec.ts
 ```
 
-Run tests matching a name pattern:
+By name pattern:
 
 ```bash
 pnpm test -- -t "computes coverage as min of TPR and TNR"
