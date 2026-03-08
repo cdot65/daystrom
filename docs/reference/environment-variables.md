@@ -27,13 +27,7 @@ All environment variables used by Daystrom, grouped by category. See `.env.examp
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `PANW_AI_SEC_API_KEY` | Yes* | AI Security scan API key |
-| `PANW_AI_SEC_API_TOKEN` | -- | Alternative: bearer token |
-| `PANW_AI_SEC_PROFILE_NAME` | -- | Default profile name |
-| `PANW_AI_SEC_API_ENDPOINT` | -- | Custom endpoint (default: `https://service.api.aisecurity.paloaltonetworks.com`) |
-
-!!! info
-    *Either `PANW_AI_SEC_API_KEY` or `PANW_AI_SEC_API_TOKEN` is required.
+| `PANW_AI_SEC_API_KEY` | Yes | AI Security scan API key |
 
 ---
 
