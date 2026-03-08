@@ -95,6 +95,9 @@ nav:
       - AIRS Constraints: reference/airs-constraints.md
   - Examples:
       - Guardrail to Red Team: examples/guardrail-to-redteam.md
+      - Managing Targets: examples/managing-targets.md
+      - Managing Prompt Sets: examples/managing-prompt-sets.md
+      - Running Scans: examples/running-scans.md
   - Development:
       - Contributing: development/contributing.md
       - Testing: development/testing.md
