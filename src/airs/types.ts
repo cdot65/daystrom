@@ -16,10 +16,12 @@ export type { CreateCustomTopicRequest, SdkCustomTopic };
 // ---------------------------------------------------------------------------
 // Scan result — normalized output from a single AIRS prompt scan
 // ---------------------------------------------------------------------------
+/** Normalized output from a single AIRS prompt scan. */
 export interface ScanResult {
   scanId: string;
   reportId: string;
   action: 'allow' | 'block';
+  /** Whether the topic guardrail was triggered for this prompt. */
   triggered: boolean;
   category?: string;
   raw?: unknown;
@@ -28,8 +30,12 @@ export interface ScanResult {
 // ---------------------------------------------------------------------------
 // Service interfaces — contracts for scan and topic management adapters
 // ---------------------------------------------------------------------------
+
+/** Contract for AIRS prompt scanning operations. */
 export interface ScanService {
+  /** Scan a single prompt against a security profile. */
   scan(profileName: string, prompt: string, sessionId?: string): Promise<ScanResult>;
+  /** Scan multiple prompts with concurrency control. */
   scanBatch(
     profileName: string,
     prompts: string[],
@@ -38,11 +44,17 @@ export interface ScanService {
   ): Promise<ScanResult[]>;
 }
 
+/** Contract for AIRS topic CRUD and profile linking operations. */
 export interface ManagementService {
+  /** Create a new custom topic. */
   createTopic(request: CreateCustomTopicRequest): Promise<SdkCustomTopic>;
+  /** Update an existing custom topic by ID. */
   updateTopic(topicId: string, request: CreateCustomTopicRequest): Promise<SdkCustomTopic>;
+  /** Delete a custom topic by ID. */
   deleteTopic(topicId: string): Promise<void>;
+  /** List all custom topics. */
   listTopics(): Promise<SdkCustomTopic[]>;
+  /** Assign a topic to a security profile's topic-guardrails. */
   assignTopicToProfile(
     profileName: string,
     topicId: string,

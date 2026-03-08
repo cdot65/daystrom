@@ -2,6 +2,7 @@ import { confirm, input, number, select } from '@inquirer/prompts';
 import type { LlmProvider } from '../config/schema.js';
 import type { UserInput } from '../core/types.js';
 
+/** Interactively collect all user inputs for a generation run via Inquirer prompts. */
 export async function collectUserInput(): Promise<UserInput> {
   const topicDescription = await input({
     message: 'Describe the topic to create a guardrail for:',
@@ -64,6 +65,7 @@ export async function collectUserInput(): Promise<UserInput> {
   };
 }
 
+/** Prompt the user to select an LLM provider from the supported list. */
 export async function selectLlmProvider(): Promise<LlmProvider> {
   return select<LlmProvider>({
     message: 'Select LLM provider:',
@@ -78,6 +80,7 @@ export async function selectLlmProvider(): Promise<LlmProvider> {
   });
 }
 
+/** Prompt the user to confirm whether to continue refining after an iteration. */
 export async function confirmContinue(iteration: number, coverage: number): Promise<boolean> {
   return confirm({
     message: `Iteration ${iteration} complete (coverage: ${(coverage * 100).toFixed(1)}%). Continue refining?`,

@@ -63,6 +63,11 @@ function clampTopic(topic: CustomTopicOutput): CustomTopicOutput {
   return { name, description, examples };
 }
 
+/**
+ * LLM service implementation using LangChain structured output.
+ * Handles topic generation, test creation, result analysis, and topic improvement
+ * with automatic retry and AIRS constraint clamping.
+ */
 export class LangChainLlmService implements LlmService {
   private memorySection = '';
 

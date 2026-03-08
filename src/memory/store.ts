@@ -23,6 +23,12 @@ const STOP_WORDS = new Set([
   'were',
 ]);
 
+/**
+ * Normalize a topic description into a stable category key.
+ * Removes stop words, lowercases, deduplicates, and sorts alphabetically.
+ * @param description - Free-text topic description.
+ * @returns Hyphen-joined keyword string used as the memory file name.
+ */
 export function normalizeCategory(description: string): string {
   const words = description
     .toLowerCase()
@@ -34,6 +40,11 @@ export function normalizeCategory(description: string): string {
   return unique.join('-');
 }
 
+/**
+ * File-based persistence for cross-run learnings.
+ * Stores one JSON file per category at `{dir}/{category}.json`.
+ * Supports keyword-overlap-based retrieval for cross-topic transfer.
+ */
 export class MemoryStore {
   constructor(private dir: string) {}
 
@@ -41,11 +52,13 @@ export class MemoryStore {
     return join(this.dir, `${category}.json`);
   }
 
+  /** Persist a topic memory to disk, creating the directory if needed. */
   async save(memory: TopicMemory): Promise<void> {
     await mkdir(this.dir, { recursive: true });
     await writeFile(this.filePath(memory.category), JSON.stringify(memory, null, 2), 'utf-8');
   }
 
+  /** Load a topic memory by category, or null if not found. */
   async load(category: string): Promise<TopicMemory | null> {
     try {
       const data = await readFile(this.filePath(category), 'utf-8');
@@ -55,6 +68,7 @@ export class MemoryStore {
     }
   }
 
+  /** Find all topic memories with >= 50% keyword overlap to the given description. */
   async findRelevant(topicDescription: string): Promise<TopicMemory[]> {
     const targetCategory = normalizeCategory(topicDescription);
     const categories = await this.listCategories();
@@ -70,6 +84,7 @@ export class MemoryStore {
     return results;
   }
 
+  /** List all stored category names. */
   async listCategories(): Promise<string[]> {
     try {
       const files = await readdir(this.dir);

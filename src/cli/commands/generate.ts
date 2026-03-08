@@ -25,6 +25,7 @@ import {
   renderTopic,
 } from '../renderer.js';
 
+/** Register the `generate` command — starts a new guardrail generation loop. */
 export function registerGenerateCommand(program: Command): void {
   program
     .command('generate')

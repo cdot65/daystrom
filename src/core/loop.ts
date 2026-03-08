@@ -14,17 +14,22 @@ import type {
   UserInput,
 } from './types.js';
 
+/** Contract for LLM operations used by the refinement loop. */
 export interface LlmService {
+  /** Generate an initial topic definition from a user description. */
   generateTopic(description: string, intent: string, seeds?: string[]): Promise<CustomTopic>;
+  /** Generate positive and negative test prompts for a topic. */
   generateTests(
     topic: CustomTopic,
     intent: string,
   ): Promise<{ positiveTests: TestCase[]; negativeTests: TestCase[] }>;
+  /** Analyze scan results to identify false positive/negative patterns. */
   analyzeResults(
     topic: CustomTopic,
     results: TestResult[],
     metrics: EfficacyMetrics,
   ): Promise<AnalysisReport>;
+  /** Refine a topic definition based on metrics and analysis from the previous iteration. */
   improveTopic(
     topic: CustomTopic,
     metrics: EfficacyMetrics,
@@ -35,11 +40,17 @@ export interface LlmService {
   ): Promise<CustomTopic>;
 }
 
+/** Dependencies injected into the refinement loop. */
 export interface LoopDependencies {
+  /** LLM service for topic generation, testing, analysis, and improvement. */
   llm: LlmService;
+  /** AIRS management service for topic CRUD and profile linking. */
   management: ManagementService;
+  /** AIRS scan service for batch prompt scanning. */
   scanner: ScanService;
+  /** Delay (ms) after topic deploy to allow AIRS propagation. Default 10000. */
   propagationDelayMs?: number;
+  /** Optional memory system for cross-run learning extraction. */
   memory?: { extractor: LearningExtractor };
 }
 
@@ -47,6 +58,12 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Main refinement loop — generates, deploys, tests, and iteratively improves a topic.
+ * Yields typed {@link LoopEvent} discriminated unions at each stage.
+ * @param input - User input seeding the generation run.
+ * @param deps - Injected service dependencies.
+ */
 export async function* runLoop(
   input: UserInput,
   deps: LoopDependencies,
