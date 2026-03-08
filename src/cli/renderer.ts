@@ -8,15 +8,18 @@ import type {
 } from '../core/types.js';
 import type { RunStateSummary } from '../persistence/types.js';
 
+/** Render the application banner. */
 export function renderHeader(): void {
   console.log(chalk.bold.cyan('\n  Prisma AIRS Guardrail Generator'));
   console.log(chalk.dim('  Iterative custom topic refinement\n'));
 }
 
+/** Render iteration number header. */
 export function renderIterationStart(iteration: number): void {
   console.log(chalk.bold(`\n━━━ Iteration ${iteration} ━━━`));
 }
 
+/** Render a topic's name, description, and examples. */
 export function renderTopic(topic: CustomTopic): void {
   console.log(chalk.bold('  Topic:'));
   console.log(`    Name: ${chalk.white(topic.name)}`);
@@ -27,6 +30,7 @@ export function renderTopic(topic: CustomTopic): void {
   }
 }
 
+/** Render a scan progress bar with percentage. */
 export function renderTestProgress(completed: number, total: number): void {
   const pct = Math.round((completed / total) * 100);
   const bar = '█'.repeat(Math.round(pct / 5)) + '░'.repeat(20 - Math.round(pct / 5));
@@ -34,6 +38,7 @@ export function renderTestProgress(completed: number, total: number): void {
   if (completed === total) console.log();
 }
 
+/** Render efficacy metrics with color-coded coverage. */
 export function renderMetrics(metrics: EfficacyMetrics): void {
   const coverageColor =
     metrics.coverage >= 0.9 ? chalk.green : metrics.coverage >= 0.7 ? chalk.yellow : chalk.red;
@@ -51,6 +56,7 @@ export function renderMetrics(metrics: EfficacyMetrics): void {
   );
 }
 
+/** Render analysis summary with FP/FN pattern details. */
 export function renderAnalysis(analysis: AnalysisReport): void {
   console.log(chalk.bold('\n  Analysis:'));
   console.log(`    ${analysis.summary}`);
@@ -68,6 +74,7 @@ export function renderAnalysis(analysis: AnalysisReport): void {
   }
 }
 
+/** Render loop completion summary with best iteration and run ID. */
 export function renderLoopComplete(runState: RunState): void {
   const best = runState.iterations[runState.bestIteration - 1];
   console.log(chalk.bold.green('\n━━━ Complete ━━━'));
@@ -81,6 +88,7 @@ export function renderLoopComplete(runState: RunState): void {
   console.log(`\n  Run ID: ${chalk.dim(runState.id)}\n`);
 }
 
+/** Render a list of saved runs with status, coverage, and topic description. */
 export function renderRunList(runs: RunStateSummary[]): void {
   if (runs.length === 0) {
     console.log(chalk.dim('  No saved runs found.\n'));
@@ -105,10 +113,12 @@ export function renderRunList(runs: RunStateSummary[]): void {
   }
 }
 
+/** Render an error message to stderr. */
 export function renderError(message: string): void {
   console.error(chalk.red(`\n  Error: ${message}\n`));
 }
 
+/** Render a one-line iteration summary with duration and coverage. */
 export function renderIterationSummary(result: IterationResult): void {
   const coverageColor =
     result.metrics.coverage >= 0.9
@@ -121,6 +131,7 @@ export function renderIterationSummary(result: IterationResult): void {
   );
 }
 
+/** Render memory loading status (count of learnings loaded or "none found"). */
 export function renderMemoryLoaded(learningCount: number): void {
   if (learningCount > 0) {
     console.log(chalk.cyan(`  Memory: loaded ${learningCount} learnings from previous runs`));
@@ -129,6 +140,7 @@ export function renderMemoryLoaded(learningCount: number): void {
   }
 }
 
+/** Render count of learnings extracted from the current run. */
 export function renderMemoryExtracted(learningCount: number): void {
   console.log(chalk.cyan(`  Memory: extracted ${learningCount} learnings from this run`));
 }

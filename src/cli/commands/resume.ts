@@ -18,6 +18,7 @@ import {
   renderTopic,
 } from '../renderer.js';
 
+/** Register the `resume` command — resumes a paused or failed run. */
 export function registerResumeCommand(program: Command): void {
   program
     .command('resume <runId>')

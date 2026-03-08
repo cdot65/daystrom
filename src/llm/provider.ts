@@ -5,6 +5,7 @@ import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { ChatVertexAI } from '@langchain/google-vertexai';
 import type { LlmProvider } from '../config/schema.js';
 
+/** Configuration for creating an LLM provider instance. */
 export interface LlmProviderConfig {
   provider: LlmProvider;
   model?: string;
@@ -26,6 +27,11 @@ const DEFAULT_MODELS: Record<LlmProvider, string> = {
   'gemini-bedrock': 'gemini-2.0-flash',
 };
 
+/**
+ * Factory that creates a LangChain chat model for the configured provider.
+ * @param config - Provider type, model name, and auth credentials.
+ * @returns A configured LangChain BaseChatModel instance.
+ */
 export async function createLlmProvider(config: LlmProviderConfig): Promise<BaseChatModel> {
   const modelName = config.model ?? DEFAULT_MODELS[config.provider];
 

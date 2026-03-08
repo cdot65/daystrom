@@ -10,6 +10,7 @@ import {
   renderTopic,
 } from '../renderer.js';
 
+/** Register the `report` command — view detailed results for a run. */
 export function registerReportCommand(program: Command): void {
   program
     .command('report <runId>')

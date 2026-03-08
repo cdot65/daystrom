@@ -1,12 +1,26 @@
 import type { MemoryStore } from './store.js';
 import type { Learning } from './types.js';
 
+/**
+ * Builds a budget-aware memory section for LLM prompt injection.
+ * Retrieves relevant learnings from the store, sorts by corroboration count,
+ * and formats them within a character budget (verbose -> compact -> omit).
+ */
 export class MemoryInjector {
+  /**
+   * @param store - Memory store for retrieving learnings.
+   * @param maxChars - Character budget for the memory section. Default 3000.
+   */
   constructor(
     private store: MemoryStore,
     private maxChars: number = 3000,
   ) {}
 
+  /**
+   * Build a formatted memory section string for prompt injection.
+   * @param topicDescription - Topic to find relevant learnings for.
+   * @returns Formatted learnings string, or empty string if none found.
+   */
   async buildMemorySection(topicDescription: string): Promise<string> {
     const memories = await this.store.findRelevant(topicDescription);
     if (memories.length === 0) return '';
