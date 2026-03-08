@@ -1,5 +1,26 @@
 # Release Notes
 
+## v1.0.7
+
+### Dependencies
+
+- Bump `@cdot65/prisma-airs-sdk` from `^0.2.0` to `^0.4.0` -- adds Model Security, Red Team domains, typed enums, JSDoc, shared retry logic (backward compatible)
+
+### CI
+
+- Add explicit `format:check` step to CI workflow to catch formatting violations in PRs
+
+### Documentation
+
+- Fix inaccurate `LoopEvent` documentation in `CLAUDE.md` and `docs/architecture/core-loop.md`
+- Remove unused env vars (`CLOUD_ML_REGION`, `ANTHROPIC_VERTEX_PROJECT_ID`, `PANW_AI_SEC_API_TOKEN`, `PANW_AI_SEC_PROFILE_NAME`) from `.env.example` and reference docs
+- Add JSDoc/TSDoc to all 36+ exported symbols across the public API
+
+### Code Quality
+
+- Extract shared `byteLen()` utility from `constraints.ts`, remove duplicate in `service.ts`
+- Remove deprecated `MAX_EXAMPLES_COUNT` constant
+
 ## v1.0.0
 
 First stable release of Daystrom.
