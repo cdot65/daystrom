@@ -4,7 +4,7 @@ title: Home
 
 <div class="hero" markdown>
 
-![Daystrom Logo](images/logo.svg){ .hero-logo }
+![Daystrom Logo](images/daystrom-logo.svg){ .hero-logo }
 
 # Daystrom
 
