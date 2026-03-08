@@ -1,6 +1,8 @@
 # Model Security Operations
 
-This guide walks through managing AI Model Security using the `daystrom model-security` command group — security groups, rules, and rule instances.
+This guide walks through managing AI Model Security using the `daystrom model-security` command group — security groups, rules, rule instances, scans, and labels.
+
+All output shown below is captured from real Prisma AIRS API responses.
 
 ---
 
@@ -18,55 +20,52 @@ daystrom model-security groups list
 
   Security Groups:
 
-  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    Default GCS Group  ACTIVE  source: GCS
-  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    Default LOCAL Group  ACTIVE  source: LOCAL
-  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    Default S3 Group  ACTIVE  source: S3
-  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    Default AZURE Group  ACTIVE  source: AZURE
-  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    Default HUGGING_FACE Group  ACTIVE  source: HUGGING_FACE
+  bb1d038a-0506-4b07-8f16-a723b8c1a1c7
+    Default GCS  ACTIVE  source: GCS
+  020d546d-3920-4ef3-9183-00f37f33f566
+    Default LOCAL  ACTIVE  source: LOCAL
+  6a1e67e1-00cc-45dc-9395-3a9e3dbf50f9
+    Default S3  ACTIVE  source: S3
+  fd1a4209-32d0-4a1a-bd40-cde35104dc39
+    Default AZURE  ACTIVE  source: AZURE
+  4c22aef7-2ab7-40ba-b3f1-cd9e9aa1768e
+    Default HUGGING_FACE  ACTIVE  source: HUGGING_FACE
 ```
 
-### Filter groups
+### Filter groups by source type
 
 ```bash
-# By source type
 daystrom model-security groups list --source-types LOCAL,S3
+```
 
-# Search by name
-daystrom model-security groups list --search "Default"
+```
+  Security Groups:
 
-# Sort by creation date
-daystrom model-security groups list --sort-field created_at --sort-dir desc
+  020d546d-3920-4ef3-9183-00f37f33f566
+    Default LOCAL  ACTIVE  source: LOCAL
+  6a1e67e1-00cc-45dc-9395-3a9e3dbf50f9
+    Default S3  ACTIVE  source: S3
 ```
 
 ### Get group details
 
 ```bash
-daystrom model-security groups get <uuid>
+daystrom model-security groups get bb1d038a-0506-4b07-8f16-a723b8c1a1c7
 ```
 
 ```
-  Prisma AIRS — Model Security
-  ML model supply chain security
-
   Security Group Detail:
 
-    UUID:        xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    Name:        Default LOCAL Group
-    Description: Default security group for LOCAL source type
-    Source Type: LOCAL
+    UUID:        bb1d038a-0506-4b07-8f16-a723b8c1a1c7
+    Name:        Default GCS
+    Description: Auto-created default security group for GCS models
+    Source Type: GCS
     State:       ACTIVE
-    Created:     2025-08-15T10:30:00.000Z
-    Updated:     2025-08-15T10:30:00.000Z
+    Created:     2025-10-30T14:14:17.321066Z
+    Updated:     2026-02-19T16:03:26.660748Z
 ```
 
 ### Create a group
-
-Create a JSON configuration file:
 
 ```json title="group-config.json"
 {
@@ -80,16 +79,10 @@ Create a JSON configuration file:
 daystrom model-security groups create --config group-config.json
 ```
 
-### Update a group
+### Update and delete
 
 ```bash
 daystrom model-security groups update <uuid> --name "Renamed Group"
-daystrom model-security groups update <uuid> --description "Updated description"
-```
-
-### Delete a group
-
-```bash
 daystrom model-security groups delete <uuid>
 ```
 
@@ -106,84 +99,143 @@ daystrom model-security rules list --limit 5
 ```
 
 ```
-  Prisma AIRS — Model Security
-  ML model supply chain security
-
   Security Rules:
 
-  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    Unsafe Deserialization  type: SECURITY  default: BLOCKING
-    Detects model files using unsafe serialization formats
-    Sources: LOCAL, S3, GCS, AZURE, HUGGING_FACE
-  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    Malicious Code Injection  type: SECURITY  default: BLOCKING
-    Scans for embedded malicious code in model artifacts
-    Sources: LOCAL, S3, GCS, AZURE, HUGGING_FACE
+  550e8400-e29b-41d4-a716-44665544000b
+    Known Framework Operators Check  type: ARTIFACT  default: BLOCKING
+    Model artifacts should only contain known safe TensorFlow operators
+    Sources: ALL
+  550e8400-e29b-41d4-a716-446655440006
+    License Exists  type: METADATA  default: BLOCKING
+    Models should have a license
+    Sources: HUGGING_FACE
+  550e8400-e29b-41d4-a716-446655440007
+    License Is Valid For Use  type: METADATA  default: BLOCKING
+    Models license should be valid for use
+    Sources: HUGGING_FACE
+  550e8400-e29b-41d4-a716-446655440008
+    Load Time Code Execution Check  type: ARTIFACT  default: BLOCKING
+    Model artifacts should not contain unsafe operators that are run upon deserialization
+    Sources: ALL
+  550e8400-e29b-41d4-a716-44665544000a
+    Model Architecture Backdoor Check  type: ARTIFACT  default: BLOCKING
+    Model architecture files should not contain backdoor attacks
+    Sources: ALL
 ```
 
-### Filter rules
+### Search rules
 
 ```bash
-# By source type
-daystrom model-security rules list --source-type LOCAL
+daystrom model-security rules list --search "License"
+```
 
-# Search by name
-daystrom model-security rules list --search "deserialization"
+```
+  Security Rules:
+
+  550e8400-e29b-41d4-a716-446655440006
+    License Exists  type: METADATA  default: BLOCKING
+    Models should have a license
+    Sources: HUGGING_FACE
+  550e8400-e29b-41d4-a716-446655440007
+    License Is Valid For Use  type: METADATA  default: BLOCKING
+    Models license should be valid for use
+    Sources: HUGGING_FACE
 ```
 
 ### Get rule details
 
 ```bash
-daystrom model-security rules get <uuid>
+daystrom model-security rules get 550e8400-e29b-41d4-a716-44665544000b
 ```
 
-Shows full rule detail including description, compatible sources, remediation steps, and editable fields.
+```
+  Security Rule Detail:
+
+    UUID:          550e8400-e29b-41d4-a716-44665544000b
+    Name:          Known Framework Operators Check
+    Description:   Model artifacts should only contain known safe TensorFlow operators
+    Rule Type:     ARTIFACT
+    Default State: BLOCKING
+    Sources:       ALL
+
+    Remediation:
+      Ensure that the model does not contain any custom TensorFlow operators
+      https://docs.paloaltonetworks.com/.../known-framework-operators-check
+```
 
 ---
 
 ## Rule Instances
 
-Rule instances are the per-group configuration of security rules. Each group has instances for the rules applicable to its source type.
+Rule instances are the per-group configuration of security rules.
 
 ### List rule instances
 
 ```bash
-daystrom model-security rule-instances list <groupUuid>
+daystrom model-security rule-instances list 020d546d-3920-4ef3-9183-00f37f33f566
 ```
 
 ```
-  Prisma AIRS — Model Security
-  ML model supply chain security
-
   Rule Instances:
 
-  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    Unsafe Deserialization  BLOCKING
-  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    Malicious Code Injection  BLOCKING
-  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    License Compliance  ALLOWING
+  67185c67-020a-4625-816f-9a2137e3d6b3
+    Known Framework Operators Check  BLOCKING
+  34f0a130-d2a3-451d-8795-776f5d5bdd8f
+    Load Time Code Execution Check  BLOCKING
+  0fe19730-3fb4-474b-9160-d2de02be592b
+    Model Architecture Backdoor Check  BLOCKING
+  c532d04b-ca2d-4e03-8b4b-8a81917c02cf
+    Runtime Code Execution Check  BLOCKING
+  53aab919-06c4-4ebf-a1e1-8124ce2ae0d5
+    Stored In Approved File Format  BLOCKING
+  6648097a-37bd-4726-ab51-a63188c52a23
+    Stored In Approved Location  DISABLED
+  43dd1d74-f902-4337-8615-85c7e7403098
+    Suspicious Model Components Check  BLOCKING
 ```
 
-### Filter rule instances
+### Filter by state
 
 ```bash
-# By state
-daystrom model-security rule-instances list <groupUuid> --state BLOCKING
+daystrom model-security rule-instances list 020d546d-3920-4ef3-9183-00f37f33f566 --state BLOCKING
+```
 
-# By security rule
-daystrom model-security rule-instances list <groupUuid> --security-rule-uuid <ruleUuid>
+```
+  Rule Instances:
+
+  67185c67-020a-4625-816f-9a2137e3d6b3
+    Known Framework Operators Check  BLOCKING
+  34f0a130-d2a3-451d-8795-776f5d5bdd8f
+    Load Time Code Execution Check  BLOCKING
+  0fe19730-3fb4-474b-9160-d2de02be592b
+    Model Architecture Backdoor Check  BLOCKING
+  c532d04b-ca2d-4e03-8b4b-8a81917c02cf
+    Runtime Code Execution Check  BLOCKING
+  53aab919-06c4-4ebf-a1e1-8124ce2ae0d5
+    Stored In Approved File Format  BLOCKING
+  43dd1d74-f902-4337-8615-85c7e7403098
+    Suspicious Model Components Check  BLOCKING
 ```
 
 ### Get rule instance details
 
 ```bash
-daystrom model-security rule-instances get <groupUuid> <instanceUuid>
+daystrom model-security rule-instances get 020d546d-3920-4ef3-9183-00f37f33f566 67185c67-020a-4625-816f-9a2137e3d6b3
+```
+
+```
+  Rule Instance Detail:
+
+    UUID:         67185c67-020a-4625-816f-9a2137e3d6b3
+    Group UUID:   020d546d-3920-4ef3-9183-00f37f33f566
+    Rule UUID:    550e8400-e29b-41d4-a716-44665544000b
+    State:        BLOCKING
+    Rule Name:    Known Framework Operators Check
+    Created:      2025-10-30T14:14:17.321066Z
+    Updated:      2025-10-30T14:14:17.321066Z
 ```
 
 ### Update a rule instance
-
-Create a JSON configuration file:
 
 ```json title="rule-instance-update.json"
 {
@@ -205,80 +257,174 @@ daystrom model-security rule-instances update <groupUuid> <instanceUuid> --confi
 ### List scans
 
 ```bash
-daystrom model-security scans list
+daystrom model-security scans list --limit 3
 ```
 
 ```
-  Prisma AIRS — Model Security
-  ML model supply chain security
-
   Model Security Scans:
 
-  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    COMPLETED  2025-09-01T14:30:00.000Z
-    Rules: 8 passed  2 failed  / 10 total
-  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    COMPLETED  2025-09-02T10:00:00.000Z
-    Rules: 10 passed  0 failed  / 10 total
+  7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
+    BLOCKED  HUGGING_FACE  2026-03-03T22:32:12.344402Z
+    https://huggingface.co/microsoft/DialoGPT-medium
+    Rules: 10 passed  1 failed  / 11 total
+  ee71b4da-64ce-4d6c-96fb-2bced1154a06
+    ALLOWED  MODEL_SECURITY_SDK  2026-03-03T22:21:44.130386Z
+    /Users/.../models/qwen3-0.6b-saffron-merged
+    Rules: 6 passed  0 failed  / 6 total
+  6456c1fd-1a76-40c4-a591-3275d7885c17
+    ALLOWED  MODEL_SECURITY_SDK  2026-03-03T22:16:54.578468Z
+    models/qwen3-0.6b-saffron-qlora/
+    Rules: 6 passed  0 failed  / 6 total
 ```
 
 ### Filter scans
 
 ```bash
 # By evaluation outcome
-daystrom model-security scans list --eval-outcome FAILED
+daystrom model-security scans list --eval-outcome BLOCKED
 
 # By source type
-daystrom model-security scans list --source-type LOCAL
-
-# Search
-daystrom model-security scans list --search "model-name"
+daystrom model-security scans list --source-type HUGGING_FACE
 ```
 
 ### Get scan details
 
 ```bash
-daystrom model-security scans get <uuid>
+daystrom model-security scans get 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
+```
+
+```
+  Scan Detail:
+
+    UUID:       7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
+    Outcome:    BLOCKED
+    Model URI:  https://huggingface.co/microsoft/DialoGPT-medium
+    Origin:     HUGGING_FACE
+    Source:     HUGGING_FACE
+    Group:      Default HUGGING_FACE
+    Created:    2026-03-03T22:32:12.344402Z
+    Updated:    2026-03-03T22:32:12.477430Z
+    Rules:      10 passed  1 failed  / 11 total
 ```
 
 ### View scan evaluations
 
 ```bash
-daystrom model-security scans evaluations <scanUuid>
+daystrom model-security scans evaluations 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
 ```
 
 ```
-  Prisma AIRS — Model Security
-  ML model supply chain security
-
   Rule Evaluations:
 
-  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    Unsafe Deserialization  ALLOWED
-  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    Malicious Code Injection  BLOCKED
+  83924890-6823-4e6f-9541-3eed300b890e
+    License Exists  PASSED  BLOCKING
+  1a4db8ab-cbe6-4f9f-bfbf-fb65fdb451de
+    License Is Valid For Use  PASSED  BLOCKING
+  0e424aa6-0fb7-427a-8809-3caa301a8c40
+    Model Is Blocked  PASSED  BLOCKING
+  ec06ca86-1271-4d3a-a310-272190f74503
+    Organization Is Blocked  PASSED  BLOCKING
+  494c926e-0f8a-4a22-87ae-2a1ff06c0e7b
+    Organization Verified By Hugging Face  PASSED  BLOCKING
+  1ae405a2-15a9-4a3b-8e57-5a916c133857
+    Stored In Approved File Format  FAILED  BLOCKING
+  6c5b370e-320b-41bb-b206-8a4e5265eeea
+    Known Framework Operators Check  PASSED  BLOCKING
+  779f12dd-b672-494f-9962-2e642ff3716e
+    Load Time Code Execution Check  PASSED  BLOCKING
+  5fbe2ef0-6cb8-441d-b6cf-88ff1c6f9a93
+    Model Architecture Backdoor Check  PASSED  BLOCKING
+  60c3cd09-e9ce-40f2-aff3-d62c21c9c64f
+    Runtime Code Execution Check  PASSED  BLOCKING
+  33fc876c-18b1-4c58-863e-c133fdb07fb1
+    Suspicious Model Components Check  PASSED  BLOCKING
 ```
 
 ### View violations
 
 ```bash
-daystrom model-security scans violations <scanUuid>
+daystrom model-security scans violations 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
+```
+
+```
+  Violations:
+
+  0115bae0-bc07-468b-8ca6-a585d8c82f59
+    Stored In Approved File Format  pytorch_model.bin
+    Model file 'pytorch_model.bin' is stored in an unapproved format: pickle
+    Threat: UNAPPROVED_FORMATS
+  2b5e4d7b-2a50-408e-b6cf-640f1b8ec4cd
+    Stored In Approved File Format  pytorch_model.bin
+    Model file 'pytorch_model.bin' is stored in an unapproved format: pytorch_v0_1_10
+    Threat: UNAPPROVED_FORMATS
+  33b437c4-47f0-4878-a249-64be8bd46e06
+    Stored In Approved File Format  rust_model.ot
+    Model file 'rust_model.ot' is stored in an unapproved format: pytorch_torch_script
+    Threat: UNAPPROVED_FORMATS
+  f1409208-b28c-4234-b015-137b6b28508c
+    Stored In Approved File Format  rust_model.ot
+    Model file 'rust_model.ot' is stored in an unapproved format: zip
+    Threat: UNAPPROVED_FORMATS
+  9d39c991-e37f-4e6f-bc27-bffed8d90047
+    Stored In Approved File Format  tf_model.h5
+    Model file 'tf_model.h5' is stored in an unapproved format: keras_weights
+    Threat: UNAPPROVED_FORMATS
 ```
 
 ### View scanned files
 
 ```bash
-daystrom model-security scans files <scanUuid>
+daystrom model-security scans files 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
+```
 
-# Filter by result
-daystrom model-security scans files <scanUuid> --result FAILED
+```
+  Scanned Files:
+
+    SUCCESS  FILE  config.json [json]
+    SKIPPED  FILE  flax_model.msgpack
+    SUCCESS  FILE  generation_config_for_conversational.json [json]
+    SUCCESS  FILE  generation_config.json [json]
+    SKIPPED  FILE  .gitattributes
+    SKIPPED  FILE  merges.txt
+    FAILED  FILE  pytorch_model.bin [pickle, pytorch_v0_1_10]
+    SKIPPED  FILE  README.md [not_model]
+    FAILED  FILE  rust_model.ot [pytorch_torch_script, zip]
+    FAILED  FILE  tf_model.h5 [keras_weights]
+    SUCCESS  FILE  tokenizer_config.json [json]
+    SUCCESS  FILE  vocab.json [json]
 ```
 
 ---
 
 ## Labels
 
-Labels help organize and categorize scans.
+Labels help organize and categorize scans with key-value metadata.
+
+### Browse label taxonomy
+
+```bash
+daystrom model-security labels keys
+```
+
+```
+  Label Keys:
+
+    branch
+    commit
+    env
+    repo
+```
+
+```bash
+daystrom model-security labels values env
+```
+
+```
+  Label Values for "env":
+
+    ci
+    production
+```
 
 ### Add labels
 
@@ -298,16 +444,6 @@ daystrom model-security labels set <scanUuid> --labels '[{"key":"env","value":"s
 daystrom model-security labels delete <scanUuid> --keys env,team
 ```
 
-### Browse label taxonomy
-
-```bash
-# List all label keys
-daystrom model-security labels keys
-
-# List values for a key
-daystrom model-security labels values env
-```
-
 ---
 
 ## PyPI Authentication
@@ -322,19 +458,29 @@ daystrom model-security pypi-auth
 
 ## Common Workflows
 
-### Audit a model source
+### Investigate a blocked scan
 
-1. List available groups to find the right source type:
+1. Find blocked scans:
    ```bash
-   daystrom model-security groups list --source-types S3
+   daystrom model-security scans list --eval-outcome BLOCKED
    ```
 
-2. Check which rules are active:
+2. View evaluations to find which rule failed:
    ```bash
-   daystrom model-security rule-instances list <groupUuid> --state BLOCKING
+   daystrom model-security scans evaluations <scanUuid>
    ```
 
-3. Review a specific rule's remediation steps:
+3. View specific violations:
+   ```bash
+   daystrom model-security scans violations <scanUuid>
+   ```
+
+4. Check the scanned files:
+   ```bash
+   daystrom model-security scans files <scanUuid>
+   ```
+
+5. Look up remediation steps for the failed rule:
    ```bash
    daystrom model-security rules get <ruleUuid>
    ```

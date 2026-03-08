@@ -473,7 +473,11 @@ export interface ModelSecurityRuleInstanceUpdateRequest {
 /** Normalized model security scan. */
 export interface ModelSecurityScan {
   uuid: string;
-  status: string;
+  evalOutcome: string;
+  modelUri: string;
+  scanOrigin: string;
+  sourceType: string;
+  securityGroupName: string;
   evalSummary: {
     rulesFailed: number;
     rulesPassed: number;
@@ -497,24 +501,32 @@ export interface ModelSecurityScanListOptions {
 /** Normalized rule evaluation from a scan. */
 export interface ModelSecurityEvaluation {
   uuid: string;
-  evalOutcome: string;
   result: string;
-  securityRuleUuid: string;
+  violationCount: number;
+  ruleInstanceUuid: string;
   ruleName: string;
+  ruleDescription: string;
+  ruleInstanceState: string;
 }
 
 /** Normalized violation from a scan. */
 export interface ModelSecurityViolation {
   uuid: string;
-  ruleName: string;
-  filePath: string;
   description: string;
+  threat: string;
+  threatDescription: string;
+  file: string;
+  ruleName: string;
+  ruleDescription: string;
+  ruleInstanceState: string;
 }
 
 /** Normalized scanned file from a scan. */
 export interface ModelSecurityFile {
-  filePath: string;
+  uuid: string;
+  path: string;
   type: string;
+  formats: string[];
   result: string;
 }
 

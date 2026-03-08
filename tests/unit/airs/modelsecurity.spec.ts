@@ -451,7 +451,11 @@ describe('SdkModelSecurityService', () => {
         scans: [
           {
             uuid: 's-1',
-            status: 'COMPLETED',
+            eval_outcome: 'BLOCKED',
+            model_uri: 'https://huggingface.co/test/model',
+            scan_origin: 'HUGGING_FACE',
+            source_type: 'HUGGING_FACE',
+            security_group_name: 'Default HUGGING_FACE',
             eval_summary: { rules_failed: 1, rules_passed: 5, total_rules: 6 },
             created_at: '2026-01-01T00:00:00Z',
             updated_at: '2026-01-02T00:00:00Z',
@@ -464,7 +468,11 @@ describe('SdkModelSecurityService', () => {
       expect(result.totalItems).toBe(1);
       expect(result.scans[0]).toEqual({
         uuid: 's-1',
-        status: 'COMPLETED',
+        evalOutcome: 'BLOCKED',
+        modelUri: 'https://huggingface.co/test/model',
+        scanOrigin: 'HUGGING_FACE',
+        sourceType: 'HUGGING_FACE',
+        securityGroupName: 'Default HUGGING_FACE',
         evalSummary: { rulesFailed: 1, rulesPassed: 5, totalRules: 6 },
         createdAt: '2026-01-01T00:00:00Z',
         updatedAt: '2026-01-02T00:00:00Z',
@@ -495,7 +503,11 @@ describe('SdkModelSecurityService', () => {
     it('returns normalized scan', async () => {
       mockScansGet.mockResolvedValue({
         uuid: 's-1',
-        status: 'COMPLETED',
+        eval_outcome: 'ALLOWED',
+        model_uri: 'gs://bucket/model',
+        scan_origin: 'GCS',
+        source_type: 'GCS',
+        security_group_name: 'Default GCS',
         eval_summary: { rules_failed: 0, rules_passed: 3, total_rules: 3 },
         created_at: '2026-01-01T00:00:00Z',
         updated_at: '2026-01-02T00:00:00Z',
@@ -504,7 +516,8 @@ describe('SdkModelSecurityService', () => {
 
       const result = await service.getScan('s-1');
       expect(result.uuid).toBe('s-1');
-      expect(result.evalSummary.totalRules).toBe(3);
+      expect(result.evalOutcome).toBe('ALLOWED');
+      expect(result.evalSummary?.totalRules).toBe(3);
     });
   });
 
@@ -512,7 +525,11 @@ describe('SdkModelSecurityService', () => {
     it('passes request to SDK and returns normalized result', async () => {
       mockScansCreate.mockResolvedValue({
         uuid: 's-new',
-        status: 'PENDING',
+        eval_outcome: 'PENDING',
+        model_uri: '',
+        scan_origin: 'LOCAL',
+        source_type: 'LOCAL',
+        security_group_name: 'Default LOCAL',
         eval_summary: null,
         created_at: '2026-01-01T00:00:00Z',
         updated_at: '2026-01-01T00:00:00Z',
@@ -535,10 +552,12 @@ describe('SdkModelSecurityService', () => {
         evaluations: [
           {
             uuid: 'e-1',
-            eval_outcome: 'BLOCKED',
             result: 'FAILED',
-            security_rule_uuid: 'r-1',
+            violation_count: 2,
+            rule_instance_uuid: 'ri-1',
             rule_name: 'Format Check',
+            rule_description: 'Check file format',
+            rule_instance_state: 'BLOCKING',
           },
         ],
       });
@@ -547,10 +566,12 @@ describe('SdkModelSecurityService', () => {
       expect(result.totalItems).toBe(1);
       expect(result.evaluations[0]).toEqual({
         uuid: 'e-1',
-        evalOutcome: 'BLOCKED',
         result: 'FAILED',
-        securityRuleUuid: 'r-1',
+        violationCount: 2,
+        ruleInstanceUuid: 'ri-1',
         ruleName: 'Format Check',
+        ruleDescription: 'Check file format',
+        ruleInstanceState: 'BLOCKING',
       });
     });
   });
@@ -559,14 +580,16 @@ describe('SdkModelSecurityService', () => {
     it('returns normalized single evaluation', async () => {
       mockScansGetEvaluation.mockResolvedValue({
         uuid: 'e-1',
-        eval_outcome: 'ALLOWED',
         result: 'PASSED',
-        security_rule_uuid: 'r-1',
+        violation_count: 0,
+        rule_instance_uuid: 'ri-1',
         rule_name: 'License Check',
+        rule_description: 'Check license',
+        rule_instance_state: 'BLOCKING',
       });
 
       const result = await service.getEvaluation('e-1');
-      expect(result.evalOutcome).toBe('ALLOWED');
+      expect(result.result).toBe('PASSED');
     });
   });
 
@@ -580,9 +603,13 @@ describe('SdkModelSecurityService', () => {
         violations: [
           {
             uuid: 'v-1',
-            rule_name: 'Malicious Code',
-            file_path: 'model.pkl',
             description: 'Pickle exploit detected',
+            threat: 'MALICIOUS_CODE',
+            threat_description: 'Code injection threat',
+            file: 'model.pkl',
+            rule_name: 'Malicious Code',
+            rule_description: 'Scans for malicious code',
+            rule_instance_state: 'BLOCKING',
           },
         ],
       });
@@ -591,9 +618,13 @@ describe('SdkModelSecurityService', () => {
       expect(result.totalItems).toBe(1);
       expect(result.violations[0]).toEqual({
         uuid: 'v-1',
-        ruleName: 'Malicious Code',
-        filePath: 'model.pkl',
         description: 'Pickle exploit detected',
+        threat: 'MALICIOUS_CODE',
+        threatDescription: 'Code injection threat',
+        file: 'model.pkl',
+        ruleName: 'Malicious Code',
+        ruleDescription: 'Scans for malicious code',
+        ruleInstanceState: 'BLOCKING',
       });
     });
   });
@@ -602,14 +633,19 @@ describe('SdkModelSecurityService', () => {
     it('returns normalized single violation', async () => {
       mockScansGetViolation.mockResolvedValue({
         uuid: 'v-1',
-        rule_name: 'Format Check',
-        file_path: 'model.bin',
         description: 'Unapproved format',
+        threat: 'UNAPPROVED_FORMATS',
+        threat_description: 'Unapproved file format',
+        file: 'model.bin',
+        rule_name: 'Format Check',
+        rule_description: 'Check file format',
+        rule_instance_state: 'BLOCKING',
       });
 
       const result = await service.getViolation('v-1');
       expect(result.uuid).toBe('v-1');
       expect(result.ruleName).toBe('Format Check');
+      expect(result.threat).toBe('UNAPPROVED_FORMATS');
     });
   });
 
@@ -622,8 +658,10 @@ describe('SdkModelSecurityService', () => {
         pagination: { total_items: 1 },
         files: [
           {
-            file_path: 'model.safetensors',
+            uuid: 'f-1',
+            path: 'model.safetensors',
             type: 'FILE',
+            formats: ['safetensors'],
             result: 'SUCCESS',
           },
         ],
@@ -632,8 +670,10 @@ describe('SdkModelSecurityService', () => {
       const result = await service.getFiles('s-1');
       expect(result.totalItems).toBe(1);
       expect(result.files[0]).toEqual({
-        filePath: 'model.safetensors',
+        uuid: 'f-1',
+        path: 'model.safetensors',
         type: 'FILE',
+        formats: ['safetensors'],
         result: 'SUCCESS',
       });
     });
