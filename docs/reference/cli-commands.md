@@ -2,7 +2,7 @@
 
 Binary: `daystrom` (or `pnpm run dev` during development).
 
-Six command groups manage the full guardrail lifecycle.
+Seven command groups manage the full guardrail lifecycle.
 
 ---
 
@@ -341,3 +341,80 @@ Abort a running scan.
 ```bash
 daystrom redteam abort <jobId>
 ```
+
+---
+
+## model-security
+
+AI Model Security operations — manage security groups, browse rules, and configure rule instances.
+
+### model-security groups
+
+Manage security groups that define scanning policies for ML model sources.
+
+```bash
+daystrom model-security groups list [options]
+daystrom model-security groups get <uuid>
+daystrom model-security groups create --config <path>
+daystrom model-security groups update <uuid> [options]
+daystrom model-security groups delete <uuid>
+```
+
+| Subcommand | Flags |
+|------------|-------|
+| `list` | `--source-types <types>`, `--search <query>`, `--sort-field <field>`, `--sort-dir <dir>`, `--enabled-rules <uuids>`, `--limit <n>` (default 20) |
+| `get <uuid>` | — |
+| `create` | `--config <path>` (required) |
+| `update <uuid>` | `--name <name>`, `--description <desc>` |
+| `delete <uuid>` | — |
+
+#### Group config JSON format
+
+```json
+{
+  "name": "My Security Group",
+  "source_type": "LOCAL",
+  "description": "Scans local model files",
+  "rule_configurations": {}
+}
+```
+
+### model-security rules
+
+Browse available security rules (read-only).
+
+```bash
+daystrom model-security rules list [options]
+daystrom model-security rules get <uuid>
+```
+
+| Subcommand | Flags |
+|------------|-------|
+| `list` | `--source-type <type>`, `--search <query>`, `--limit <n>` (default 20) |
+| `get <uuid>` | — |
+
+### model-security rule-instances
+
+Manage rule instances within security groups.
+
+```bash
+daystrom model-security rule-instances list <groupUuid> [options]
+daystrom model-security rule-instances get <groupUuid> <instanceUuid>
+daystrom model-security rule-instances update <groupUuid> <instanceUuid> --config <path>
+```
+
+| Subcommand | Flags |
+|------------|-------|
+| `list <groupUuid>` | `--security-rule-uuid <uuid>`, `--state <state>`, `--limit <n>` (default 20) |
+| `get <groupUuid> <instanceUuid>` | — |
+| `update <groupUuid> <instanceUuid>` | `--config <path>` (required) |
+
+#### Rule instance update JSON format
+
+```json
+{
+  "state": "BLOCKING",
+  "field_values": {
+    "threshold": 0.8
+  }
+}

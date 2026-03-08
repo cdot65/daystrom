@@ -1,4 +1,9 @@
 import chalk from 'chalk';
+import type {
+  ModelSecurityGroup,
+  ModelSecurityRule,
+  ModelSecurityRuleInstance,
+} from '../airs/types.js';
 import type { AuditResult, ConflictPair, ProfileTopic } from '../audit/types.js';
 import type {
   AnalysisReport,
@@ -690,6 +695,141 @@ export function renderConflicts(conflicts: ConflictPair[]): void {
     }
     if (c.evidence.length > 3) {
       console.log(chalk.dim(`    ...and ${c.evidence.length - 3} more`));
+    }
+  }
+  console.log();
+}
+
+// ---------------------------------------------------------------------------
+// Model Security rendering
+// ---------------------------------------------------------------------------
+
+/** Render the model security banner. */
+export function renderModelSecurityHeader(): void {
+  console.log(chalk.bold.blue('\n  Prisma AIRS — Model Security'));
+  console.log(chalk.dim('  ML model supply chain security\n'));
+}
+
+/** Render security group list. */
+export function renderGroupList(groups: ModelSecurityGroup[]): void {
+  if (groups.length === 0) {
+    console.log(chalk.dim('  No security groups found.\n'));
+    return;
+  }
+  console.log(chalk.bold('\n  Security Groups:\n'));
+  for (const g of groups) {
+    console.log(`  ${chalk.dim(g.uuid)}`);
+    const stateColor = g.state === 'ACTIVE' ? chalk.green : chalk.yellow;
+    console.log(`    ${g.name}  ${stateColor(g.state)}  source: ${chalk.dim(g.sourceType)}`);
+  }
+  console.log();
+}
+
+/** Render security group detail. */
+export function renderGroupDetail(group: ModelSecurityGroup): void {
+  console.log(chalk.bold('\n  Security Group Detail:\n'));
+  console.log(`    UUID:        ${chalk.dim(group.uuid)}`);
+  console.log(`    Name:        ${group.name}`);
+  console.log(`    Description: ${group.description || chalk.dim('(none)')}`);
+  console.log(`    Source Type: ${group.sourceType}`);
+  const stateColor = group.state === 'ACTIVE' ? chalk.green : chalk.yellow;
+  console.log(`    State:       ${stateColor(group.state)}`);
+  console.log(`    Created:     ${chalk.dim(group.createdAt)}`);
+  console.log(`    Updated:     ${chalk.dim(group.updatedAt)}`);
+  console.log();
+}
+
+/** Render security rule list. */
+export function renderRuleList(rules: ModelSecurityRule[]): void {
+  if (rules.length === 0) {
+    console.log(chalk.dim('  No security rules found.\n'));
+    return;
+  }
+  console.log(chalk.bold('\n  Security Rules:\n'));
+  for (const r of rules) {
+    console.log(`  ${chalk.dim(r.uuid)}`);
+    console.log(
+      `    ${r.name}  type: ${chalk.dim(r.ruleType)}  default: ${chalk.dim(r.defaultState)}`,
+    );
+    console.log(`    ${chalk.dim(r.description)}`);
+    console.log(`    Sources: ${r.compatibleSources.map((s) => chalk.dim(s)).join(', ')}`);
+  }
+  console.log();
+}
+
+/** Render security rule detail. */
+export function renderRuleDetail(rule: ModelSecurityRule): void {
+  console.log(chalk.bold('\n  Security Rule Detail:\n'));
+  console.log(`    UUID:          ${chalk.dim(rule.uuid)}`);
+  console.log(`    Name:          ${rule.name}`);
+  console.log(`    Description:   ${rule.description}`);
+  console.log(`    Rule Type:     ${rule.ruleType}`);
+  console.log(`    Default State: ${rule.defaultState}`);
+  console.log(`    Sources:       ${rule.compatibleSources.join(', ')}`);
+
+  if (rule.remediation.description) {
+    console.log(chalk.bold('\n    Remediation:'));
+    console.log(`      ${rule.remediation.description}`);
+    if (rule.remediation.steps.length > 0) {
+      for (const step of rule.remediation.steps) {
+        console.log(`      ${chalk.dim('•')} ${step}`);
+      }
+    }
+    if (rule.remediation.url) {
+      console.log(`      ${chalk.dim(rule.remediation.url)}`);
+    }
+  }
+
+  if (rule.editableFields.length > 0) {
+    console.log(chalk.bold('\n    Editable Fields:'));
+    for (const f of rule.editableFields) {
+      console.log(`      ${f.displayName} (${chalk.dim(f.attributeName)}): ${f.displayType}`);
+      if (f.description) console.log(`        ${chalk.dim(f.description)}`);
+    }
+  }
+  console.log();
+}
+
+/** Render rule instance list. */
+export function renderRuleInstanceList(instances: ModelSecurityRuleInstance[]): void {
+  if (instances.length === 0) {
+    console.log(chalk.dim('  No rule instances found.\n'));
+    return;
+  }
+  console.log(chalk.bold('\n  Rule Instances:\n'));
+  for (const ri of instances) {
+    const stateColor =
+      ri.state === 'BLOCKING' ? chalk.red : ri.state === 'ALLOWING' ? chalk.green : chalk.dim;
+    const ruleName = (ri.rule as { name?: string })?.name ?? ri.securityRuleUuid;
+    console.log(`  ${chalk.dim(ri.uuid)}`);
+    console.log(`    ${ruleName}  ${stateColor(ri.state)}`);
+  }
+  console.log();
+}
+
+/** Render rule instance detail. */
+export function renderRuleInstanceDetail(instance: ModelSecurityRuleInstance): void {
+  console.log(chalk.bold('\n  Rule Instance Detail:\n'));
+  console.log(`    UUID:         ${chalk.dim(instance.uuid)}`);
+  console.log(`    Group UUID:   ${chalk.dim(instance.securityGroupUuid)}`);
+  console.log(`    Rule UUID:    ${chalk.dim(instance.securityRuleUuid)}`);
+  const stateColor =
+    instance.state === 'BLOCKING'
+      ? chalk.red
+      : instance.state === 'ALLOWING'
+        ? chalk.green
+        : chalk.dim;
+  console.log(`    State:        ${stateColor(instance.state)}`);
+  const ruleName = (instance.rule as { name?: string })?.name;
+  if (ruleName) console.log(`    Rule Name:    ${ruleName}`);
+  console.log(`    Created:      ${chalk.dim(instance.createdAt)}`);
+  console.log(`    Updated:      ${chalk.dim(instance.updatedAt)}`);
+
+  if (Object.keys(instance.fieldValues).length > 0) {
+    console.log(chalk.bold('\n    Field Values:'));
+    for (const [key, value] of Object.entries(instance.fieldValues)) {
+      const display = Array.isArray(value) ? value.join(', ') : String(value);
+      console.log(`      ${key}: ${chalk.dim(display)}`);
     }
   }
   console.log();

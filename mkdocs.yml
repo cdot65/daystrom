@@ -1,6 +1,6 @@
 site_name: Daystrom
 site_url: https://cdot65.github.io/daystrom/
-site_description: Automated Prisma AIRS custom topic guardrail generator with iterative, self-improving refinement
+site_description: CLI and library for Palo Alto Prisma AIRS — guardrail refinement, AI red teaming, model security scanning
 repo_name: cdot65/daystrom
 repo_url: https://github.com/cdot65/daystrom
 
@@ -88,6 +88,7 @@ nav:
       - Topic Constraints: features/topic-constraints.md
       - Resumable Runs: features/resumable-runs.md
       - Red Team Scanning: features/red-team.md
+      - Model Security: features/model-security.md
   - Reference:
       - CLI Commands: reference/cli-commands.md
       - Configuration Options: reference/configuration.md
@@ -98,6 +99,7 @@ nav:
       - Managing Targets: examples/managing-targets.md
       - Managing Prompt Sets: examples/managing-prompt-sets.md
       - Running Scans: examples/running-scans.md
+      - Model Security: examples/model-security.md
   - Development:
       - Contributing: development/contributing.md
       - Testing: development/testing.md

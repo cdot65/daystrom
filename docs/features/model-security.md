@@ -1,0 +1,70 @@
+# Model Security
+
+Daystrom integrates with Palo Alto Prisma AIRS AI Model Security to manage ML model supply chain security. This enables scanning model artifacts for vulnerabilities, malicious code, and compliance issues before deployment.
+
+## Overview
+
+The `daystrom model-security` command group provides access to Model Security operations:
+
+- **Groups** — manage security groups that define scanning policies per source type
+- **Rules** — browse available security rules (read-only, managed by AIRS)
+- **Rule Instances** — configure rule enforcement within groups (BLOCKING, ALLOWING, DISABLED)
+
+## Concepts
+
+### Security Groups
+
+A security group ties a **source type** (LOCAL, S3, GCS, AZURE, HUGGING_FACE) to a set of **rule instances**. Each group defines the security policy applied when scanning models from that source.
+
+### Security Rules
+
+Rules are the individual checks AIRS performs — unsafe deserialization detection, malicious code injection scanning, license compliance, etc. Rules are managed by AIRS and cannot be created or deleted via the API.
+
+### Rule Instances
+
+When a group is created, AIRS automatically provisions rule instances for all compatible rules. Each instance can be configured independently:
+
+| State | Behavior |
+|-------|----------|
+| `BLOCKING` | Scan fails if rule triggers |
+| `ALLOWING` | Rule evaluates but doesn't block |
+| `DISABLED` | Rule is skipped entirely |
+
+## Workflow
+
+### 1. List available groups
+
+```bash
+daystrom model-security groups list
+```
+
+### 2. Browse security rules
+
+```bash
+daystrom model-security rules list
+daystrom model-security rules get <uuid>
+```
+
+### 3. Configure rule enforcement
+
+```bash
+# View current rule instances in a group
+daystrom model-security rule-instances list <groupUuid>
+
+# Update a rule instance state
+echo '{"state": "BLOCKING"}' > update.json
+daystrom model-security rule-instances update <groupUuid> <instanceUuid> --config update.json
+```
+
+### 4. Create custom groups
+
+```bash
+echo '{"name": "Strict S3 Policy", "source_type": "S3"}' > group.json
+daystrom model-security groups create --config group.json
+```
+
+## CLI Reference
+
+See [CLI Commands — model-security](../reference/cli-commands.md#model-security) for full option details.
+
+See [Model Security Examples](../examples/model-security.md) for hands-on walkthroughs.

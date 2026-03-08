@@ -5,6 +5,7 @@ import { Command } from 'commander';
 import { registerAuditCommand } from './commands/audit.js';
 import { registerGenerateCommand } from './commands/generate.js';
 import { registerListCommand } from './commands/list.js';
+import { registerModelSecurityCommand } from './commands/modelsecurity.js';
 import { registerRedteamCommand } from './commands/redteam.js';
 import { registerReportCommand } from './commands/report.js';
 import { registerResumeCommand } from './commands/resume.js';
@@ -21,6 +22,7 @@ registerResumeCommand(program);
 registerReportCommand(program);
 registerListCommand(program);
 registerRedteamCommand(program);
+registerModelSecurityCommand(program);
 registerAuditCommand(program);
 
 program.parse();
