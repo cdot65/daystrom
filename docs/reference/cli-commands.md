@@ -108,13 +108,26 @@ daystrom report <runId> [options]
 | Flag | Default | What it does |
 |------|---------|-------------|
 | `--iteration <n>` | _(best)_ | Show a specific iteration instead of the best |
+| `--format <fmt>` | `terminal` | Output format: `terminal`, `json`, `html` |
+| `--tests` | _(off)_ | Include per-test-case details |
+| `--diff <runId>` | _(none)_ | Compare with another run side-by-side |
+| `--output <path>` | `<runId>-report.html` | Output file path (html format only) |
 
 ```bash
-# Best iteration
+# Best iteration (terminal)
 daystrom report abc123xyz
 
 # Specific iteration
 daystrom report abc123xyz --iteration 3
+
+# JSON export (to stdout)
+daystrom report abc123xyz --format json --tests
+
+# HTML report with test details
+daystrom report abc123xyz --format html --tests --output my-report.html
+
+# Compare two runs
+daystrom report abc123xyz --diff def456uvw
 ```
 
 ---

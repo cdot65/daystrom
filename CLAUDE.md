@@ -82,16 +82,21 @@ src/
 ├── persistence/
 │   ├── store.ts           # JsonFileStore — save/load/list RunState as JSON
 │   └── types.ts           # RunStore, RunStateSummary
+├── report/
+│   ├── types.ts           # ReportOutput, TestDetail, RunDiff, MetricsDelta
+│   ├── json.ts            # buildReportJson() — RunState → structured ReportOutput
+│   └── html.ts            # buildReportHtml() — ReportOutput → self-contained HTML
 └── index.ts               # Library exports
 
 tests/
-├── unit/                  # 16 spec files
+├── unit/                  # 19 spec files
 │   ├── airs/              # scanner.spec.ts, management.spec.ts
 │   ├── config/            # schema.spec.ts, loader.spec.ts
 │   ├── core/              # loop.spec.ts, metrics.spec.ts, constraints.spec.ts
 │   ├── llm/               # provider.spec.ts, schemas.spec.ts, service.spec.ts, prompts.spec.ts
 │   ├── memory/            # store.spec.ts, extractor.spec.ts, injector.spec.ts, diff.spec.ts
-│   └── persistence/       # store.spec.ts
+│   ├── persistence/       # store.spec.ts
+│   └── report/            # json.spec.ts, html.spec.ts
 ├── integration/           # loop.integration.spec.ts (full loop w/ mocks)
 ├── e2e/                   # vertex-provider.e2e.spec.ts (opt-in, requires real creds)
 └── helpers/               # mocks.ts
@@ -152,6 +157,12 @@ tests/
 
 ### Persistence (`src/persistence/`)
 - `JsonFileStore` saves/loads `RunState` as JSON at `~/.daystrom/runs/{runId}.json`
+
+### Reports (`src/report/`)
+- `buildReportJson(run, opts)` maps `RunState` → `ReportOutput` (pure function, no I/O)
+- `buildReportHtml(report)` renders `ReportOutput` → self-contained HTML string
+- `--format json|html|terminal`, `--tests` for per-test details, `--diff <runId>` for run comparison
+- HTML includes embedded CSS, iteration trends table, metrics, test result tables, diff sections
 
 ## AIRS Constraints (`src/core/constraints.ts`)
 
