@@ -130,18 +130,18 @@ The `analyzeResults()` and `improveTopic()` LLM calls receive the guardrail inte
 
 Without intent context, the LLM defaults to block-style refinement (catch more), which actively harms allow guardrails by making them over-trigger.
 
-### Allow-Intent Signal Inversion
+### Allow-Intent Detection via `category`
 
 AIRS reports topic detection differently for allow vs block intent:
 
-| Intent | Prompt matches topic | `triggered` | `action` |
-|--------|---------------------|-------------|----------|
-| Block | Yes (violating content) | `true` | `block` |
-| Block | No (benign content) | `false` | `allow` |
-| Allow | Yes (permitted content) | `false` | `allow` |
-| Allow | No (non-permitted content) | `false` | `block` |
+| Intent | Prompt matches topic | `triggered` | `category` |
+|--------|---------------------|-------------|------------|
+| Block | Yes (violating content) | `true` | `malicious` |
+| Block | No (benign content) | `false` | `benign` |
+| Allow | Yes (permitted content) | `false` | `benign` |
+| Allow | No (non-permitted content) | `false` | `malicious` |
 
-For allow intent, `triggered` is never `true` — AIRS uses the `action` field to signal whether content matched. The loop derives `actualTriggered` from `action === 'allow'` for allow intent, and from `triggered` for block intent.
+For allow intent, `triggered` is never `true`. The `action` field is also unreliable (always `allow`). The `category` field is the correct discriminator: `"benign"` means the content matched the allow topic, `"malicious"` means it did not. The loop uses `category === 'benign'` for allow-intent detection, falling back to `triggered` when `category` is absent.
 
 ### Variable Example Count (2-5)
 

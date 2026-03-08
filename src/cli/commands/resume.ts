@@ -1,6 +1,8 @@
+import * as path from 'node:path';
 import type { Command } from 'commander';
 import { SdkManagementService } from '../../airs/management.js';
-import { AirsScanService } from '../../airs/scanner.js';
+import { AirsScanService, DebugScanService } from '../../airs/scanner.js';
+import type { ScanService } from '../../airs/types.js';
 import { loadConfig } from '../../config/loader.js';
 import { runLoop } from '../../core/loop.js';
 import { createLlmProvider } from '../../llm/provider.js';
@@ -25,6 +27,7 @@ export function registerResumeCommand(program: Command): void {
     .command('resume <runId>')
     .description('Resume a paused or failed run')
     .option('--max-iterations <n>', 'Additional iterations to run', '10')
+    .option('--debug-scans', 'Dump raw AIRS scan responses to JSONL for debugging', false)
     .action(async (runId: string, opts) => {
       try {
         renderHeader();
@@ -64,7 +67,11 @@ export function registerResumeCommand(program: Command): void {
 
         const llm = new LangChainLlmService(model);
         if (!config.airsApiKey) throw new Error('PANW_AI_SEC_API_KEY is required');
-        const scanner = new AirsScanService(config.airsApiKey);
+        let scanner: ScanService = new AirsScanService(config.airsApiKey);
+        if (opts.debugScans) {
+          const debugPath = path.join(config.dataDir, '..', `debug-scans-${runId}.jsonl`);
+          scanner = new DebugScanService(scanner, debugPath);
+        }
         const management = new SdkManagementService({
           clientId: config.mgmtClientId,
           clientSecret: config.mgmtClientSecret,

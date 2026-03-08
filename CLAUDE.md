@@ -107,8 +107,9 @@ tests/
 - Stop: `coverage >= targetCoverage` (default 0.9). Coverage = `min(TPR, TNR)`
 
 ### AIRS Integration (`src/airs/`)
-- **Scanner**: `Scanner.syncScan()` via SDK, detection = `prompt_detected.topic_violation` (fallback: `topic_guardrails_details`)
-- **Allow-intent signal inversion**: For allow topics, AIRS never sets `triggered: true` — the loop derives `actualTriggered` from `action === 'allow'` instead
+- **Scanner**: `Scanner.syncScan()` via SDK, detection = `prompt_detected.topic_violation` (fallback: `topic_guardrails_details`), extracts `category` from response
+- **Allow-intent detection via `category`**: For allow topics, AIRS never sets `triggered: true` and `action` is unreliable. The loop uses `category === 'benign'` (topic matched) vs `'malicious'` (no match), falling back to `triggered` when `category` is absent
+- **`DebugScanService`**: Wrapper that appends raw scan responses to a JSONL file when `--debug-scans` is passed
 - **Management**: `ManagementClient` for topic CRUD + profile linking via OAuth2
 - Profile updates create **new revisions with new UUIDs** — always reference profiles by name, never ID
 - Topics must be added to profile's `model-protection` → `topic-guardrails` → `topic-list`

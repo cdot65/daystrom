@@ -383,8 +383,8 @@ describe('runLoop', () => {
     );
   });
 
-  it('uses action field for allow-intent triggered detection', async () => {
-    // Mock scanner simulating AIRS allow-intent: matching prompts → action: 'allow'
+  it('uses category field for allow-intent triggered detection', async () => {
+    // Mock scanner simulating AIRS allow-intent: matching prompts → category: 'benign'
     const allowScanner = createMockAllowScanService([/weapon/i, /bomb/i]);
     const llm = createMockLlm();
     const deps = createDeps({ llm, scanner: allowScanner });
@@ -400,11 +400,45 @@ describe('runLoop', () => {
     const evalEvent = events.find((e) => e.type === 'evaluate:complete');
     expect(evalEvent).toBeDefined();
     if (evalEvent?.type === 'evaluate:complete') {
-      // "weapon" and "bomb" prompts should now be detected as matching (action: 'allow')
-      // "cats" and "weather" should NOT match (action: 'block')
-      // With allow intent, actualTriggered = (action === 'allow')
+      // "weapon" and "bomb" prompts → category: 'benign' → actualTriggered = true
+      // "cats" and "weather" → category: 'malicious' → actualTriggered = false
       expect(evalEvent.metrics.truePositives).toBeGreaterThan(0);
       expect(evalEvent.metrics.trueNegatives).toBeGreaterThan(0);
+    }
+  });
+
+  it('falls back to triggered when category absent for allow-intent', async () => {
+    // Scanner with no category field — should fall back to triggered
+    const noCategoryScanner: import('../../../src/airs/types.js').ScanService = {
+      scan: async () => ({
+        scanId: 's1',
+        reportId: 'r1',
+        action: 'allow' as const,
+        triggered: false,
+      }),
+      scanBatch: async (_p, prompts) =>
+        prompts.map(() => ({
+          scanId: 's1',
+          reportId: 'r1',
+          action: 'allow' as const,
+          triggered: false,
+        })),
+    };
+    const deps = createDeps({ scanner: noCategoryScanner });
+    const events: LoopEvent[] = [];
+
+    for await (const event of runLoop(
+      { ...defaultInput, intent: 'allow', maxIterations: 1 },
+      deps,
+    )) {
+      events.push(event);
+    }
+
+    const evalEvent = events.find((e) => e.type === 'evaluate:complete');
+    expect(evalEvent).toBeDefined();
+    if (evalEvent?.type === 'evaluate:complete') {
+      // All triggered=false, so all actualTriggered=false → positive tests are FN
+      expect(evalEvent.metrics.falseNegatives).toBeGreaterThan(0);
     }
   });
 

@@ -381,5 +381,55 @@ describe('SdkManagementService', () => {
       const blockEntry = tg['topic-list'].find((tl) => tl.action === 'block');
       expect(blockEntry?.topic).toEqual([]);
     });
+
+    it('always sets guardrail-level action to block', async () => {
+      // Even when existing guardrail has action: 'allow', it should be overwritten to 'block'
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          {
+            profile_id: 'p-1',
+            profile_name: 'test-profile',
+            active: true,
+            policy: {
+              'ai-security-profiles': [
+                {
+                  'model-type': 'default',
+                  'model-configuration': {
+                    'model-protection': [
+                      {
+                        name: 'topic-guardrails',
+                        action: 'allow',
+                        options: [],
+                        'topic-list': [],
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      });
+      mockProfileUpdate.mockResolvedValue({});
+
+      await service.assignTopicToProfile('test-profile', 'topic-1', 'Weapons', 'block');
+
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      expect((tg as Record<string, unknown>).action).toBe('block');
+    });
+
+    it('sets guardrail-level action to block even for allow-intent topics', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          { profile_id: 'p-1', profile_name: 'test-profile', active: true, policy: {} },
+        ],
+      });
+      mockProfileUpdate.mockResolvedValue({});
+
+      await service.assignTopicToProfile('test-profile', 'topic-1', 'Safe Topic', 'allow');
+
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      expect((tg as Record<string, unknown>).action).toBe('block');
+    });
   });
 });

@@ -78,7 +78,7 @@ cd daystrom
 pnpm install
 cp .env.example .env   # edit with your credentials
 pnpm run generate      # run via tsx
-pnpm test              # 192 tests
+pnpm test              # 217 tests
 pnpm run lint          # biome check
 ```
 

@@ -1,5 +1,21 @@
 # Release Notes
 
+## v1.1.1
+
+### Bug Fixes
+
+- **Fix allow-intent detection (P0)**: The v1.1.0 `action === 'allow'` heuristic was wrong — AIRS returns `action: 'allow'` for all prompts on allow topics. Detection now uses the `category` field (`'benign'` = topic matched, `'malicious'` = no match), with fallback to `triggered` when `category` is absent.
+- **Fix profile guardrail-level action**: `topic-guardrails` entry in security profiles now always uses `action: 'block'` to enforce violations. Previously defaulted to `'allow'`, causing all topic guardrails to be unenforced.
+
+### Features
+
+- **`--debug-scans` flag**: Dumps raw AIRS scan responses to a JSONL file (`~/.daystrom/debug-scans-*.jsonl`) for offline inspection. Available on both `generate` and `resume` commands.
+- **Scanner extracts `category`**: The `category` field from AIRS responses is now included in `ScanResult`.
+
+### Tests
+
+- 217 tests across 17 spec files (up from 209)
+
 ## v1.1.0
 
 ### Bug Fixes
