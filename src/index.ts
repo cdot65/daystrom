@@ -16,6 +16,12 @@ export { AirsScanService } from './airs/scanner.js';
 // Core loop & metrics — the main generate→test→evaluate→improve cycle
 // ---------------------------------------------------------------------------
 export type {
+  PromptDetail,
+  PromptSetDetail,
+  PromptSetService,
+  PromptSetVersionInfo,
+  PropertyName,
+  PropertyValue,
   RedTeamAttack,
   RedTeamCategory,
   RedTeamCustomAttack,
@@ -24,6 +30,10 @@ export type {
   RedTeamService,
   RedTeamStaticReport,
   RedTeamTarget,
+  RedTeamTargetCreateRequest,
+  RedTeamTargetDetail,
+  RedTeamTargetUpdateRequest,
+  TargetOperationOptions,
 } from './airs/types.js';
 // ---------------------------------------------------------------------------
 // Audit — profile-level multi-topic evaluation and conflict detection

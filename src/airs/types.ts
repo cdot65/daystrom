@@ -57,6 +57,41 @@ export interface PromptSetService {
   ): Promise<{ uuid: string; prompt: string }>;
   /** List all custom prompt sets. */
   listPromptSets(): Promise<Array<{ uuid: string; name: string; active: boolean }>>;
+  /** Get prompt set details. */
+  getPromptSet(uuid: string): Promise<PromptSetDetail>;
+  /** Update prompt set name/description. */
+  updatePromptSet(
+    uuid: string,
+    request: { name?: string; description?: string },
+  ): Promise<PromptSetDetail>;
+  /** Archive or unarchive a prompt set. */
+  archivePromptSet(uuid: string, archive: boolean): Promise<void>;
+  /** Get prompt set version info with stats. */
+  getPromptSetVersionInfo(uuid: string): Promise<PromptSetVersionInfo>;
+  /** Download CSV template for a prompt set. */
+  downloadTemplate(uuid: string): Promise<string>;
+  /** Upload CSV file to a prompt set. */
+  uploadPromptsCsv(uuid: string, file: Blob): Promise<{ message: string; status: number }>;
+  /** List prompts in a prompt set. */
+  listPrompts(setUuid: string, opts?: { limit?: number; skip?: number }): Promise<PromptDetail[]>;
+  /** Get a single prompt. */
+  getPrompt(setUuid: string, promptUuid: string): Promise<PromptDetail>;
+  /** Update a prompt. */
+  updatePrompt(
+    setUuid: string,
+    promptUuid: string,
+    request: { prompt?: string; goal?: string },
+  ): Promise<PromptDetail>;
+  /** Delete a prompt. */
+  deletePrompt(setUuid: string, promptUuid: string): Promise<void>;
+  /** List property names. */
+  getPropertyNames(): Promise<PropertyName[]>;
+  /** Create a property name. */
+  createPropertyName(name: string): Promise<PropertyName>;
+  /** Get values for a property. */
+  getPropertyValues(name: string): Promise<PropertyValue[]>;
+  /** Create a property value. */
+  createPropertyValue(name: string, value: string): Promise<PropertyValue>;
 }
 
 // ---------------------------------------------------------------------------
@@ -85,6 +120,97 @@ export interface RedTeamTarget {
   status: string;
   targetType?: string;
   active: boolean;
+}
+
+/** Detailed target info with connection params and metadata. */
+export interface RedTeamTargetDetail extends RedTeamTarget {
+  connectionParams?: Record<string, unknown>;
+  background?: {
+    industry?: string | null;
+    use_case?: string | null;
+    competitors?: string[] | null;
+  };
+  additionalContext?: {
+    system_prompt?: string | null;
+    use_case_description?: string | null;
+    documents?: unknown[] | null;
+  };
+  metadata?: {
+    multi_turn?: boolean;
+    rate_limit?: number | null;
+    rate_limit_error_json?: Record<string, unknown> | null;
+    is_streaming_enabled?: boolean | null;
+    max_turns?: number | null;
+    api_endpoint_type?: string | null;
+    response_mode?: string | null;
+  };
+}
+
+/** Request to create a red team target. */
+export interface RedTeamTargetCreateRequest {
+  name: string;
+  target_type: string;
+  connection_params: Record<string, unknown>;
+  background?: Record<string, unknown>;
+  additional_context?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}
+
+/** Request to update a red team target. */
+export interface RedTeamTargetUpdateRequest {
+  name?: string;
+  target_type?: string;
+  connection_params?: Record<string, unknown>;
+  background?: Record<string, unknown>;
+  additional_context?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}
+
+/** Options for target create/update operations. */
+export interface TargetOperationOptions {
+  validate?: boolean;
+}
+
+/** Normalized prompt set detail. */
+export interface PromptSetDetail {
+  uuid: string;
+  name: string;
+  active: boolean;
+  archive: boolean;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Prompt set version info with stats. */
+export interface PromptSetVersionInfo {
+  uuid: string;
+  version: number;
+  stats: {
+    total: number;
+    active: number;
+    inactive: number;
+  };
+}
+
+/** Normalized individual prompt. */
+export interface PromptDetail {
+  uuid: string;
+  prompt: string;
+  goal?: string;
+  active: boolean;
+  promptSetId: string;
+}
+
+/** Property name entry. */
+export interface PropertyName {
+  name: string;
+}
+
+/** Property value entry. */
+export interface PropertyValue {
+  name: string;
+  value: string;
 }
 
 /** Normalized attack category with subcategories. */
@@ -161,6 +287,37 @@ export interface RedTeamCustomAttack {
 export interface RedTeamService {
   /** List configured red team targets. */
   listTargets(): Promise<RedTeamTarget[]>;
+
+  /** Get target details. */
+  getTarget(uuid: string): Promise<RedTeamTargetDetail>;
+
+  /** Create a red team target. */
+  createTarget(
+    request: RedTeamTargetCreateRequest,
+    opts?: TargetOperationOptions,
+  ): Promise<RedTeamTargetDetail>;
+
+  /** Update a red team target. */
+  updateTarget(
+    uuid: string,
+    request: RedTeamTargetUpdateRequest,
+    opts?: TargetOperationOptions,
+  ): Promise<RedTeamTargetDetail>;
+
+  /** Delete a red team target. */
+  deleteTarget(uuid: string): Promise<void>;
+
+  /** Probe a target connection. */
+  probeTarget(request: Record<string, unknown>): Promise<Record<string, unknown>>;
+
+  /** Get target profile. */
+  getTargetProfile(uuid: string): Promise<Record<string, unknown>>;
+
+  /** Update target profile. */
+  updateTargetProfile(
+    uuid: string,
+    request: Record<string, unknown>,
+  ): Promise<Record<string, unknown>>;
 
   /** Create a red team scan job. */
   createScan(request: {

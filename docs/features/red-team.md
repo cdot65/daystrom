@@ -4,13 +4,16 @@ Daystrom integrates with Palo Alto Prisma AIRS AI Red Team to run adversarial sc
 
 ## Overview
 
-The `daystrom redteam` command group provides full access to Red Team scan operations:
+The `daystrom redteam` command group provides full access to Red Team operations:
 
 - **Scan** — launch static, dynamic, or custom prompt set scans
 - **Status** — monitor running scans
 - **Report** — view results with severity breakdowns and attack details
 - **List** — browse recent scans
-- **Targets** — list configured red team targets
+- **Targets** — full CRUD on red team targets (create, get, update, delete, probe, profile)
+- **Prompt Sets** — manage custom prompt sets (create, get, update, archive, upload CSV, download template)
+- **Prompts** — manage individual prompts within sets (add, list, get, update, delete)
+- **Properties** — manage custom attack property names and values
 - **Categories** — list available attack categories
 - **Abort** — stop a running scan
 
@@ -24,10 +27,60 @@ The `daystrom redteam` command group provides full access to Red Team scan opera
 
 ## Workflow
 
-### 1. Check available targets
+### 1. Manage targets
 
 ```bash
-daystrom redteam targets
+# List all targets
+daystrom redteam targets list
+
+# Get target details
+daystrom redteam targets get <uuid>
+
+# Create a target from JSON config file
+daystrom redteam targets create --config target.json
+
+# Create with connection validation
+daystrom redteam targets create --config target.json --validate
+
+# Update a target
+daystrom redteam targets update <uuid> --config updates.json
+
+# Update with connection validation
+daystrom redteam targets update <uuid> --config updates.json --validate
+
+# Delete a target
+daystrom redteam targets delete <uuid>
+
+# Probe a target connection (test without saving)
+daystrom redteam targets probe --config connection.json
+
+# View target profile
+daystrom redteam targets profile <uuid>
+
+# Update target profile
+daystrom redteam targets update-profile <uuid> --config profile.json
+```
+
+**Example `target.json`:**
+```json
+{
+  "name": "My Chatbot",
+  "target_type": "REST",
+  "connection_params": {
+    "api_endpoint": "https://api.example.com/chat",
+    "request_headers": { "Authorization": "Bearer token" },
+    "request_json": { "message": "{prompt}" },
+    "response_key": "response"
+  },
+  "background": {
+    "industry": "finance",
+    "use_case": "customer support"
+  },
+  "metadata": {
+    "multi_turn": false,
+    "rate_limit": 10
+  }
+}
 ```
 
 ### 2. Browse attack categories (for STATIC scans)
@@ -62,9 +115,9 @@ daystrom redteam scan --target <uuid> --name "Async Scan" --no-wait
 ```
 
 !!! tip "Finding prompt set UUIDs"
+    Use `daystrom redteam prompt-sets list` to find prompt set UUIDs.
     Prompt sets created by `daystrom generate --create-prompt-set` emit
-    the UUID in the `promptset:created` event. You can also list prompt
-    sets via the SDK's `SdkPromptSetService.listPromptSets()`.
+    the UUID in the `promptset:created` event.
 
 ### 4. Check status
 
@@ -109,6 +162,69 @@ daystrom redteam list --target <uuid> --limit 20
 daystrom redteam abort <jobId>
 ```
 
+## Prompt Set Management
+
+```bash
+# List all prompt sets
+daystrom redteam prompt-sets list
+
+# Get prompt set details + version info
+daystrom redteam prompt-sets get <uuid>
+
+# Create a prompt set
+daystrom redteam prompt-sets create --name "My Set" --description "Test prompts"
+
+# Update a prompt set
+daystrom redteam prompt-sets update <uuid> --name "New Name"
+
+# Archive/unarchive
+daystrom redteam prompt-sets archive <uuid>
+daystrom redteam prompt-sets archive <uuid> --unarchive
+
+# Download CSV template
+daystrom redteam prompt-sets download <uuid> --output template.csv
+
+# Upload CSV prompts
+daystrom redteam prompt-sets upload <uuid> prompts.csv
+```
+
+## Individual Prompt Management
+
+```bash
+# List prompts in a set
+daystrom redteam prompts list <setUuid>
+
+# Get prompt details
+daystrom redteam prompts get <setUuid> <promptUuid>
+
+# Add a prompt
+daystrom redteam prompts add <setUuid> --prompt "Test prompt" --goal "Should trigger"
+
+# Update a prompt
+daystrom redteam prompts update <setUuid> <promptUuid> --prompt "Updated text"
+
+# Delete a prompt
+daystrom redteam prompts delete <setUuid> <promptUuid>
+```
+
+## Property Management
+
+Custom attack properties let you tag and categorize prompts.
+
+```bash
+# List property names
+daystrom redteam properties list
+
+# Create a property name
+daystrom redteam properties create --name "category"
+
+# List values for a property
+daystrom redteam properties values category
+
+# Add a property value
+daystrom redteam properties add-value --name "category" --value "security"
+```
+
 ## Authentication
 
 Red Team operations reuse the same OAuth2 credentials as topic management:
@@ -125,10 +241,10 @@ Optional overrides for dedicated red team endpoints:
 
 ## Library API
 
-The `SdkRedTeamService` class is exported for programmatic use:
+The `SdkRedTeamService` and `SdkPromptSetService` classes are exported for programmatic use:
 
 ```typescript
-import { SdkRedTeamService } from '@cdot65/daystrom';
+import { SdkRedTeamService, SdkPromptSetService } from '@cdot65/daystrom';
 
 const redteam = new SdkRedTeamService({
   clientId: process.env.PANW_MGMT_CLIENT_ID,
@@ -136,14 +252,32 @@ const redteam = new SdkRedTeamService({
   tsgId: process.env.PANW_MGMT_TSG_ID,
 });
 
-const targets = await redteam.listTargets();
+// Target CRUD
+const target = await redteam.createTarget({
+  name: 'My Target',
+  target_type: 'REST',
+  connection_params: { api_endpoint: 'https://api.example.com' },
+}, { validate: true });
+
+// Scans
 const job = await redteam.createScan({
   name: 'API Scan',
-  targetUuid: targets[0].uuid,
+  targetUuid: target.uuid,
   jobType: 'STATIC',
 });
 const completed = await redteam.waitForCompletion(job.uuid, (progress) => {
   console.log(`${progress.status}: ${progress.completed}/${progress.total}`);
 });
 const report = await redteam.getStaticReport(completed.uuid);
+
+// Prompt set management
+const promptSets = new SdkPromptSetService({
+  clientId: process.env.PANW_MGMT_CLIENT_ID,
+  clientSecret: process.env.PANW_MGMT_CLIENT_SECRET,
+  tsgId: process.env.PANW_MGMT_TSG_ID,
+});
+
+const ps = await promptSets.createPromptSet('My Set', 'Description');
+await promptSets.addPrompt(ps.uuid, 'Test prompt', 'Should trigger');
+await promptSets.uploadPromptsCsv(ps.uuid, new Blob(['prompt,goal\n"test","goal"']));
 ```

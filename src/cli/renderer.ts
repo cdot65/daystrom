@@ -454,6 +454,149 @@ export function renderPromptSetList(
   console.log();
 }
 
+/** Render target detail. */
+export function renderTargetDetail(target: {
+  uuid: string;
+  name: string;
+  status: string;
+  targetType?: string;
+  active: boolean;
+  connectionParams?: Record<string, unknown>;
+  background?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}): void {
+  console.log(chalk.bold('\n  Target Detail:\n'));
+  console.log(`    UUID:   ${chalk.dim(target.uuid)}`);
+  console.log(`    Name:   ${target.name}`);
+  console.log(
+    `    Status: ${statusColor(target.active ? 'COMPLETED' : 'FAILED')(target.active ? 'active' : 'inactive')}`,
+  );
+  if (target.targetType) console.log(`    Type:   ${target.targetType}`);
+  if (target.connectionParams) {
+    console.log(chalk.bold('\n    Connection:'));
+    for (const [k, v] of Object.entries(target.connectionParams)) {
+      console.log(`      ${k}: ${chalk.dim(String(v))}`);
+    }
+  }
+  if (target.background) {
+    console.log(chalk.bold('\n    Background:'));
+    for (const [k, v] of Object.entries(target.background)) {
+      if (v != null) console.log(`      ${k}: ${chalk.dim(String(v))}`);
+    }
+  }
+  if (target.metadata) {
+    console.log(chalk.bold('\n    Metadata:'));
+    for (const [k, v] of Object.entries(target.metadata)) {
+      if (v != null) console.log(`      ${k}: ${chalk.dim(String(v))}`);
+    }
+  }
+  console.log();
+}
+
+/** Render prompt set detail. */
+export function renderPromptSetDetail(ps: {
+  uuid: string;
+  name: string;
+  active: boolean;
+  archive: boolean;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}): void {
+  console.log(chalk.bold('\n  Prompt Set Detail:\n'));
+  console.log(`    UUID:        ${chalk.dim(ps.uuid)}`);
+  console.log(`    Name:        ${ps.name}`);
+  console.log(
+    `    Status:      ${statusColor(ps.active ? 'COMPLETED' : 'FAILED')(ps.active ? 'active' : 'inactive')}`,
+  );
+  console.log(`    Archived:    ${ps.archive ? 'yes' : 'no'}`);
+  if (ps.description) console.log(`    Description: ${ps.description}`);
+  if (ps.createdAt) console.log(`    Created:     ${chalk.dim(ps.createdAt)}`);
+  if (ps.updatedAt) console.log(`    Updated:     ${chalk.dim(ps.updatedAt)}`);
+  console.log();
+}
+
+/** Render prompt set version info. */
+export function renderVersionInfo(info: {
+  uuid: string;
+  version: number;
+  stats: { total: number; active: number; inactive: number };
+}): void {
+  console.log(chalk.bold('\n  Version Info:\n'));
+  console.log(`    Version:  ${info.version}`);
+  console.log(`    Total:    ${info.stats.total}`);
+  console.log(`    Active:   ${chalk.green(String(info.stats.active))}`);
+  console.log(`    Inactive: ${chalk.dim(String(info.stats.inactive))}`);
+  console.log();
+}
+
+/** Render a list of prompts. */
+export function renderPromptList(
+  prompts: Array<{
+    uuid: string;
+    prompt: string;
+    goal?: string;
+    active: boolean;
+  }>,
+): void {
+  if (prompts.length === 0) {
+    console.log(chalk.dim('  No prompts found.\n'));
+    return;
+  }
+  console.log(chalk.bold('\n  Prompts:\n'));
+  for (const p of prompts) {
+    const status = p.active ? chalk.green('active') : chalk.dim('inactive');
+    const text = p.prompt.length > 80 ? `${p.prompt.substring(0, 77)}...` : p.prompt;
+    console.log(`  ${chalk.dim(p.uuid)}  ${status}`);
+    console.log(`    ${text}`);
+    if (p.goal) console.log(`    ${chalk.dim(`Goal: ${p.goal}`)}`);
+  }
+  console.log();
+}
+
+/** Render prompt detail. */
+export function renderPromptDetail(p: {
+  uuid: string;
+  prompt: string;
+  goal?: string;
+  active: boolean;
+  promptSetId: string;
+}): void {
+  console.log(chalk.bold('\n  Prompt Detail:\n'));
+  console.log(`    UUID:       ${chalk.dim(p.uuid)}`);
+  console.log(`    Set UUID:   ${chalk.dim(p.promptSetId)}`);
+  console.log(`    Status:     ${p.active ? chalk.green('active') : chalk.dim('inactive')}`);
+  console.log(`    Prompt:     ${p.prompt}`);
+  if (p.goal) console.log(`    Goal:       ${p.goal}`);
+  console.log();
+}
+
+/** Render property names list. */
+export function renderPropertyNames(names: Array<{ name: string }>): void {
+  if (names.length === 0) {
+    console.log(chalk.dim('  No property names found.\n'));
+    return;
+  }
+  console.log(chalk.bold('\n  Property Names:\n'));
+  for (const n of names) {
+    console.log(`    ${chalk.dim('•')} ${n.name}`);
+  }
+  console.log();
+}
+
+/** Render property values. */
+export function renderPropertyValues(values: Array<{ name: string; value: string }>): void {
+  if (values.length === 0) {
+    console.log(chalk.dim('  No property values found.\n'));
+    return;
+  }
+  console.log(chalk.bold('\n  Property Values:\n'));
+  for (const v of values) {
+    console.log(`    ${v.name}: ${chalk.dim(v.value)}`);
+  }
+  console.log();
+}
+
 /** Render polling progress inline. */
 export function renderScanProgress(job: {
   status: string;

@@ -2,6 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SdkRedTeamService } from '../../../src/airs/redteam.js';
 
 const mockTargetsList = vi.fn();
+const mockTargetsGet = vi.fn();
+const mockTargetsCreate = vi.fn();
+const mockTargetsUpdate = vi.fn();
+const mockTargetsDelete = vi.fn();
+const mockTargetsProbe = vi.fn();
+const mockTargetsGetProfile = vi.fn();
+const mockTargetsUpdateProfile = vi.fn();
 const mockScansCreate = vi.fn();
 const mockScansGet = vi.fn();
 const mockScansList = vi.fn();
@@ -14,7 +21,16 @@ const mockCustomAttackReportsListCustomAttacks = vi.fn();
 
 function makeMockClient() {
   return {
-    targets: { list: mockTargetsList },
+    targets: {
+      list: mockTargetsList,
+      get: mockTargetsGet,
+      create: mockTargetsCreate,
+      update: mockTargetsUpdate,
+      delete: mockTargetsDelete,
+      probe: mockTargetsProbe,
+      getProfile: mockTargetsGetProfile,
+      updateProfile: mockTargetsUpdateProfile,
+    },
     scans: {
       create: mockScansCreate,
       get: mockScansGet,
@@ -516,6 +532,181 @@ describe('SdkRedTeamService', () => {
 
       const result = await service.getCategories();
       expect(result[0].subCategories).toEqual([]);
+    });
+  });
+
+  describe('getTarget', () => {
+    it('returns normalized target detail', async () => {
+      mockTargetsGet.mockResolvedValue({
+        uuid: 't-1',
+        name: 'My Target',
+        status: 'active',
+        target_type: 'REST',
+        active: true,
+        connection_params: { api_endpoint: 'https://example.com' },
+        background: { industry: 'finance', use_case: 'chatbot', competitors: ['acme'] },
+        additional_context: {
+          system_prompt: 'You are helpful',
+          use_case_description: 'desc',
+          documents: [],
+        },
+        metadata: { multi_turn: false, rate_limit: 10, is_streaming_enabled: false },
+      });
+
+      const result = await service.getTarget('t-1');
+      expect(result.uuid).toBe('t-1');
+      expect(result.name).toBe('My Target');
+      expect(result.targetType).toBe('REST');
+      expect(result.connectionParams).toEqual({ api_endpoint: 'https://example.com' });
+      expect(result.background).toEqual({
+        industry: 'finance',
+        use_case: 'chatbot',
+        competitors: ['acme'],
+      });
+      expect(result.additionalContext).toEqual({
+        system_prompt: 'You are helpful',
+        use_case_description: 'desc',
+        documents: [],
+      });
+      expect(result.metadata).toEqual({
+        multi_turn: false,
+        rate_limit: 10,
+        is_streaming_enabled: false,
+      });
+      expect(mockTargetsGet).toHaveBeenCalledWith('t-1');
+    });
+
+    it('handles missing optional fields', async () => {
+      mockTargetsGet.mockResolvedValue({
+        uuid: 't-2',
+        name: 'Minimal',
+        status: 'inactive',
+        active: false,
+      });
+
+      const result = await service.getTarget('t-2');
+      expect(result.uuid).toBe('t-2');
+      expect(result.connectionParams).toBeUndefined();
+      expect(result.background).toBeUndefined();
+      expect(result.metadata).toBeUndefined();
+    });
+  });
+
+  describe('createTarget', () => {
+    it('creates target and returns normalized detail', async () => {
+      mockTargetsCreate.mockResolvedValue({
+        uuid: 't-new',
+        name: 'New Target',
+        status: 'active',
+        target_type: 'REST',
+        active: true,
+        connection_params: { api_endpoint: 'https://api.example.com' },
+      });
+
+      const result = await service.createTarget({
+        name: 'New Target',
+        target_type: 'REST',
+        connection_params: { api_endpoint: 'https://api.example.com' },
+      });
+
+      expect(result.uuid).toBe('t-new');
+      expect(result.name).toBe('New Target');
+      expect(mockTargetsCreate).toHaveBeenCalledWith(
+        {
+          name: 'New Target',
+          target_type: 'REST',
+          connection_params: { api_endpoint: 'https://api.example.com' },
+        },
+        undefined,
+      );
+    });
+
+    it('passes validate option', async () => {
+      mockTargetsCreate.mockResolvedValue({
+        uuid: 't-new',
+        name: 'Validated Target',
+        status: 'active',
+        target_type: 'REST',
+        active: true,
+      });
+
+      await service.createTarget(
+        { name: 'Validated Target', target_type: 'REST', connection_params: {} },
+        { validate: true },
+      );
+
+      expect(mockTargetsCreate).toHaveBeenCalledWith(
+        { name: 'Validated Target', target_type: 'REST', connection_params: {} },
+        { validate: true },
+      );
+    });
+  });
+
+  describe('updateTarget', () => {
+    it('updates target and returns normalized detail', async () => {
+      mockTargetsUpdate.mockResolvedValue({
+        uuid: 't-1',
+        name: 'Updated Target',
+        status: 'active',
+        target_type: 'REST',
+        active: true,
+      });
+
+      const result = await service.updateTarget('t-1', { name: 'Updated Target' });
+      expect(result.uuid).toBe('t-1');
+      expect(result.name).toBe('Updated Target');
+      expect(mockTargetsUpdate).toHaveBeenCalledWith('t-1', { name: 'Updated Target' }, undefined);
+    });
+
+    it('passes validate option', async () => {
+      mockTargetsUpdate.mockResolvedValue({
+        uuid: 't-1',
+        name: 'Target',
+        status: 'active',
+        target_type: 'REST',
+        active: true,
+      });
+
+      await service.updateTarget('t-1', { name: 'Target' }, { validate: true });
+      expect(mockTargetsUpdate).toHaveBeenCalledWith('t-1', { name: 'Target' }, { validate: true });
+    });
+  });
+
+  describe('deleteTarget', () => {
+    it('deletes target', async () => {
+      mockTargetsDelete.mockResolvedValue(undefined);
+      await expect(service.deleteTarget('t-1')).resolves.not.toThrow();
+      expect(mockTargetsDelete).toHaveBeenCalledWith('t-1');
+    });
+  });
+
+  describe('probeTarget', () => {
+    it('probes target connection', async () => {
+      mockTargetsProbe.mockResolvedValue({ status: 'connected', latency_ms: 42 });
+      const result = await service.probeTarget({ api_endpoint: 'https://example.com' });
+      expect(result).toEqual({ status: 'connected', latency_ms: 42 });
+      expect(mockTargetsProbe).toHaveBeenCalledWith({ api_endpoint: 'https://example.com' });
+    });
+  });
+
+  describe('getTargetProfile', () => {
+    it('returns target profile', async () => {
+      mockTargetsGetProfile.mockResolvedValue({
+        profiling_status: 'COMPLETED',
+        categories: ['safety'],
+      });
+      const result = await service.getTargetProfile('t-1');
+      expect(result).toEqual({ profiling_status: 'COMPLETED', categories: ['safety'] });
+      expect(mockTargetsGetProfile).toHaveBeenCalledWith('t-1');
+    });
+  });
+
+  describe('updateTargetProfile', () => {
+    it('updates target profile', async () => {
+      mockTargetsUpdateProfile.mockResolvedValue({ profiling_status: 'PENDING' });
+      const result = await service.updateTargetProfile('t-1', { categories: ['security'] });
+      expect(result).toEqual({ profiling_status: 'PENDING' });
+      expect(mockTargetsUpdateProfile).toHaveBeenCalledWith('t-1', { categories: ['security'] });
     });
   });
 
