@@ -93,6 +93,8 @@ nav:
       - Configuration Options: reference/configuration.md
       - Environment Variables: reference/environment-variables.md
       - AIRS Constraints: reference/airs-constraints.md
+  - Examples:
+      - Guardrail to Red Team: examples/guardrail-to-redteam.md
   - Development:
       - Contributing: development/contributing.md
       - Testing: development/testing.md

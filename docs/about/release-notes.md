@@ -1,5 +1,11 @@
 # Release Notes
 
+## v1.3.1
+
+### Documentation
+
+- **End-to-end example workflow**: New Examples section with a complete guardrail-to-red-team walkthrough — generate a topic guardrail, export prompts as a custom prompt set, launch a CUSTOM red team scan, monitor status, and review per-prompt results. All output captured from a real AIRS run.
+
 ## v1.3.0
 
 ### Bug Fixes
