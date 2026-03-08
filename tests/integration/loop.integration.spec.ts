@@ -4,6 +4,7 @@ import type { LoopEvent, UserInput } from '../../src/core/types.js';
 import {
   createMockAllowScanService,
   createMockManagementService,
+  createMockPromptSetService,
   createMockScanService,
 } from '../helpers/mocks.js';
 
@@ -246,5 +247,47 @@ describe('Loop Integration', () => {
     if (accumulated[1]?.type === 'tests:accumulated') {
       expect(accumulated[1].totalCount).toBe(6); // 2 + 4
     }
+  });
+
+  it('creates custom prompt set from best iteration test cases', async () => {
+    const scanner = createMockScanService([/weapon/i, /bomb/i]);
+    const promptSets = createMockPromptSetService();
+    const llm = createDeterministicLlm();
+
+    const deps: LoopDependencies = {
+      llm,
+      management: createMockManagementService(),
+      scanner,
+      propagationDelayMs: 0,
+      promptSets,
+    };
+
+    const input: UserInput = {
+      topicDescription: 'Block weapons discussions',
+      intent: 'block',
+      profileName: 'promptset-test',
+      maxIterations: 1,
+      targetCoverage: 0.99,
+      createPromptSet: true,
+    };
+
+    const events: LoopEvent[] = [];
+    for await (const event of runLoop(input, deps)) {
+      events.push(event);
+    }
+
+    const psEvent = events.find((e) => e.type === 'promptset:created');
+    expect(psEvent).toBeDefined();
+    if (psEvent?.type === 'promptset:created') {
+      expect(psEvent.promptSetId).toBe('ps-1');
+      expect(psEvent.promptCount).toBe(8); // 4 positive + 4 negative from deterministic LLM
+      expect(psEvent.promptSetName).toContain('daystrom-Weapons Discussion-');
+    }
+
+    // Verify event ordering: promptset:created before loop:complete
+    const eventTypes = events.map((e) => e.type);
+    const psIdx = eventTypes.indexOf('promptset:created');
+    const completeIdx = eventTypes.indexOf('loop:complete');
+    expect(psIdx).toBeLessThan(completeIdx);
   });
 });

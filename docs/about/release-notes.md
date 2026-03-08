@@ -11,10 +11,13 @@
 
 - **`--debug-scans` flag**: Dumps raw AIRS scan responses to a JSONL file (`~/.daystrom/debug-scans-*.jsonl`) for offline inspection. Available on both `generate` and `resume` commands.
 - **Scanner extracts `category`**: The `category` field from AIRS responses is now included in `ScanResult`.
+- **`--create-prompt-set` flag**: Auto-creates a custom prompt set in AI Runtime Security from the best iteration's test cases. Prompts include goals indicating expected guardrail behavior. Available on both `generate` and `resume` commands.
+- **`SdkPromptSetService`**: New service wrapping `RedTeamClient.customAttacks` for prompt set CRUD.
+- **`promptset:created` event**: New loop event emitted after prompt set creation with set ID, name, and prompt count.
 
 ### Tests
 
-- 217 tests across 17 spec files (up from 209)
+- 230 tests across 18 spec files (up from 209)
 
 ## v1.1.0
 

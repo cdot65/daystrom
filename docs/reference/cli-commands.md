@@ -29,6 +29,8 @@ daystrom generate [options]
 | `--max-accumulated-tests <n>` | unlimited | Cap on accumulated test count |
 | `--no-memory` | memory on | Disable cross-run learning |
 | `--debug-scans` | off | Dump raw AIRS scan responses to JSONL for debugging |
+| `--create-prompt-set` | off | Create custom prompt set in AI Red Team from test cases |
+| `--prompt-set-name <name>` | auto | Override auto-generated prompt set name |
 
 !!! tip "Skip all prompts"
     When both `--topic` and `--profile` are provided, interactive mode is skipped entirely.
@@ -83,6 +85,8 @@ daystrom resume <runId> [options]
 |------|---------|-------------|
 | `--max-iterations <n>` | `20` | Additional iterations from current position |
 | `--debug-scans` | off | Dump raw AIRS scan responses to JSONL for debugging |
+| `--create-prompt-set` | off | Create custom prompt set in AI Red Team from test cases |
+| `--prompt-set-name <name>` | auto | Override auto-generated prompt set name |
 
 ```bash
 daystrom resume abc123xyz --max-iterations 10

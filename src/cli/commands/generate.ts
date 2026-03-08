@@ -1,6 +1,7 @@
 import * as path from 'node:path';
 import type { Command } from 'commander';
 import { SdkManagementService } from '../../airs/management.js';
+import { SdkPromptSetService } from '../../airs/promptsets.js';
 import { AirsScanService, DebugScanService } from '../../airs/scanner.js';
 import type { ScanService } from '../../airs/types.js';
 import { loadConfig } from '../../config/loader.js';
@@ -45,6 +46,8 @@ export function registerGenerateCommand(program: Command): void {
     .option('--memory', 'Enable learning memory (default)')
     .option('--no-memory', 'Disable learning memory')
     .option('--debug-scans', 'Dump raw AIRS scan responses to JSONL for debugging', false)
+    .option('--create-prompt-set', 'Create custom prompt set from test cases after loop', false)
+    .option('--prompt-set-name <name>', 'Override auto-generated prompt set name')
     .action(async (opts) => {
       try {
         renderHeader();
@@ -68,6 +71,8 @@ export function registerGenerateCommand(program: Command): void {
             maxAccumulatedTests: opts.maxAccumulatedTests
               ? Number.parseInt(opts.maxAccumulatedTests, 10)
               : undefined,
+            createPromptSet: opts.createPromptSet ?? false,
+            promptSetName: opts.promptSetName,
           };
         } else {
           userInput = await collectUserInput();
@@ -118,6 +123,16 @@ export function registerGenerateCommand(program: Command): void {
 
         const memoryExtractor = memoryStore ? new LearningExtractor(model, memoryStore) : undefined;
 
+        // Set up prompt set service if requested
+        const promptSets = userInput.createPromptSet
+          ? new SdkPromptSetService({
+              clientId: config.mgmtClientId,
+              clientSecret: config.mgmtClientSecret,
+              tsgId: config.mgmtTsgId,
+              tokenEndpoint: config.mgmtTokenEndpoint,
+            })
+          : undefined;
+
         // Run the loop
         for await (const event of runLoop(userInput, {
           llm,
@@ -125,6 +140,7 @@ export function registerGenerateCommand(program: Command): void {
           scanner,
           propagationDelayMs: config.propagationDelayMs,
           memory: memoryExtractor ? { extractor: memoryExtractor } : undefined,
+          promptSets,
         })) {
           switch (event.type) {
             case 'iteration:start':
@@ -150,6 +166,11 @@ export function registerGenerateCommand(program: Command): void {
               break;
             case 'memory:extracted':
               renderMemoryExtracted(event.learningCount);
+              break;
+            case 'promptset:created':
+              console.log(
+                `  ✓ Custom prompt set created: ${event.promptSetName} (${event.promptCount} prompts)`,
+              );
               break;
             case 'loop:complete':
               await store.save(event.runState);

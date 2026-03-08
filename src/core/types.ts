@@ -23,6 +23,8 @@ export interface UserInput {
   targetCoverage?: number;
   accumulateTests?: boolean;
   maxAccumulatedTests?: number;
+  createPromptSet?: boolean;
+  promptSetName?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -106,4 +108,5 @@ export type LoopEvent =
   | { type: 'loop:complete'; bestResult: IterationResult; runState: RunState }
   | { type: 'loop:paused'; runState: RunState }
   | { type: 'memory:loaded'; learningCount: number }
-  | { type: 'memory:extracted'; learningCount: number };
+  | { type: 'memory:extracted'; learningCount: number }
+  | { type: 'promptset:created'; promptSetId: string; promptSetName: string; promptCount: number };

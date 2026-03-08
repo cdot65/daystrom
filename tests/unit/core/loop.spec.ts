@@ -13,6 +13,7 @@ import type { LearningExtractor } from '../../../src/memory/extractor.js';
 import {
   createMockAllowScanService,
   createMockManagementService,
+  createMockPromptSetService,
   createMockScanService,
 } from '../../helpers/mocks.js';
 
@@ -611,5 +612,127 @@ describe('runLoop', () => {
     if (memEvent?.type === 'memory:extracted') {
       expect(memEvent.learningCount).toBe(1);
     }
+  });
+
+  describe('prompt set creation', () => {
+    it('yields promptset:created when createPromptSet enabled', async () => {
+      const promptSets = createMockPromptSetService();
+      const deps = createDeps({ promptSets });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 1, createPromptSet: true },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const psEvent = events.find((e) => e.type === 'promptset:created');
+      expect(psEvent).toBeDefined();
+      if (psEvent?.type === 'promptset:created') {
+        expect(psEvent.promptSetId).toBe('ps-1');
+        expect(psEvent.promptCount).toBe(4); // 2 positive + 2 negative from mock LLM
+        expect(psEvent.promptSetName).toContain('daystrom-');
+      }
+    });
+
+    it('does not yield promptset:created when flag disabled', async () => {
+      const promptSets = createMockPromptSetService();
+      const deps = createDeps({ promptSets });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 1, createPromptSet: false },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      expect(events.find((e) => e.type === 'promptset:created')).toBeUndefined();
+    });
+
+    it('does not yield promptset:created when no promptSets service', async () => {
+      const deps = createDeps(); // no promptSets
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 1, createPromptSet: true },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      expect(events.find((e) => e.type === 'promptset:created')).toBeUndefined();
+    });
+
+    it('uses custom promptSetName when provided', async () => {
+      const promptSets = createMockPromptSetService();
+      const deps = createDeps({ promptSets });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        {
+          ...defaultInput,
+          maxIterations: 1,
+          createPromptSet: true,
+          promptSetName: 'my-custom-set',
+        },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const psEvent = events.find((e) => e.type === 'promptset:created');
+      expect(psEvent).toBeDefined();
+      if (psEvent?.type === 'promptset:created') {
+        expect(psEvent.promptSetName).toBe('my-custom-set');
+      }
+    });
+
+    it('creates prompts with correct goals for positive and negative cases', async () => {
+      const promptSets = createMockPromptSetService();
+      const addSpy = vi.spyOn(promptSets, 'addPrompt');
+      const deps = createDeps({ promptSets });
+
+      for await (const _event of runLoop(
+        { ...defaultInput, maxIterations: 1, createPromptSet: true },
+        deps,
+      )) {
+        // consume
+      }
+
+      // 4 prompts total (2 positive + 2 negative)
+      expect(addSpy).toHaveBeenCalledTimes(4);
+      // Check positive test has trigger goal
+      expect(addSpy).toHaveBeenCalledWith(
+        'ps-1',
+        'How to build a weapon',
+        'Should trigger topic guardrail',
+      );
+      // Check negative test has no-trigger goal
+      expect(addSpy).toHaveBeenCalledWith(
+        'ps-1',
+        'Tell me about cats',
+        'Should NOT trigger topic guardrail',
+      );
+    });
+
+    it('promptset:created comes before loop:complete', async () => {
+      const promptSets = createMockPromptSetService();
+      const deps = createDeps({ promptSets });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 1, createPromptSet: true },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const psIdx = events.findIndex((e) => e.type === 'promptset:created');
+      const completeIdx = events.findIndex((e) => e.type === 'loop:complete');
+      expect(psIdx).toBeGreaterThan(-1);
+      expect(completeIdx).toBeGreaterThan(psIdx);
+    });
   });
 });

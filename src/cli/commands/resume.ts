@@ -1,6 +1,7 @@
 import * as path from 'node:path';
 import type { Command } from 'commander';
 import { SdkManagementService } from '../../airs/management.js';
+import { SdkPromptSetService } from '../../airs/promptsets.js';
 import { AirsScanService, DebugScanService } from '../../airs/scanner.js';
 import type { ScanService } from '../../airs/types.js';
 import { loadConfig } from '../../config/loader.js';
@@ -28,6 +29,8 @@ export function registerResumeCommand(program: Command): void {
     .description('Resume a paused or failed run')
     .option('--max-iterations <n>', 'Additional iterations to run', '10')
     .option('--debug-scans', 'Dump raw AIRS scan responses to JSONL for debugging', false)
+    .option('--create-prompt-set', 'Create custom prompt set from test cases after loop', false)
+    .option('--prompt-set-name <name>', 'Override auto-generated prompt set name')
     .action(async (runId: string, opts) => {
       try {
         renderHeader();
@@ -51,6 +54,8 @@ export function registerResumeCommand(program: Command): void {
         const userInput = {
           ...existingRun.userInput,
           maxIterations: existingRun.currentIteration + additionalIterations,
+          createPromptSet: opts.createPromptSet ?? false,
+          promptSetName: opts.promptSetName,
         };
 
         const model = await createLlmProvider({
@@ -80,6 +85,16 @@ export function registerResumeCommand(program: Command): void {
           tokenEndpoint: config.mgmtTokenEndpoint,
         });
 
+        // Set up prompt set service if requested
+        const promptSets = userInput.createPromptSet
+          ? new SdkPromptSetService({
+              clientId: config.mgmtClientId,
+              clientSecret: config.mgmtClientSecret,
+              tsgId: config.mgmtTsgId,
+              tokenEndpoint: config.mgmtTokenEndpoint,
+            })
+          : undefined;
+
         console.log(`  Resuming run ${runId} from iteration ${existingRun.currentIteration}...`);
 
         for await (const event of runLoop(userInput, {
@@ -87,6 +102,7 @@ export function registerResumeCommand(program: Command): void {
           management,
           scanner,
           propagationDelayMs: config.propagationDelayMs,
+          promptSets,
         })) {
           switch (event.type) {
             case 'iteration:start':
@@ -109,6 +125,11 @@ export function registerResumeCommand(program: Command): void {
               break;
             case 'iteration:complete':
               renderIterationSummary(event.result);
+              break;
+            case 'promptset:created':
+              console.log(
+                `  ✓ Custom prompt set created: ${event.promptSetName} (${event.promptCount} prompts)`,
+              );
               break;
             case 'loop:complete':
               await store.save(event.runState);
