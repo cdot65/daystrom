@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  byteLen,
   validateDescription,
   validateExample,
   validateExamples,
@@ -9,6 +10,21 @@ import {
 import type { CustomTopic } from '../../../src/core/types.js';
 
 describe('constraints', () => {
+  describe('byteLen', () => {
+    it('returns byte length for ASCII strings', () => {
+      expect(byteLen('hello')).toBe(5);
+    });
+
+    it('returns byte length for multi-byte characters', () => {
+      // em dash is 3 bytes in UTF-8
+      expect(byteLen('\u2014')).toBe(3);
+    });
+
+    it('returns 0 for empty string', () => {
+      expect(byteLen('')).toBe(0);
+    });
+  });
+
   describe('validateName', () => {
     it('accepts valid name', () => {
       expect(validateName('My Topic')).toEqual([]);
