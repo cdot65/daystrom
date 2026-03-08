@@ -4,9 +4,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node 20+](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org/)
 
-**Automated CLI that generates, tests, and iteratively refines Palo Alto Prisma AIRS custom topic guardrails.**
+**CLI and library for Palo Alto Prisma AIRS — guardrail refinement, AI red teaming, model security scanning, and profile audits.**
 
-Daystrom uses an LLM to produce topic definitions, deploys them to Prisma AIRS, scans test prompts, evaluates efficacy, and loops until a coverage target is met. Cross-run memory persists learnings for future runs.
+Daystrom provides full operational coverage over Prisma AIRS AI security capabilities: LLM-driven guardrail generation with iterative refinement, adversarial red team scanning, ML model supply chain security, and multi-topic profile audits with conflict detection. Cross-run memory persists learnings across guardrail runs.
 
 ## Install
 
@@ -63,35 +63,38 @@ daystrom generate \
 
 ### Commands
 
-| Command | Description |
-|---------|-------------|
-| `daystrom generate` | Start a new guardrail generation loop |
-| `daystrom resume <runId>` | Resume a paused or failed run |
-| `daystrom report <runId>` | View results for a saved run |
+| Command Group | Description |
+|---------------|-------------|
+| `daystrom generate` | LLM-driven guardrail generation with iterative refinement |
+| `daystrom resume <runId>` | Resume a paused or failed generation run |
+| `daystrom report <runId>` | View results for a saved run (terminal, JSON, HTML) |
 | `daystrom list` | List all saved runs |
-| `daystrom redteam scan` | Launch a red team scan against a target |
-| `daystrom redteam status <jobId>` | Check scan progress |
-| `daystrom redteam report <jobId>` | View scan results |
-| `daystrom redteam list` | List recent scans |
+| `daystrom audit` | Evaluate all topics in a security profile — per-topic metrics + conflict detection |
+| `daystrom redteam` | Red team scanning — targets, prompt sets, scans, reports |
+| `daystrom model-security` | ML model supply chain security — groups, rules, scans, labels |
 
-### Red Team Scanning
+### Red Team
 
 ```bash
-# List available targets
-daystrom redteam targets
-
-# Launch a custom scan with a daystrom-generated prompt set
-daystrom redteam scan \
-  --target <uuid> \
-  --name "Topic Validation" \
-  --type CUSTOM \
-  --prompt-sets <prompt-set-uuid>
-
-# Check scan progress
+daystrom redteam targets list
+daystrom redteam scan --target <uuid> --name "Scan" --type CUSTOM --prompt-sets <uuid>
 daystrom redteam status <jobId>
-
-# View report with attack details
 daystrom redteam report <jobId> --attacks
+```
+
+### Model Security
+
+```bash
+daystrom model-security groups list
+daystrom model-security scans list --eval-outcome BLOCKED
+daystrom model-security scans evaluations <scanUuid>
+daystrom model-security scans violations <scanUuid>
+```
+
+### Profile Audit
+
+```bash
+daystrom audit --profile my-security-profile --provider claude-api
 ```
 
 ## Development
