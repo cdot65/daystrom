@@ -1,82 +1,81 @@
 # Metrics & Evaluation
 
-Each iteration computes efficacy metrics from test results to measure guardrail quality and guide improvement.
+Every iteration measures how well the guardrail performs, then uses that data to guide improvement. Here's what gets measured and why.
 
-## Metrics Reference
+## The Metrics
 
-| Metric | Formula | Description |
-|--------|---------|-------------|
-| **TPR** | `TP / (TP + FN)` | True positive rate / sensitivity — fraction of violations correctly detected |
-| **TNR** | `TN / (TN + FP)` | True negative rate / specificity — fraction of benign prompts correctly passed |
-| **Coverage** | `min(TPR, TNR)` | Primary optimization target — ensures both detection and specificity improve together |
-| **Accuracy** | `(TP + TN) / total` | Overall correctness across all test cases |
-| **F1** | `2 * (precision * recall) / (precision + recall)` | Harmonic mean of precision and recall |
+| Metric | Formula | What it tells you |
+|--------|---------|-------------------|
+| **TPR** (sensitivity) | `TP / (TP + FN)` | How many violations are caught |
+| **TNR** (specificity) | `TN / (TN + FP)` | How many safe prompts are correctly passed |
+| **Coverage** | `min(TPR, TNR)` | The primary optimization target |
+| **Accuracy** | `(TP + TN) / total` | Overall correctness |
+| **F1** | `2 * (precision * recall) / (precision + recall)` | Balance of precision and recall |
 
 !!! important "Why Coverage = min(TPR, TNR)"
-    Optimizing TPR alone leads to overly broad guardrails that block benign prompts. Optimizing TNR alone leads to guardrails that miss violations. Coverage forces both to improve in tandem — the guardrail must be both sensitive and specific.
+    A guardrail that catches every violation but also blocks half the safe prompts isn't useful. Coverage forces both detection and specificity to improve together — the system can't game the metric by excelling at one while ignoring the other.
 
-## Test Generation
+---
 
-Each iteration generates a balanced test suite via the LLM:
+## How Tests Work
 
-- **Positive tests** — prompts that _should_ trigger the guardrail (true violations)
-- **Negative tests** — prompts that _should not_ trigger (benign, topically related but non-violating)
+Each iteration, the LLM generates a balanced test suite:
 
-Each test case contains:
+- **Positive tests** — prompts that _should_ trigger the guardrail (actual violations)
+- **Negative tests** — prompts that _should not_ trigger (safe but topically adjacent)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `prompt` | `string` | The test prompt text |
-| `expectedTriggered` | `boolean` | Whether the guardrail should detect this |
-| `category` | `string` | Label for grouping (e.g., `"direct-request"`, `"benign-adjacent"`) |
+Every test case has three fields:
 
-!!! tip
-    The LLM generates adversarial negative tests that are topically adjacent to the guardrail — these are the hardest cases for the model to get right and drive the most improvement.
+| Field | What it is |
+|-------|-----------|
+| `prompt` | The test prompt text |
+| `expectedTriggered` | Should the guardrail catch this? |
+| `category` | Grouping label (e.g., `"direct-request"`, `"benign-adjacent"`) |
+
+!!! tip "Why topically adjacent negatives matter"
+    The LLM generates negative tests that are _close_ to the guardrail's topic but shouldn't trigger. These are the hardest cases and drive the most improvement — a "weapons" guardrail shouldn't block a cooking discussion about knives.
+
+---
 
 ## Scanning
 
-Test prompts are scanned against AIRS in batches using the Scanner API.
+Test prompts are scanned against AIRS in parallel batches:
 
 ```mermaid
 graph LR
-    A[Test Cases] --> B[scanBatch]
-    B --> C[p-limit concurrency=5]
-    C --> D[Scanner.syncScan]
-    D --> E[TestResult[]]
+    A[Test Cases] --> B[Batch Scanner]
+    B --> C[Concurrent Requests]
+    C --> D[AIRS Scan API]
+    D --> E[Results]
 ```
 
-- Concurrency controlled via `p-limit` (default 5, configurable via `scanConcurrency`)
-- Detection check: `prompt_detected.topic_violation` field
-- Fallback: `topic_guardrails_details` if primary field absent
+- **Concurrency**: controlled by `scanConcurrency` (default 5)
+- **Detection**: checks `prompt_detected.topic_violation` (fallback: `topic_guardrails_details`)
 
-!!! warning "Rate Limiting"
-    Setting `scanConcurrency` above 5 risks hitting AIRS API rate limits. The default of 5 balances throughput and reliability.
+!!! warning "Rate limits"
+    `scanConcurrency` above 5 risks AIRS API throttling. The default balances speed and reliability.
+
+---
 
 ## FP/FN Analysis
 
-After each scan batch, the LLM receives:
+After scanning, the LLM examines every misclassified result. It receives the topic definition, all test results, and the computed metrics, then identifies patterns:
 
-1. The current topic definition (name, description, examples)
-2. All test results with expected vs. actual outcomes
-3. Computed metrics
+| Error Type | What happened | Example |
+|-----------|--------------|---------|
+| **False positive** | Safe prompt incorrectly blocked | Cooking discussion flagged by "weapons" guardrail because "knife" appeared in examples |
+| **False negative** | Violation slipped through | Coded language or indirect references not caught by the description |
 
-The LLM then produces an `AnalysisReport` identifying:
+The analysis produces concrete suggestions — "narrow the description to exclude kitchen contexts" or "add an example covering euphemistic language" — that feed directly into the next iteration.
 
-| Pattern Type | Cause | Example |
-|-------------|-------|---------|
-| **False positives** | Description too broad, ambiguous examples | Benign cooking discussion flagged by "weapons" guardrail due to "knife" in examples |
-| **False negatives** | Description too narrow, missing edge cases | Coded language or indirect references not caught |
+---
 
-Each analysis includes concrete improvement suggestions applied in the next iteration.
+## When the Loop Stops
 
-## Stop Conditions
-
-The loop terminates when either condition is met:
-
-| Condition | Default | Description |
+| Condition | Default | What happens |
 |-----------|---------|-------------|
-| `coverage >= targetCoverage` | `0.9` (90%) | Target reached — run succeeds |
-| `iteration >= maxIterations` | `20` | Budget exhausted — run completes with best result |
+| Coverage target met | 90% | Run succeeds |
+| Max iterations reached | 20 | Run completes with best result found |
 
 !!! note
-    The best iteration (highest coverage) is tracked regardless of when the loop stops. Even if the final iteration regresses, the best result is preserved.
+    The best iteration (highest coverage) is tracked throughout the run. Even if the final iteration regresses, the best result is always preserved.

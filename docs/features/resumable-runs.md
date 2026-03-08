@@ -1,6 +1,6 @@
 # Resumable Runs
 
-Runs can be paused (via interruption) or fail mid-execution and later be resumed from the last completed iteration.
+Runs checkpoint after every iteration. If something goes wrong — network error, rate limit, or you just hit Ctrl+C — pick up right where you left off. No wasted API calls.
 
 ## Run Lifecycle
 
@@ -17,78 +17,75 @@ stateDiagram-v2
 
 | Status | Meaning |
 |--------|---------|
-| `running` | Loop actively iterating |
-| `paused` | Loop was interrupted (Ctrl+C or signal) |
-| `completed` | Target coverage reached or max iterations exhausted |
-| `failed` | Unrecoverable error during iteration |
+| `running` | Loop is actively iterating |
+| `paused` | Interrupted (Ctrl+C or signal) |
+| `completed` | Coverage target reached or max iterations used |
+| `failed` | Unrecoverable error during an iteration |
 
-!!! info "Resumable Statuses"
+!!! info
     Only `paused` and `failed` runs can be resumed. Completed runs are final.
 
-## Persistence
+---
 
-Full `RunState` is persisted to disk after each iteration:
+## What Gets Saved
 
-```
-~/.daystrom/runs/{runId}.json
-```
+Full run state is written to disk after each iteration at `~/.daystrom/runs/{runId}.json`:
 
-The saved state includes:
-
-| Field | Description |
-|-------|-------------|
-| `runId` | Unique identifier |
+| Field | What it is |
+|-------|-----------|
+| `runId` | Unique identifier for this run |
 | `status` | Current lifecycle status |
-| `userInput` | Original user configuration |
-| `iterations` | Array of all completed iteration results |
-| `bestIteration` | Index of iteration with highest coverage |
-| `currentTopic` | Latest topic definition |
+| `userInput` | Your original configuration (topic, intent, provider, etc.) |
+| `iterations` | All completed iteration results with metrics |
+| `bestIteration` | Index of the iteration with highest coverage |
+| `currentTopic` | The latest topic definition |
 | `createdAt` / `updatedAt` | Timestamps |
 
 !!! tip
-    Because full state is saved after each iteration, no work is lost on interruption. The next `resume` picks up exactly where the run left off.
+    Because state is saved after _every_ iteration, you never lose more than the current in-progress iteration on failure.
 
-## Resuming a Run
+---
 
-```bash
-pnpm run dev resume <runId>
-```
-
-### Options
-
-| Flag | Description |
-|------|-------------|
-| `--max-iterations <n>` | Number of **additional** iterations from current position |
+## Resuming
 
 ```bash
-# Resume with up to 10 more iterations
-pnpm run dev resume abc123 --max-iterations 10
+daystrom resume <runId>
 ```
 
 The resumed run continues with:
 
 - The same topic name (locked after iteration 1)
 - The latest topic definition from the last completed iteration
-- All prior iteration history for context
+- Full iteration history for LLM context
+- Inherited settings (including `accumulateTests`) from the original `UserInput`
+
+### Add More Iterations
+
+```bash
+# Resume with up to 10 more iterations from current position
+daystrom resume abc123 --max-iterations 10
+```
+
+---
 
 ## Viewing Results
 
 ### List All Runs
 
 ```bash
-pnpm run dev list
+daystrom list
 ```
 
-Displays a summary table of all saved runs with ID, status, topic name, iterations completed, best coverage, and timestamps.
+Summary table with run ID, status, topic name, iterations completed, best coverage, and timestamps.
 
-### View Run Report
+### View a Specific Run
 
 ```bash
 # Best iteration (highest coverage)
-pnpm run dev report <runId>
+daystrom report <runId>
 
-# Specific iteration
-pnpm run dev report <runId> --iteration 3
+# A specific iteration
+daystrom report <runId> --iteration 3
 ```
 
-Reports show the topic definition, test results, metrics, and analysis for the selected iteration.
+Shows topic definition, test results, metrics, and analysis for the selected iteration.

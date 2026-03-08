@@ -21,6 +21,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# Design source files
+*.ai
+
 # MkDocs
 site/
 

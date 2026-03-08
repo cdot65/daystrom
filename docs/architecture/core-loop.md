@@ -1,10 +1,10 @@
 # Core Loop
 
-The core loop lives in `src/core/loop.ts` and is implemented as an async generator (`runLoop()`) that yields typed `LoopEvent` discriminated unions. This design fully decouples the iteration engine from the CLI renderer, making the loop independently testable.
+The heart of Daystrom. The core loop (`src/core/loop.ts`) is an async generator that yields typed events as it works. The CLI renders those events, but the loop itself has no knowledge of how its output is displayed — making it independently testable and reusable.
 
-## Iteration Flowchart
+## What Happens Each Iteration
 
-Each iteration follows a fixed sequence of stages:
+Each iteration follows a fixed sequence:
 
 ```mermaid
 flowchart TD
@@ -26,9 +26,9 @@ flowchart TD
     MaxCheck -->|No| Start
 ```
 
-## Event Types
+## Events
 
-The generator yields events at each stage of the loop. Consumers (e.g., the CLI renderer) iterate the generator and dispatch on the event `type` field.
+The generator yields events at each stage. Consumers (like the CLI renderer) iterate the generator and switch on the event `type`.
 
 ### Yielded by `runLoop()`
 

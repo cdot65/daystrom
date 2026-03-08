@@ -1,6 +1,6 @@
 # AWS Bedrock
 
-The Bedrock providers (`claude-bedrock` and `gemini-bedrock`) run models through AWS Bedrock using `@langchain/aws` (`ChatBedrockConverse`).
+Run models through AWS Bedrock. Both `claude-bedrock` and `gemini-bedrock` use `@langchain/aws` and support either explicit credentials or the AWS default credential chain.
 
 ## Authentication
 

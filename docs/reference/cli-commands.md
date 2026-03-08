@@ -1,25 +1,27 @@
 # CLI Commands
 
-Binary name: `daystrom` (or `pnpm run dev` in development).
+Binary: `daystrom` (or `pnpm run dev` during development).
 
-Four subcommands manage the full guardrail lifecycle: generate, resume, report, and list.
+Four commands manage the full guardrail lifecycle.
 
 ---
 
 ## generate
 
-Start a new guardrail generation loop.
+Start a new guardrail generation run.
 
 ```bash
 daystrom generate [options]
 ```
 
-| Flag | Default | Description |
+### Options
+
+| Flag | Default | What it does |
 |------|---------|-------------|
 | `--provider <name>` | `claude-api` | LLM provider (`claude-api`, `claude-vertex`, `claude-bedrock`, `gemini-api`, `gemini-vertex`, `gemini-bedrock`) |
 | `--model <name>` | per-provider | Override default model |
-| `--profile <name>` | (prompted) | AIRS security profile name |
-| `--topic <desc>` | (prompted) | Natural language description of content to detect |
+| `--profile <name>` | _(prompted)_ | AIRS security profile name |
+| `--topic <desc>` | _(prompted)_ | Natural language description of content to detect |
 | `--intent <block\|allow>` | `block` | Whether matching prompts are blocked or allowed |
 | `--max-iterations <n>` | `20` | Maximum refinement iterations |
 | `--target-coverage <n>` | `90` | Coverage percentage to stop at |
@@ -27,59 +29,65 @@ daystrom generate [options]
 | `--max-accumulated-tests <n>` | unlimited | Cap on accumulated test count |
 | `--no-memory` | memory on | Disable cross-run learning |
 
-!!! tip "Non-interactive mode"
-    When both `--topic` and `--profile` are provided, interactive prompts are skipped entirely.
+!!! tip "Skip all prompts"
+    When both `--topic` and `--profile` are provided, interactive mode is skipped entirely.
 
 ### Interactive Mode
 
-When flags are omitted, Inquirer prompts collect:
+When flags are omitted, Daystrom walks you through:
 
-- Topic description
-- Intent (block or allow)
-- Security profile name
-- Seed examples (optional)
-- Max iterations
-- Target coverage %
-- Accumulate tests across iterations (yes/no)
-- Max accumulated tests (if accumulation enabled)
+1. Topic description
+2. Intent (block or allow)
+3. Security profile name
+4. Seed examples (optional)
+5. Max iterations
+6. Target coverage %
+7. Accumulate tests across iterations (yes/no)
+8. Max accumulated tests (if accumulation enabled)
 
 ### Examples
 
 ```bash
-# Interactive — prompts for all inputs
-pnpm run generate
+# Interactive — prompts for everything
+daystrom generate
 
 # Non-interactive — all inputs via flags
-pnpm run generate \
+daystrom generate \
   --provider claude-api \
   --profile my-security-profile \
   --topic "Block discussions about building explosives" \
   --intent block \
   --target-coverage 90
+
+# With test accumulation
+daystrom generate \
+  --topic "Allow recipe discussions" \
+  --intent allow \
+  --profile cooking-policy \
+  --accumulate-tests \
+  --max-accumulated-tests 60
 ```
 
 ---
 
 ## resume
 
-Resume a paused or failed run from its saved state on disk.
+Pick up a paused or failed run from where it left off.
 
 ```bash
 daystrom resume <runId> [options]
 ```
 
-| Flag | Default | Description |
+| Flag | Default | What it does |
 |------|---------|-------------|
-| `--max-iterations <n>` | `20` | Additional iterations to run from current position |
-
-### Example
+| `--max-iterations <n>` | `20` | Additional iterations from current position |
 
 ```bash
-pnpm run dev resume abc123xyz --max-iterations 10
+daystrom resume abc123xyz --max-iterations 10
 ```
 
 !!! note
-    The run must exist in the data directory (`~/.daystrom/runs/` by default). Use `daystrom list` to find run IDs.
+    The run must exist in the data directory (`~/.daystrom/runs/`). Use `daystrom list` to find run IDs. Settings like `accumulateTests` are inherited from the original run.
 
 ---
 
@@ -91,33 +99,26 @@ View results for a saved run.
 daystrom report <runId> [options]
 ```
 
-| Flag | Default | Description |
+| Flag | Default | What it does |
 |------|---------|-------------|
-| `--iteration <n>` | (best) | Show a specific iteration instead of the best |
-
-### Examples
+| `--iteration <n>` | _(best)_ | Show a specific iteration instead of the best |
 
 ```bash
-# Show best iteration
-pnpm run dev report abc123xyz
+# Best iteration
+daystrom report abc123xyz
 
-# Show specific iteration
-pnpm run dev report abc123xyz --iteration 3
+# Specific iteration
+daystrom report abc123xyz --iteration 3
 ```
 
 ---
 
 ## list
 
-List all saved runs.
+Show all saved runs.
 
 ```bash
 daystrom list
 ```
 
-Displays a summary table with:
-
-- Run ID
-- Status
-- Coverage
-- Iteration count
+Displays a summary table with run ID, status, coverage, and iteration count.

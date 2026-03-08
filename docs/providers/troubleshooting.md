@@ -1,6 +1,6 @@
-# Provider Troubleshooting
+# Troubleshooting
 
-Common errors by provider category and how to resolve them.
+Something not working? Find your error below.
 
 ---
 
@@ -10,7 +10,7 @@ Common errors by provider category and how to resolve them.
 |-------|-------|-----|
 | `401 Unauthorized` / `invalid x-api-key` | Missing or invalid API key | Verify `ANTHROPIC_API_KEY` or `GOOGLE_API_KEY` is set and correct |
 | `429 Rate limit exceeded` | Too many requests | Reduce `SCAN_CONCURRENCY` or wait before retrying |
-| `Could not resolve model` | Wrong model name for provider | Verify model name matches API format (see [overview](overview.md#model-override)) |
+| `Could not resolve model` | Wrong model name for provider | Verify model name matches API format (see [overview](overview.md#override-the-default-model)) |
 | `ENOTFOUND api.anthropic.com` | Network / DNS issue | Check internet connectivity and proxy settings |
 
 !!! tip "Validate your API key"

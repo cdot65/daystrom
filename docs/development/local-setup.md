@@ -23,20 +23,22 @@ cp .env.example .env
 
 Edit `.env` with your credentials:
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | Yes (or provider equivalent) | LLM provider API key |
+| Variable | Required | What it's for |
+|----------|:--------:|-------------|
+| `ANTHROPIC_API_KEY` | Yes* | LLM provider API key |
 | `PANW_AI_SEC_API_KEY` | Yes | Prisma AIRS Scan API key |
 | `PANW_MGMT_CLIENT_ID` | Yes | AIRS Management OAuth2 client ID |
 | `PANW_MGMT_CLIENT_SECRET` | Yes | AIRS Management OAuth2 client secret |
 | `PANW_MGMT_TSG_ID` | Yes | Tenant Service Group ID |
 
+*Or the equivalent for your chosen provider.
+
 !!! note "Tests run without credentials"
-    Unit and integration tests use MSW mocks. You only need real credentials for E2E tests and actual AIRS operations.
+    Unit and integration tests use MSW mocks — you only need real credentials for E2E tests and actual AIRS operations.
 
 ## Development Commands
 
-| Command | Description |
+| Command | What it does |
 |---------|-------------|
 | `pnpm run dev` | Run CLI via tsx (any subcommand) |
 | `pnpm run generate` | Interactive guardrail generation |
@@ -52,26 +54,26 @@ Edit `.env` with your credentials:
 
 ## Data Directories
 
-Daystrom stores runtime data under `~/.daystrom/`:
+Runtime data lives under `~/.daystrom/`:
 
-| Path | Purpose |
-|------|---------|
+| Path | What's in it |
+|------|-------------|
 | `~/.daystrom/runs/` | Persisted run states (JSON) |
 | `~/.daystrom/memory/` | Cross-run learning store |
-| `~/.daystrom/config.json` | Optional config file (overrides Zod defaults) |
+| `~/.daystrom/config.json` | Optional config file |
 
 !!! info "Config priority"
-    CLI flags > environment variables > `~/.daystrom/config.json` > Zod schema defaults.
+    CLI flags > environment variables > config file > Zod schema defaults
 
 ## Verify Setup
 
-Run all three checks to confirm your environment is working:
+Run all three checks to confirm everything works:
 
 ```bash
-pnpm test           # All tests pass without AIRS creds (MSW mocked)
+pnpm test           # All tests pass (no AIRS creds needed)
 pnpm run lint       # No lint errors
 pnpm tsc --noEmit   # No type errors
 ```
 
-!!! success "All three should pass cleanly on a fresh clone"
-    If any fail, ensure you are on Node >= 20 and have run `pnpm install`.
+!!! success "All three should pass on a fresh clone"
+    If any fail, make sure you're on Node >= 20 and have run `pnpm install`.

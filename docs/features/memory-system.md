@@ -1,80 +1,79 @@
 # Memory System
 
-Cross-run learning memory that extracts, stores, and injects learnings across guardrail generation runs. Learnings from one topic improve future runs on similar topics.
+Daystrom learns from every run. After a guardrail generation completes, the system extracts insights and stores them for future runs on similar topics. Over time, this means faster convergence and fewer iterations.
 
 ```mermaid
 graph LR
-    A[Run Completes] --> B[LearningExtractor]
-    B --> C[MemoryStore]
-    C --> D[MemoryInjector]
-    D --> E[Next Run LLM Prompts]
+    A[Run Completes] --> B[Extract Learnings]
+    B --> C[Store by Category]
+    C --> D[Inject into Future Prompts]
 ```
 
 ## How Learnings Work
 
-After each run completes, the `LearningExtractor` sends the full iteration history to the LLM for analysis. The LLM produces structured `Learning` objects:
+After each run, the `LearningExtractor` sends the full iteration history to the LLM. The LLM produces structured insights:
 
-| Field | Description |
-|-------|-------------|
-| `insight` | Actionable observation from the run |
-| `strategy` | How to apply the insight in future runs |
-| `outcome` | `improved` \| `degraded` \| `neutral` |
-| `changeType` | `description-only` \| `examples-only` \| `both` \| `initial` |
-| `corroborations` | Count of runs confirming this learning (starts at 0, increments on rediscovery) |
+| Field | What it is |
+|-------|-----------|
+| `insight` | An actionable observation (e.g., "Specific action verbs in examples improve detection") |
+| `strategy` | How to apply it next time |
+| `outcome` | `improved`, `degraded`, or `neutral` |
+| `changeType` | What was changed: `description-only`, `examples-only`, `both`, or `initial` |
+| `corroborations` | How many runs have confirmed this learning |
 | `tags` | Metadata for filtering and display |
 
 !!! info "Corroboration"
-    When a new run rediscovers an existing learning, the corroboration count increments rather than creating a duplicate. Higher corroboration = higher injection priority.
+    When a new run rediscovers an existing insight, the corroboration count goes up instead of creating a duplicate. Higher corroboration = higher priority when injecting into prompts.
 
-## Keyword-Based Categorization
+---
 
-Topic descriptions are normalized to keyword-based category strings:
+## Topic Categorization
+
+Learnings are organized by keyword-based categories derived from the topic description:
 
 1. Lowercase the description
 2. Strip punctuation
-3. Remove stop words
+3. Remove stop words (the, a, and, etc.)
 4. Sort remaining words alphabetically
 5. Join with hyphens
 
-**Example:** `"Block weapons discussions"` → `block-discussions-weapons`
+**Example:** `"Block weapons discussions"` becomes `block-discussions-weapons`
 
-Each category maps to a separate memory file on disk.
+Each category gets its own file on disk.
+
+---
 
 ## Cross-Topic Transfer
 
-Learnings are injected for any topic whose keyword set has **≥50% overlap** with the stored category.
+Here's where memory gets powerful: learnings transfer to _related_ topics, not just exact matches.
 
-!!! example "Transfer Example"
-    Learnings from `"Block weapons discussions"` (`block-discussions-weapons`) transfer to `"Block violence and weapons"` (`block-violence-weapons`) because the keyword overlap exceeds 50%.
+Any topic whose keywords have **50% or more overlap** with a stored category receives those learnings.
 
-This enables knowledge reuse across related guardrail topics without requiring exact matches.
+!!! example "How transfer works"
+    Learnings from `"Block weapons discussions"` (`block-discussions-weapons`) automatically transfer to `"Block violence and weapons"` (`block-violence-weapons`) — the keyword overlap exceeds 50%.
+
+---
 
 ## Budget-Aware Injection
 
-The injector operates within a configurable character budget (default **3000 chars**, range 500–10000). Learnings are sorted by corroboration count descending, then rendered in three tiers:
+Learnings are injected into LLM prompts within a character budget (default **3000 chars**, configurable 500--10000). They're sorted by corroboration count and rendered in three tiers:
 
-### Tier 1 — Verbose
-
-Full metadata included when budget allows:
-
+### Tier 1 — Full Detail
+When budget allows, include metadata:
 ```
 - [DO] Use specific action verbs in examples (description-only, seen 4x)
 - [AVOID] Overly generic descriptions that match benign prompts (both, seen 3x)
 ```
 
 ### Tier 2 — Compact
-
-Insight only, when verbose format would exceed budget:
-
+When space is tight, insight only:
 ```
 - [DO] Use specific action verbs in examples
 - [AVOID] Overly generic descriptions that match benign prompts
 ```
 
 ### Tier 3 — Omitted
-
-When even compact format doesn't fit:
-
+When even compact doesn't fit:
 ```
 (+5 more learnings omitted)
 ```
@@ -82,16 +81,18 @@ When even compact format doesn't fit:
 !!! note
     Anti-patterns are appended after learnings if remaining budget allows.
 
+---
+
 ## Best-Known Tracking
 
-The memory store tracks the best topic definition and metrics for each category. This allows comparison across runs — if a new run produces worse results, the best-known definition is preserved for reference.
+The memory store keeps the best topic definition and metrics for each category. If a new run produces worse results, the previous best is preserved — you never lose your best configuration.
 
 ## Storage
 
-All memory files are stored at:
+All memory files live at:
 
 ```
 ~/.daystrom/memory/{category}.json
 ```
 
-Each file contains the learnings array, best-known topic, and best-known metrics for that category.
+Each file contains the learnings array, best-known topic definition, and best-known metrics for that category. Files are human-readable JSON.

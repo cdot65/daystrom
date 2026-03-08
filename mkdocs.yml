@@ -7,7 +7,7 @@ repo_url: https://github.com/cdot65/daystrom
 theme:
   name: material
   logo: images/logo.svg
-  favicon: images/logo.svg
+  favicon: images/favicon.ico
   palette:
     - scheme: default
       primary: deep purple
@@ -57,6 +57,9 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - tables
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - toc:
       permalink: true
 
