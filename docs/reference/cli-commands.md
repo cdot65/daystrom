@@ -418,3 +418,57 @@ daystrom model-security rule-instances update <groupUuid> <instanceUuid> --confi
     "threshold": 0.8
   }
 }
+```
+
+### model-security scans
+
+Model security scan operations — create, list, inspect scans and their results.
+
+```bash
+daystrom model-security scans list [options]
+daystrom model-security scans get <uuid>
+daystrom model-security scans create --config <path>
+daystrom model-security scans evaluations <scanUuid> [--limit <n>]
+daystrom model-security scans evaluation <uuid>
+daystrom model-security scans violations <scanUuid> [--limit <n>]
+daystrom model-security scans violation <uuid>
+daystrom model-security scans files <scanUuid> [--type <type>] [--result <result>] [--limit <n>]
+```
+
+| Subcommand | Flags |
+|------------|-------|
+| `list` | `--eval-outcome <outcome>`, `--source-type <type>`, `--scan-origin <origin>`, `--search <query>`, `--limit <n>` (default 20) |
+| `get <uuid>` | — |
+| `create` | `--config <path>` (required) |
+| `evaluations <scanUuid>` | `--limit <n>` (default 20) |
+| `evaluation <uuid>` | — |
+| `violations <scanUuid>` | `--limit <n>` (default 20) |
+| `violation <uuid>` | — |
+| `files <scanUuid>` | `--type <type>`, `--result <result>`, `--limit <n>` (default 20) |
+
+### model-security labels
+
+Manage labels on model security scans.
+
+```bash
+daystrom model-security labels add <scanUuid> --labels '<json>'
+daystrom model-security labels set <scanUuid> --labels '<json>'
+daystrom model-security labels delete <scanUuid> --keys <key1,key2>
+daystrom model-security labels keys [--limit <n>]
+daystrom model-security labels values <key> [--limit <n>]
+```
+
+| Subcommand | Flags |
+|------------|-------|
+| `add <scanUuid>` | `--labels <json>` (required) |
+| `set <scanUuid>` | `--labels <json>` (required) |
+| `delete <scanUuid>` | `--keys <keys>` (required, comma-separated) |
+| `keys` | `--limit <n>` (default 20) |
+| `values <key>` | `--limit <n>` (default 20) |
+
+### model-security pypi-auth
+
+Get PyPI authentication URL for Google Artifact Registry.
+
+```bash
+daystrom model-security pypi-auth

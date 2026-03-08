@@ -9,6 +9,9 @@ The `daystrom model-security` command group provides access to Model Security op
 - **Groups** — manage security groups that define scanning policies per source type
 - **Rules** — browse available security rules (read-only, managed by AIRS)
 - **Rule Instances** — configure rule enforcement within groups (BLOCKING, ALLOWING, DISABLED)
+- **Scans** — create, list, and inspect model security scans with evaluations, violations, and file results
+- **Labels** — organize scans with key-value labels
+- **PyPI Auth** — get authentication for Google Artifact Registry
 
 ## Concepts
 
@@ -61,6 +64,29 @@ daystrom model-security rule-instances update <groupUuid> <instanceUuid> --confi
 ```bash
 echo '{"name": "Strict S3 Policy", "source_type": "S3"}' > group.json
 daystrom model-security groups create --config group.json
+```
+
+### 5. Inspect scan results
+
+```bash
+# List scans
+daystrom model-security scans list
+
+# View evaluations for a scan
+daystrom model-security scans evaluations <scanUuid>
+
+# View violations
+daystrom model-security scans violations <scanUuid>
+
+# View scanned files
+daystrom model-security scans files <scanUuid>
+```
+
+### 6. Organize with labels
+
+```bash
+daystrom model-security labels add <scanUuid> --labels '[{"key":"env","value":"prod"}]'
+daystrom model-security labels keys
 ```
 
 ## CLI Reference

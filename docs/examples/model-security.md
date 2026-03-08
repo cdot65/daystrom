@@ -200,6 +200,126 @@ daystrom model-security rule-instances update <groupUuid> <instanceUuid> --confi
 
 ---
 
+## Scans
+
+### List scans
+
+```bash
+daystrom model-security scans list
+```
+
+```
+  Prisma AIRS — Model Security
+  ML model supply chain security
+
+  Model Security Scans:
+
+  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    COMPLETED  2025-09-01T14:30:00.000Z
+    Rules: 8 passed  2 failed  / 10 total
+  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    COMPLETED  2025-09-02T10:00:00.000Z
+    Rules: 10 passed  0 failed  / 10 total
+```
+
+### Filter scans
+
+```bash
+# By evaluation outcome
+daystrom model-security scans list --eval-outcome FAILED
+
+# By source type
+daystrom model-security scans list --source-type LOCAL
+
+# Search
+daystrom model-security scans list --search "model-name"
+```
+
+### Get scan details
+
+```bash
+daystrom model-security scans get <uuid>
+```
+
+### View scan evaluations
+
+```bash
+daystrom model-security scans evaluations <scanUuid>
+```
+
+```
+  Prisma AIRS — Model Security
+  ML model supply chain security
+
+  Rule Evaluations:
+
+  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    Unsafe Deserialization  ALLOWED
+  xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    Malicious Code Injection  BLOCKED
+```
+
+### View violations
+
+```bash
+daystrom model-security scans violations <scanUuid>
+```
+
+### View scanned files
+
+```bash
+daystrom model-security scans files <scanUuid>
+
+# Filter by result
+daystrom model-security scans files <scanUuid> --result FAILED
+```
+
+---
+
+## Labels
+
+Labels help organize and categorize scans.
+
+### Add labels
+
+```bash
+daystrom model-security labels add <scanUuid> --labels '[{"key":"env","value":"prod"}]'
+```
+
+### Set labels (replace all)
+
+```bash
+daystrom model-security labels set <scanUuid> --labels '[{"key":"env","value":"staging"},{"key":"team","value":"ml"}]'
+```
+
+### Delete labels
+
+```bash
+daystrom model-security labels delete <scanUuid> --keys env,team
+```
+
+### Browse label taxonomy
+
+```bash
+# List all label keys
+daystrom model-security labels keys
+
+# List values for a key
+daystrom model-security labels values env
+```
+
+---
+
+## PyPI Authentication
+
+Get authentication URL for Google Artifact Registry (used for model scanning tools).
+
+```bash
+daystrom model-security pypi-auth
+```
+
+---
+
 ## Common Workflows
 
 ### Audit a model source
