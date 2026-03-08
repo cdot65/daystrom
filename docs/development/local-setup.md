@@ -47,6 +47,7 @@ Edit `.env` with your credentials:
 | `pnpm run lint` | Biome lint check |
 | `pnpm run lint:fix` | Auto-fix lint issues |
 | `pnpm run format` | Format with Biome |
+| `pnpm run format:check` | Check formatting (no write) |
 | `pnpm tsc --noEmit` | Type-check |
 
 ## Data Directories
