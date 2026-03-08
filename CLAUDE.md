@@ -108,6 +108,7 @@ tests/
 
 ### AIRS Integration (`src/airs/`)
 - **Scanner**: `Scanner.syncScan()` via SDK, detection = `prompt_detected.topic_violation` (fallback: `topic_guardrails_details`)
+- **Allow-intent signal inversion**: For allow topics, AIRS never sets `triggered: true` — the loop derives `actualTriggered` from `action === 'allow'` instead
 - **Management**: `ManagementClient` for topic CRUD + profile linking via OAuth2
 - Profile updates create **new revisions with new UUIDs** — always reference profiles by name, never ID
 - Topics must be added to profile's `model-protection` → `topic-guardrails` → `topic-list`

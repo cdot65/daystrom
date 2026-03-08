@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { type LlmService, type LoopDependencies, runLoop } from '../../src/core/loop.js';
 import type { LoopEvent, UserInput } from '../../src/core/types.js';
-import { createMockManagementService, createMockScanService } from '../helpers/mocks.js';
+import {
+  createMockAllowScanService,
+  createMockManagementService,
+  createMockScanService,
+} from '../helpers/mocks.js';
 
 /**
  * Deterministic mock LLM that simulates iterative improvement.
@@ -150,8 +154,9 @@ describe('Loop Integration', () => {
     }
   });
 
-  it('threads allow intent through the full loop', async () => {
-    const scanner = createMockScanService([/weapon/i]);
+  it('threads allow intent through the full loop with correct metrics', async () => {
+    // Allow scanner: matching prompts → action: 'allow', non-matching → action: 'block'
+    const scanner = createMockAllowScanService([/weapon/i, /bomb/i, /gun/i, /arms/i]);
     const llm = createDeterministicLlm();
     const deps: LoopDependencies = {
       llm,
@@ -171,6 +176,13 @@ describe('Loop Integration', () => {
       events.push(event);
     }
     expect(events.some((e) => e.type === 'loop:complete')).toBe(true);
+
+    // Verify allow intent produces real metrics (not 0% TPR)
+    const evalEvent = events.find((e) => e.type === 'evaluate:complete');
+    if (evalEvent?.type === 'evaluate:complete') {
+      expect(evalEvent.metrics.truePositives).toBeGreaterThan(0);
+      expect(evalEvent.metrics.trueNegatives).toBeGreaterThan(0);
+    }
   });
 
   it('accumulates tests across 3 iterations with growing count', async () => {

@@ -93,3 +93,40 @@ export function createMockScanService(
     },
   };
 }
+
+/**
+ * Mock scanner simulating AIRS allow-intent behavior.
+ * Matching prompts → action: 'allow', triggered: false (no violation).
+ * Non-matching prompts → action: 'block', triggered: false (blocked, no topic_violation).
+ */
+export function createMockAllowScanService(allowPatterns: RegExp[] = []): ScanService {
+  return {
+    scan: async (_profile: string, prompt: string, _sessionId?: string): Promise<ScanResult> => {
+      const matches = allowPatterns.some((p) => p.test(prompt));
+      return {
+        scanId: `scan-${Date.now()}`,
+        reportId: `report-${Date.now()}`,
+        action: matches ? 'allow' : 'block',
+        triggered: false, // AIRS never sets topic_violation for allow-intent topics
+      };
+    },
+    scanBatch: async (
+      _profile: string,
+      prompts: string[],
+      _concurrency?: number,
+      _sessionId?: string,
+    ): Promise<ScanResult[]> => {
+      const results: ScanResult[] = [];
+      for (const prompt of prompts) {
+        const matches = allowPatterns.some((p) => p.test(prompt));
+        results.push({
+          scanId: `scan-${Date.now()}`,
+          reportId: `report-${Date.now()}`,
+          action: matches ? 'allow' : 'block',
+          triggered: false,
+        });
+      }
+      return results;
+    },
+  };
+}

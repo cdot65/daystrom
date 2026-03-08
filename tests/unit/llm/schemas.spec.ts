@@ -29,7 +29,7 @@ describe('LLM schemas', () => {
       const result = CustomTopicSchema.safeParse({
         name: 'a'.repeat(101),
         description: 'Valid desc',
-        examples: ['Valid example'],
+        examples: ['Valid example', 'Another example'],
       });
       expect(result.success).toBe(true);
     });
@@ -38,7 +38,7 @@ describe('LLM schemas', () => {
       const result = CustomTopicSchema.safeParse({
         name: 'Valid',
         description: 'a'.repeat(251),
-        examples: ['Valid example'],
+        examples: ['Valid example', 'Another example'],
       });
       expect(result.success).toBe(true);
     });
@@ -52,20 +52,29 @@ describe('LLM schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('rejects zero examples', () => {
+    it('rejects fewer than 2 examples', () => {
+      expect(
+        CustomTopicSchema.safeParse({ name: 'V', description: 'V', examples: [] }).success,
+      ).toBe(false);
+      expect(
+        CustomTopicSchema.safeParse({ name: 'V', description: 'V', examples: ['one'] }).success,
+      ).toBe(false);
+    });
+
+    it('accepts exactly 2 examples', () => {
       const result = CustomTopicSchema.safeParse({
         name: 'Valid',
         description: 'Valid desc',
-        examples: [],
+        examples: ['one', 'two'],
       });
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
     });
 
     it('accepts example over 250 chars (clamping handled by service)', () => {
       const result = CustomTopicSchema.safeParse({
         name: 'Valid',
         description: 'Valid desc',
-        examples: ['a'.repeat(251)],
+        examples: ['a'.repeat(251), 'Another example'],
       });
       expect(result.success).toBe(true);
     });

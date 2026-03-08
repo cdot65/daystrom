@@ -10,7 +10,11 @@ import type {
   UserInput,
 } from '../../../src/core/types.js';
 import type { LearningExtractor } from '../../../src/memory/extractor.js';
-import { createMockManagementService, createMockScanService } from '../../helpers/mocks.js';
+import {
+  createMockAllowScanService,
+  createMockManagementService,
+  createMockScanService,
+} from '../../helpers/mocks.js';
 
 function createMockLlm() {
   return {
@@ -377,6 +381,49 @@ describe('runLoop', () => {
       0.9,
       'allow',
     );
+  });
+
+  it('uses action field for allow-intent triggered detection', async () => {
+    // Mock scanner simulating AIRS allow-intent: matching prompts → action: 'allow'
+    const allowScanner = createMockAllowScanService([/weapon/i, /bomb/i]);
+    const llm = createMockLlm();
+    const deps = createDeps({ llm, scanner: allowScanner });
+    const events: LoopEvent[] = [];
+
+    for await (const event of runLoop(
+      { ...defaultInput, intent: 'allow', maxIterations: 1 },
+      deps,
+    )) {
+      events.push(event);
+    }
+
+    const evalEvent = events.find((e) => e.type === 'evaluate:complete');
+    expect(evalEvent).toBeDefined();
+    if (evalEvent?.type === 'evaluate:complete') {
+      // "weapon" and "bomb" prompts should now be detected as matching (action: 'allow')
+      // "cats" and "weather" should NOT match (action: 'block')
+      // With allow intent, actualTriggered = (action === 'allow')
+      expect(evalEvent.metrics.truePositives).toBeGreaterThan(0);
+      expect(evalEvent.metrics.trueNegatives).toBeGreaterThan(0);
+    }
+  });
+
+  it('block-intent still uses triggered field', async () => {
+    // Standard block scanner — triggered field is used
+    const scanner = createMockScanService([/weapon/i, /bomb/i]);
+    const llm = createMockLlm();
+    const deps = createDeps({ llm, scanner });
+    const events: LoopEvent[] = [];
+
+    for await (const event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
+      events.push(event);
+    }
+
+    const evalEvent = events.find((e) => e.type === 'evaluate:complete');
+    expect(evalEvent).toBeDefined();
+    if (evalEvent?.type === 'evaluate:complete') {
+      expect(evalEvent.metrics.truePositives).toBeGreaterThan(0);
+    }
   });
 
   describe('test accumulation', () => {

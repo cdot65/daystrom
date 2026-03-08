@@ -126,7 +126,11 @@ export class LangChainLlmService implements LlmService {
         const raw = await chain.invoke({
           topicName: topic.name,
           topicDescription: topic.description,
-          topicExamples: topic.examples.map((e, i) => `${i + 1}. ${e}`).join('\n'),
+          topicExamples:
+            topic.examples.length > 0
+              ? topic.examples.map((e, i) => `${i + 1}. ${e}`).join('\n')
+              : 'None (description-only mode)',
+          exampleCount: topic.examples.length,
           intent,
           memorySection: this.memorySection,
         });
@@ -157,7 +161,9 @@ export class LangChainLlmService implements LlmService {
         const raw = await chain.invoke({
           topicName: topic.name,
           topicDescription: topic.description,
-          topicExamples: topic.examples.join(', '),
+          topicExamples:
+            topic.examples.length > 0 ? topic.examples.join(', ') : 'None (description-only)',
+          exampleCount: topic.examples.length,
           tpr: `${(metrics.truePositiveRate * 100).toFixed(1)}%`,
           tnr: `${(metrics.trueNegativeRate * 100).toFixed(1)}%`,
           accuracy: `${(metrics.accuracy * 100).toFixed(1)}%`,
@@ -203,7 +209,9 @@ export class LangChainLlmService implements LlmService {
         const raw = await chain.invoke({
           currentName: topic.name,
           currentDescription: topic.description,
-          currentExamples: topic.examples.join(', '),
+          currentExamples:
+            topic.examples.length > 0 ? topic.examples.join(', ') : 'None (description-only)',
+          exampleCount: topic.examples.length,
           iteration,
           coverage: `${(metrics.coverage * 100).toFixed(1)}%`,
           targetCoverage: `${(targetCoverage * 100).toFixed(1)}%`,
