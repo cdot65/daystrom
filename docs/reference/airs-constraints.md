@@ -11,7 +11,7 @@ Prisma AIRS enforces hard limits on custom topic definitions. Daystrom validates
 | Topic name | 100 characters max |
 | Description | 250 characters max |
 | Each example | 250 characters max |
-| Number of examples | 5 max |
+| Number of examples | 2--5 |
 | Combined total (description + all examples) | 1000 characters max |
 
 !!! warning "Byte length"

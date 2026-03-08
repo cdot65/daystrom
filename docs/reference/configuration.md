@@ -30,6 +30,7 @@ Optional JSON file at `~/.daystrom/config.json`. Keys use camelCase matching the
   "propagationDelayMs": 15000,
   "maxMemoryChars": 5000,
   "memoryEnabled": true,
+  "accumulateTests": false,
   "dataDir": "~/.daystrom/runs",
   "memoryDir": "~/.daystrom/memory"
 }
@@ -47,6 +48,8 @@ Optional JSON file at `~/.daystrom/config.json`. Keys use camelCase matching the
 | `propagationDelayMs` | -- | `PROPAGATION_DELAY_MS` | `10000` | Wait after topic deploy (ms) |
 | `maxMemoryChars` | -- | `MAX_MEMORY_CHARS` | `3000` | Memory injection budget (500--10000) |
 | `memoryEnabled` | `--no-memory` | `MEMORY_ENABLED` | `true` | Enable cross-run learning |
+| `accumulateTests` | `--accumulate-tests` | `ACCUMULATE_TESTS` | `false` | Carry forward tests across iterations |
+| `maxAccumulatedTests` | `--max-accumulated-tests` | `MAX_ACCUMULATED_TESTS` | unlimited | Cap on accumulated test count |
 | `dataDir` | -- | `DATA_DIR` | `~/.daystrom/runs` | Run state directory |
 | `memoryDir` | -- | `MEMORY_DIR` | `~/.daystrom/memory` | Learning store directory |
 

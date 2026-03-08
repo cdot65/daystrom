@@ -50,6 +50,8 @@ Create `~/.daystrom/config.json` for persistent defaults:
 | `PROPAGATION_DELAY_MS` | `propagationDelayMs` | `10000` | Wait after topic deploy (ms) |
 | `MAX_MEMORY_CHARS` | `maxMemoryChars` | `3000` | Memory injection budget (500--10000) |
 | `MEMORY_ENABLED` | `memoryEnabled` | `true` | Enable cross-run learning |
+| `ACCUMULATE_TESTS` | `accumulateTests` | `false` | Carry forward tests across iterations |
+| `MAX_ACCUMULATED_TESTS` | `maxAccumulatedTests` | unlimited | Cap on accumulated test count |
 | `DATA_DIR` | `dataDir` | `~/.daystrom/runs` | Run state directory |
 | `MEMORY_DIR` | `memoryDir` | `~/.daystrom/memory` | Learning store directory |
 
