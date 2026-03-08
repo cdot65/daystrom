@@ -30,22 +30,29 @@ flowchart TD
 
 The generator yields events at each stage of the loop. Consumers (e.g., the CLI renderer) iterate the generator and dispatch on the event `type` field.
 
+### Yielded by `runLoop()`
+
 | Event | Payload | When |
 |-------|---------|------|
 | `iteration:start` | iteration number | Start of each iteration |
 | `generate:complete` | `CustomTopic` | After LLM generates or improves topic |
-| `apply:complete` | topic ID | After topic deployed to AIRS |
-| `test:progress` | test index, result | Per-test scan completion |
+| `apply:complete` | topic ID | After topic deployed to AIRS (yielded but intentionally unhandled in CLI) |
+| `test:progress` | completed count, total | Per-test scan completion |
 | `evaluate:complete` | `EfficacyMetrics` | After metrics computed |
 | `analyze:complete` | `AnalysisReport` | After FP/FN analysis |
 | `iteration:complete` | `IterationResult` | Full iteration summary |
-| `loop:complete` | best iteration, all results | Terminal: target reached or max iterations |
-| `loop:paused` | current state | Terminal: run interrupted |
-| `memory:loaded` | learning count | Memory injected at start |
-| `memory:extracted` | learning count | Learnings extracted post-loop |
+| `memory:extracted` | learning count | Learnings extracted post-loop (only if memory enabled) |
+| `loop:complete` | best iteration, run state | Terminal: target reached or max iterations |
+
+### Defined but not yielded by `runLoop()`
+
+| Event | Payload | Status |
+|-------|---------|--------|
+| `loop:paused` | current state | Reserved for future use — not currently yielded |
+| `memory:loaded` | learning count | Emitted by CLI command (`generate.ts`) before the loop starts, not by the generator itself |
 
 !!! tip "Terminal Events"
-    `loop:complete` and `loop:paused` are terminal events. After either is yielded, the generator returns and no further events are produced. A paused run can be resumed via the `resume` command.
+    `loop:complete` is the terminal event. After it is yielded, the generator returns and no further events are produced. `loop:paused` is defined in the type union for future use but is not currently yielded.
 
 ## Topic Name Locking
 
