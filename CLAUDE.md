@@ -124,6 +124,9 @@ tests/
 ### Red Team (`src/airs/redteam.ts`)
 - `SdkRedTeamService` wraps `RedTeamClient` for scan CRUD, polling, reports
 - 3 scan types: STATIC (attack library), DYNAMIC (agent-driven), CUSTOM (prompt sets)
+- `custom_prompt_sets` must be an array of UUID strings (not `{ uuid }` objects) — AIRS API returns 422 otherwise
+- ASR/score/threatRate from AIRS API are percentages (0-100), not ratios — render directly, don't multiply by 100
+- `listCustomAttacks()` uses `customAttackReports.listCustomAttacks()` for prompt-level results on CUSTOM scans
 - `waitForCompletion()` polls with configurable interval, throws on FAILED
 - CLI: `daystrom redteam {scan,status,report,list,targets,categories,abort}`
 

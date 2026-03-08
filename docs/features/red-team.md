@@ -40,25 +40,39 @@ daystrom redteam categories
 
 ```bash
 # Static scan — full attack library
-daystrom redteam scan --target <uuid> --name "My Scan"
+daystrom redteam scan --target <uuid> --name "Full Static Scan"
 
 # Static scan — specific categories
 daystrom redteam scan --target <uuid> --name "PI Test" \
   --categories '{"prompt_injection": {}}'
 
 # Custom scan — use prompt sets from guardrail generation
-daystrom redteam scan --target <uuid> --name "Custom Test" \
-  --type CUSTOM --prompt-sets ps-uuid-1,ps-uuid-2
+daystrom redteam scan \
+  --target bff3b6ca-8be7-441c-823e-c36f1a61d41e \
+  --name "Explosives Topic Validation" \
+  --type CUSTOM \
+  --prompt-sets 7829805d-6479-4ce1-866b-2bff66a3c766
 
-# Submit without waiting
-daystrom redteam scan --target <uuid> --name "Async" --no-wait
+# Multiple prompt sets (comma-separated UUIDs)
+daystrom redteam scan --target <uuid> --name "Multi-Set Scan" \
+  --type CUSTOM --prompt-sets uuid-1,uuid-2,uuid-3
+
+# Submit without waiting for completion
+daystrom redteam scan --target <uuid> --name "Async Scan" --no-wait
 ```
+
+!!! tip "Finding prompt set UUIDs"
+    Prompt sets created by `daystrom generate --create-prompt-set` emit
+    the UUID in the `promptset:created` event. You can also list prompt
+    sets via the SDK's `SdkPromptSetService.listPromptSets()`.
 
 ### 4. Check status
 
 ```bash
 daystrom redteam status <jobId>
 ```
+
+Output includes current status (QUEUED, RUNNING, COMPLETED, FAILED, ABORTED) and progress (completed/total).
 
 ### 5. View report
 
@@ -71,13 +85,22 @@ daystrom redteam report <jobId> --attacks
 
 # Filter attacks by severity
 daystrom redteam report <jobId> --attacks --severity HIGH
+
+# Limit attack count
+daystrom redteam report <jobId> --attacks --limit 50
 ```
 
 ### 6. List recent scans
 
 ```bash
+# All recent scans
 daystrom redteam list
-daystrom redteam list --status COMPLETED --type STATIC
+
+# Filter by status and type
+daystrom redteam list --status COMPLETED --type CUSTOM
+
+# Filter by target
+daystrom redteam list --target <uuid> --limit 20
 ```
 
 ### 7. Abort a running scan

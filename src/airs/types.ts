@@ -136,7 +136,7 @@ export interface RedTeamCustomReport {
   }>;
 }
 
-/** Normalized attack list item. */
+/** Normalized attack list item (static/dynamic scans). */
 export interface RedTeamAttack {
   id: string;
   name: string;
@@ -144,6 +144,16 @@ export interface RedTeamAttack {
   category?: string;
   subCategory?: string;
   successful: boolean;
+}
+
+/** Normalized custom attack item (custom prompt set scans). */
+export interface RedTeamCustomAttack {
+  promptId: string;
+  promptText: string;
+  goal?: string;
+  threat: boolean;
+  asr?: number;
+  promptSetName?: string;
 }
 
 /** Contract for AI Red Team scan operations. */
@@ -180,11 +190,14 @@ export interface RedTeamService {
   /** Get custom attack report. */
   getCustomReport(jobId: string): Promise<RedTeamCustomReport>;
 
-  /** List attacks from a scan. */
+  /** List attacks from a static/dynamic scan. */
   listAttacks(
     jobId: string,
     opts?: { severity?: string; limit?: number },
   ): Promise<RedTeamAttack[]>;
+
+  /** List attacks from a custom prompt set scan. */
+  listCustomAttacks(jobId: string, opts?: { limit?: number }): Promise<RedTeamCustomAttack[]>;
 
   /** List available attack categories. */
   getCategories(): Promise<RedTeamCategory[]>;

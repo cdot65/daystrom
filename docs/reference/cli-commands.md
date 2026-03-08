@@ -154,11 +154,21 @@ daystrom redteam scan [options]
 
 ```bash
 # Static scan with all categories
-daystrom redteam scan --target abc-123 --name "Full Scan"
+daystrom redteam scan --target <uuid> --name "Full Scan"
 
-# Custom scan with prompt sets
-daystrom redteam scan --target abc-123 --name "Custom" \
-  --type CUSTOM --prompt-sets ps-1,ps-2
+# Static scan — specific categories only
+daystrom redteam scan --target <uuid> --name "PI Scan" \
+  --categories '{"prompt_injection": {}}'
+
+# Custom scan with a daystrom-generated prompt set
+daystrom redteam scan \
+  --target bff3b6ca-8be7-441c-823e-c36f1a61d41e \
+  --name "Explosives Topic Validation" \
+  --type CUSTOM \
+  --prompt-sets 7829805d-6479-4ce1-866b-2bff66a3c766
+
+# Submit and return immediately (don't wait for completion)
+daystrom redteam scan --target <uuid> --name "Async" --no-wait
 ```
 
 ### redteam status

@@ -1,5 +1,25 @@
 # Release Notes
 
+## v1.2.1
+
+### Bug Fixes
+
+- **Fix custom scan payload**: AIRS API expects `custom_prompt_sets` as an array of UUID strings, not objects. `createScan()` was wrapping each UUID in `{ uuid }`, causing 422 validation errors on all CUSTOM scan requests.
+- **Fix ASR display**: AIRS API returns ASR/score/threatRate as percentages (0-100), not ratios (0-1). Renderer was multiplying by 100, showing e.g. 1250% instead of 12.5%.
+
+### Features
+
+- **Custom attack list in reports**: `daystrom redteam report <jobId> --attacks` now shows prompt-level results for CUSTOM scans — prompt text, goal, threat status, and per-prompt ASR.
+
+### Tests
+
+- 258 tests across 19 spec files (up from 255)
+
+### Documentation
+
+- Updated red team CLI examples with real-world usage patterns
+- Added tip for finding prompt set UUIDs
+
 ## v1.2.0
 
 ### Features

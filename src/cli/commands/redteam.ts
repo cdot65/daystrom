@@ -4,6 +4,7 @@ import { loadConfig } from '../../config/loader.js';
 import {
   renderAttackList,
   renderCategories,
+  renderCustomAttackList,
   renderCustomReport,
   renderError,
   renderRedteamHeader,
@@ -128,11 +129,18 @@ export function registerRedteamCommand(program: Command): void {
         }
 
         if (opts.attacks) {
-          const attacks = await service.listAttacks(jobId, {
-            severity: opts.severity,
-            limit: Number.parseInt(opts.limit, 10),
-          });
-          renderAttackList(attacks);
+          if (job.jobType === 'CUSTOM') {
+            const attacks = await service.listCustomAttacks(jobId, {
+              limit: Number.parseInt(opts.limit, 10),
+            });
+            renderCustomAttackList(attacks);
+          } else {
+            const attacks = await service.listAttacks(jobId, {
+              severity: opts.severity,
+              limit: Number.parseInt(opts.limit, 10),
+            });
+            renderAttackList(attacks);
+          }
         }
       } catch (err) {
         renderError(err instanceof Error ? err.message : String(err));

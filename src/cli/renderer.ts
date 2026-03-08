@@ -215,7 +215,7 @@ export function renderScanStatus(job: {
     console.log(`    Progress: ${job.completed}/${job.total}`);
   }
   if (job.score != null) console.log(`    Score:   ${job.score}`);
-  if (job.asr != null) console.log(`    ASR:     ${(job.asr * 100).toFixed(1)}%`);
+  if (job.asr != null) console.log(`    ASR:     ${job.asr.toFixed(1)}%`);
   console.log();
 }
 
@@ -262,7 +262,7 @@ export function renderStaticReport(report: {
 }): void {
   console.log(chalk.bold('\n  Static Scan Report:'));
   if (report.score != null) console.log(`    Score: ${report.score}`);
-  if (report.asr != null) console.log(`    ASR:   ${(report.asr * 100).toFixed(1)}%`);
+  if (report.asr != null) console.log(`    ASR:   ${report.asr.toFixed(1)}%`);
 
   if (report.severityBreakdown.length > 0) {
     console.log(chalk.bold('\n  Severity Breakdown:'));
@@ -277,8 +277,9 @@ export function renderStaticReport(report: {
   if (report.categories.length > 0) {
     console.log(chalk.bold('\n  Categories:'));
     for (const c of report.categories) {
-      const asrPct = (c.asr * 100).toFixed(1);
-      console.log(`    ${c.displayName.padEnd(30)} ASR: ${asrPct}%  (${c.successful}/${c.total})`);
+      console.log(
+        `    ${c.displayName.padEnd(30)} ASR: ${c.asr.toFixed(1)}%  (${c.successful}/${c.total})`,
+      );
     }
   }
 
@@ -305,14 +306,14 @@ export function renderCustomReport(report: {
 }): void {
   console.log(chalk.bold('\n  Custom Attack Report:'));
   console.log(`    Score:   ${report.score}`);
-  console.log(`    ASR:     ${(report.asr * 100).toFixed(1)}%`);
+  console.log(`    ASR:     ${report.asr.toFixed(1)}%`);
   console.log(`    Attacks: ${report.totalAttacks}  Threats: ${report.totalThreats}`);
 
   if (report.promptSets.length > 0) {
     console.log(chalk.bold('\n  Prompt Sets:'));
     for (const ps of report.promptSets) {
       console.log(
-        `    ${ps.promptSetName.padEnd(40)} ${ps.totalThreats}/${ps.totalPrompts} threats  (${(ps.threatRate * 100).toFixed(1)}%)`,
+        `    ${ps.promptSetName.padEnd(40)} ${ps.totalThreats}/${ps.totalPrompts} threats  (${ps.threatRate.toFixed(1)}%)`,
       );
     }
   }
@@ -341,6 +342,31 @@ export function renderAttackList(
     console.log(
       `    ${sev} ${result}  ${a.name}${a.category ? chalk.dim(` [${a.category}]`) : ''}`,
     );
+  }
+  console.log();
+}
+
+/** Render custom attack list (prompt-level results). */
+export function renderCustomAttackList(
+  attacks: Array<{
+    promptText: string;
+    goal?: string;
+    threat: boolean;
+    asr?: number;
+    promptSetName?: string;
+  }>,
+): void {
+  if (attacks.length === 0) {
+    console.log(chalk.dim('  No custom attacks found.\n'));
+    return;
+  }
+  console.log(chalk.bold('\n  Custom Attacks:\n'));
+  for (const a of attacks) {
+    const result = a.threat ? chalk.red('THREAT') : chalk.green('SAFE');
+    const prompt = a.promptText.length > 80 ? `${a.promptText.substring(0, 77)}...` : a.promptText;
+    const asrStr = a.asr != null ? chalk.dim(` ASR: ${a.asr.toFixed(1)}%`) : '';
+    console.log(`    ${result}${asrStr}  ${prompt}`);
+    if (a.goal) console.log(`      ${chalk.dim(a.goal)}`);
   }
   console.log();
 }

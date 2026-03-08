@@ -2,6 +2,7 @@ import { RedTeamClient, type RedTeamClientOptions } from '@cdot65/prisma-airs-sd
 import type {
   RedTeamAttack,
   RedTeamCategory,
+  RedTeamCustomAttack,
   RedTeamCustomReport,
   RedTeamJob,
   RedTeamService,
@@ -63,7 +64,7 @@ export class SdkRedTeamService implements RedTeamService {
       jobMetadata = { categories: request.categories };
     } else if (request.jobType === 'CUSTOM' && request.customPromptSets) {
       jobMetadata = {
-        custom_prompt_sets: request.customPromptSets.map((uuid) => ({ uuid })),
+        custom_prompt_sets: request.customPromptSets,
       };
     }
 
@@ -127,7 +128,7 @@ export class SdkRedTeamService implements RedTeamService {
         return {
           id: sc.id as string,
           displayName: sc.display_name as string,
-          asr: total > 0 ? successful / total : 0,
+          asr: total > 0 ? (successful / total) * 100 : 0,
           successful,
           failed,
           total,
@@ -171,6 +172,23 @@ export class SdkRedTeamService implements RedTeamService {
         category: a.category as string | undefined,
         subCategory: a.sub_category as string | undefined,
         successful: a.successful as boolean,
+      }),
+    );
+  }
+
+  async listCustomAttacks(
+    jobId: string,
+    opts?: { limit?: number },
+  ): Promise<RedTeamCustomAttack[]> {
+    const response = await this.client.customAttackReports.listCustomAttacks(jobId, opts);
+    return ((response as Record<string, unknown>).data as Array<Record<string, unknown>>).map(
+      (a) => ({
+        promptId: a.prompt_id as string,
+        promptText: a.prompt_text as string,
+        goal: a.goal as string | undefined,
+        threat: (a.threat ?? false) as boolean,
+        asr: a.asr as number | undefined,
+        promptSetName: a.prompt_set_name as string | undefined,
       }),
     );
   }
