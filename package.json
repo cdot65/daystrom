@@ -1,7 +1,7 @@
 {
   "name": "@cdot65/daystrom",
   "packageManager": "pnpm@10.6.5",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Automated Prisma AIRS custom topic guardrail generator with iterative refinement",
   "type": "module",
   "main": "dist/index.js",

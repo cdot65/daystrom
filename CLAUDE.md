@@ -115,6 +115,8 @@ tests/
 - **Management**: `ManagementClient` for topic CRUD + profile linking via OAuth2
 - Profile updates create **new revisions with new UUIDs** — always reference profiles by name, never ID
 - Topics must be added to profile's `model-protection` → `topic-guardrails` → `topic-list`
+- AIRS rejects empty `topic-list` entries — only include entries with topics (no empty opposite-action entry)
+- Guardrail-level `action` must always be `'block'` to enforce violations
 - Topics can't be deleted while referenced by any profile revision
 
 ### LLM Service (`src/llm/`)
