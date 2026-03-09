@@ -156,7 +156,7 @@ daystrom audit <profileName> [options]
 
 | Flag | Default | What it does |
 |------|---------|-------------|
-| `--max-tests-per-topic <n>` | `40` | Max test cases generated per topic |
+| `--max-tests-per-topic <n>` | `20` | Max test cases generated per topic |
 | `--format <fmt>` | `terminal` | Output format: `terminal`, `json`, `html` |
 | `--output <path>` | `<profile>-audit.html` | Output file path (html format only) |
 | `--provider <name>` | `claude-api` | LLM provider |

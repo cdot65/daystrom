@@ -43,18 +43,6 @@ All environment variables Daystrom recognizes, grouped by category. Copy `.env.e
 
 ---
 
-## AIRS Red Team API
-
-Red team operations reuse the same OAuth2 credentials as the Management API above. These optional overrides let you point at dedicated red team endpoints:
-
-| Variable | Required | What it does |
-|----------|:--------:|-------------|
-| `PANW_RED_TEAM_DATA_ENDPOINT` | -- | Custom red team data endpoint |
-| `PANW_RED_TEAM_MGMT_ENDPOINT` | -- | Custom red team management endpoint |
-| `PANW_RED_TEAM_TOKEN_ENDPOINT` | -- | Custom red team token endpoint |
-
----
-
 ## Tuning
 
 | Variable | Default | Range | What it controls |

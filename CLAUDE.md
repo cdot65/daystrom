@@ -115,7 +115,7 @@ tests/
 
 ### Core Loop (`src/core/loop.ts`)
 - `runLoop()` async generator yields typed `LoopEvent` discriminated unions
-- Events yielded by `runLoop()`: `iteration:start`, `generate:complete`, `apply:complete`, `tests:accumulated` (if accumulation enabled, iter 2+), `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete`, `memory:extracted` (if memory enabled), `promptset:created` (if `--create-prompt-set`), `loop:complete`
+- Events yielded by `runLoop()`: `iteration:start`, `generate:complete`, `apply:complete`, `tests:composed` (iter 2+, always-on composition), `tests:accumulated` (if accumulation enabled, iter 2+), `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete`, `memory:extracted` (if memory enabled), `promptset:created` (if `--create-prompt-set`), `loop:complete`
 - Events defined in `LoopEvent` union but **not yielded** by `runLoop()`: `loop:paused` (reserved for future use), `memory:loaded` (emitted by CLI before loop starts)
 - `apply:complete` is yielded but intentionally unhandled in CLI commands (no user-facing output needed)
 - Topic name **locked after iteration 1** — only description+examples change thereafter
@@ -158,7 +158,7 @@ tests/
 
 ### LLM Service (`src/llm/`)
 - 6 providers: `claude-api` (default), `claude-vertex`, `claude-bedrock`, `gemini-api`, `gemini-vertex`, `gemini-bedrock`
-- Default model: `claude-opus-4-6` (Vertex: `claude-opus-4-6`, Bedrock: `anthropic.claude-opus-4-6-v1`)
+- Default model: `claude-opus-4-6` (Vertex: `claude-opus-4-6`, Bedrock: `anthropic.claude-opus-4-6-v1`), Gemini providers: `gemini-2.0-flash`
 - `claude-vertex` default region: `global` (not `us-central1`)
 - All 4 calls use `withStructuredOutput(ZodSchema)` — 3 retries on parse failure
 - Memory injected via `{memorySection}` template variable
