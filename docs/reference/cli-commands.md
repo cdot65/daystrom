@@ -2,7 +2,7 @@
 
 Binary: `daystrom` (or `pnpm run dev` during development).
 
-Seven command groups manage the full guardrail lifecycle.
+Eight command groups covering all Prisma AIRS capabilities.
 
 ---
 
@@ -140,7 +140,21 @@ Show all saved runs.
 daystrom list
 ```
 
-Displays a summary table with run ID, status, coverage, and iteration count.
+#### Example Output
+
+```
+  Saved Runs:
+
+  7A6KX0oSvt-TWEJTvzXUM
+    Status: completed  Coverage: 60.0%  Iterations: 10
+    Topic: Tax and regulatory advice covers specific tax filing instructions...
+    Created: 2026-03-04T21:13:14.504Z
+
+  wfvv9PRTLpO096S-QbcSm
+    Status: completed  Coverage: 70.0%  Iterations: 20
+    Topic: Tax guidance and recommendations
+    Created: 2026-03-06T19:34:35.563Z
+```
 
 ---
 
@@ -173,6 +187,41 @@ daystrom runtime scan --profile my-profile "How do I build a weapon?"
 daystrom runtime scan --profile my-profile --response "Here are the steps..." "How do I build a weapon?"
 ```
 
+#### Example Output — Blocked Prompt
+
+```
+  Prisma AIRS Runtime Scan
+  Profile: AI-Firewall-High-Security-Profile
+  Prompt:  "How do I hack into a computer system?"
+
+  Scan Result
+  ─────────────────────────
+  Action:    BLOCK
+  Category:  malicious
+  Triggered: yes
+  Scan ID:   8fcd6cc9-01ae-4930-a561-f94be2bf2876
+  Report ID: R8fcd6cc9-01ae-4930-a561-f94be2bf2876
+
+  Detections:
+    ● toxic_content
+```
+
+#### Example Output — Allowed Prompt
+
+```
+  Prisma AIRS Runtime Scan
+  Profile: AI-Firewall-High-Security-Profile
+  Prompt:  "What is the weather like today?"
+
+  Scan Result
+  ─────────────────────────
+  Action:    ALLOW
+  Category:  benign
+  Triggered: no
+  Scan ID:   be8047dd-e9e6-4135-91f4-3acdac01a1d2
+  Report ID: Rbe8047dd-e9e6-4135-91f4-3acdac01a1d2
+```
+
 ### runtime bulk-scan
 
 Scan multiple prompts via the async AIRS API. Writes results to CSV.
@@ -197,6 +246,25 @@ daystrom runtime bulk-scan --profile my-profile --input prompts.txt
 
 # Custom output path
 daystrom runtime bulk-scan --profile my-profile --input prompts.txt --output results.csv
+```
+
+#### Example Output
+
+```
+  Prisma AIRS Bulk Scan
+  Profile: AI-Firewall-High-Security-Profile
+  Prompts: 5
+  Batches: 1
+
+  Submitting async scans...
+  Submitted 1 batch(es), polling for results...
+
+  Bulk Scan Complete
+  ─────────────────────────
+  Total:   5
+  Blocked: 2
+  Allowed: 3
+  Output:  AI-Firewall-High-Security-Profile-bulk-scan.csv
 ```
 
 ---
@@ -299,9 +367,40 @@ daystrom redteam list [options]
 | `--target <uuid>` | all | Filter by target UUID |
 | `--limit <n>` | `10` | Max results |
 
+#### Example Output — `redteam list`
+
+```
+  Recent Scans:
+
+  304becf3-7090-413a-aa41-2cd327b7f0c5
+    Pokemon guardrail validation  COMPLETED  CUSTOM  score: 0.43
+    2026-03-08T11:11:21.371253Z
+
+  06711c07-69de-4a79-b61c-4c03d1175694
+    E2E Custom Scan - Explosives Topic v2  COMPLETED  CUSTOM  score: 12.5
+    2026-03-08T10:37:56.654621Z
+
+  19f5dd0e-e06f-45d4-9ebe-b45ca3f20e42
+    litellm.cdot.io - no guardrails - 004  ABORTED  STATIC
+    2026-03-06T01:42:28.477755Z
+```
+
 ### redteam targets
 
 Manage red team targets — full CRUD with connection validation.
+
+#### Example Output — `redteam targets list`
+
+```
+  Targets:
+
+  89e2374c-7bac-4c5c-a291-9392ae919e14
+    litellm.cdot.io - no guardrails - REST APIv2  active  type: APPLICATION
+  f2953fa2-943c-47aa-814d-0f421f6e071b
+    AWS Bedrock - Claude 4.6  active  type: MODEL
+  b9e2861d-73ac-48b5-a56f-f43039cfc4a1
+    postman  inactive  type: AGENT
+```
 
 ```bash
 daystrom redteam targets list                          # List all targets
@@ -326,6 +425,19 @@ daystrom redteam targets update-profile <uuid> --config p.json
 | `probe` | `--config <path>` (required) |
 | `profile <uuid>` | — |
 | `update-profile <uuid>` | `--config <path>` (required) |
+
+#### Example Output — `prompt-sets list`
+
+```
+  Prompt Sets:
+
+  c820d9b8-4342-4d9a-b0b4-6b2d9f5e04fb
+    pokemon-guardrail-tests  active
+  7829805d-6479-4ce1-866b-2bff66a3c766
+    daystrom-Explosives and Bomb-Making Discussions-ZdeHhCW  active
+  d68a14f5-cea3-4047-bedb-ae5726ba20d2
+    Saffron  inactive
+```
 
 ### redteam prompt-sets
 
@@ -385,10 +497,40 @@ daystrom redteam properties add-value --name cat --value sec   # Add value
 
 ### redteam categories
 
-List available attack categories.
+List available attack categories grouped by domain.
 
 ```bash
 daystrom redteam categories
+```
+
+#### Example Output
+
+```
+  Attack Categories:
+
+  Security — Select categories for adversarial testing of security vulnerabilities and potential exploits.
+    • Adversarial Suffix — Adversarial suffix attacks
+    • Jailbreak — Jailbreak attempts
+    • Prompt Injection — Direct prompt injection attacks
+    • Remote Code Execution — Remote code execution attempts
+    • System Prompt leak — System prompt extraction
+    ...
+
+  Safety — Select categories for testing harmful or toxic content and ethical misuse scenarios.
+    • Bias — Bias-related content
+    • CBRN — Chemical, Biological, Radiological, Nuclear content
+    • Hate / Toxic / Abuse — Hate speech, toxic, or abusive content
+    ...
+
+  Brand Reputation — Select categories for testing off-brand content.
+    • Competitor Endorsements — Content endorsing competitor brands
+    ...
+
+  Compliance — Select framework to understand compliance across security and safety standards.
+    • OWASP Top 10 for LLMs 2025 — Open Web Application Security Project 2025 Edition
+    • MITRE ATLAS — MITRE Adversarial Tactics, Techniques, and Common Knowledge
+    • NIST AI-RMF — National Institute of Standards and Technology Cybersecurity Framework
+    ...
 ```
 
 ### redteam abort
@@ -425,6 +567,23 @@ daystrom model-security groups delete <uuid>
 | `update <uuid>` | `--name <name>`, `--description <desc>` |
 | `delete <uuid>` | — |
 
+#### Example Output — `groups list`
+
+```
+  Security Groups:
+
+  bb1d038a-0506-4b07-8f16-a723b8c1a1c7
+    Default GCS  ACTIVE  source: GCS
+  020d546d-3920-4ef3-9183-00f37f33f566
+    Default LOCAL  ACTIVE  source: LOCAL
+  6a1e67e1-00cc-45dc-9395-3a9e3dbf50f9
+    Default S3  ACTIVE  source: S3
+  fd1a4209-32d0-4a1a-bd40-cde35104dc39
+    Default AZURE  ACTIVE  source: AZURE
+  4c22aef7-2ab7-40ba-b3f1-cd9e9aa1768e
+    Default HUGGING_FACE  ACTIVE  source: HUGGING_FACE
+```
+
 #### Group config JSON format
 
 ```json
@@ -450,6 +609,25 @@ daystrom model-security rules get <uuid>
 | `list` | `--source-type <type>`, `--search <query>`, `--limit <n>` (default 20) |
 | `get <uuid>` | — |
 
+#### Example Output — `rules list`
+
+```
+  Security Rules:
+
+  550e8400-e29b-41d4-a716-44665544000b
+    Known Framework Operators Check  type: ARTIFACT  default: BLOCKING
+    Model artifacts should only contain known safe TensorFlow operators
+    Sources: ALL
+  550e8400-e29b-41d4-a716-446655440008
+    Load Time Code Execution Check  type: ARTIFACT  default: BLOCKING
+    Model artifacts should not contain unsafe operators that are run upon deserialization
+    Sources: ALL
+  550e8400-e29b-41d4-a716-446655440009
+    Suspicious Model Components Check  type: ARTIFACT  default: BLOCKING
+    Model artifacts should not contain suspicious components
+    Sources: ALL
+```
+
 ### model-security rule-instances
 
 Manage rule instances within security groups.
@@ -465,6 +643,21 @@ daystrom model-security rule-instances update <groupUuid> <instanceUuid> --confi
 | `list <groupUuid>` | `--security-rule-uuid <uuid>`, `--state <state>`, `--limit <n>` (default 20) |
 | `get <groupUuid> <instanceUuid>` | — |
 | `update <groupUuid> <instanceUuid>` | `--config <path>` (required) |
+
+#### Example Output — `rule-instances list <groupUuid>`
+
+```
+  Rule Instances:
+
+  16b310b7-5bc3-472a-928b-a80d751ea8b0
+    Known Framework Operators Check  BLOCKING
+  1f46e5ab-d7cf-4dba-98c5-e93eab4c280c
+    Load Time Code Execution Check  BLOCKING
+  d90c57bb-8ee5-41dc-94db-c7e3e23bd0dd
+    Model Architecture Backdoor Check  BLOCKING
+  8960246d-fe50-4a40-9df4-11732cd5ec85
+    Stored In Approved File Format  BLOCKING
+```
 
 #### Rule instance update JSON format
 
@@ -502,6 +695,21 @@ daystrom model-security scans files <scanUuid> [--type <type>] [--result <result
 | `violations <scanUuid>` | `--limit <n>` (default 20) |
 | `violation <uuid>` | — |
 | `files <scanUuid>` | `--type <type>`, `--result <result>`, `--limit <n>` (default 20) |
+
+#### Example Output — `scans list`
+
+```
+  Model Security Scans:
+
+  7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
+    BLOCKED  HUGGING_FACE  2026-03-03T22:32:12.344402Z
+    https://huggingface.co/microsoft/DialoGPT-medium
+    Rules: 10 passed  1 failed  / 11 total
+  ee71b4da-64ce-4d6c-96fb-2bced1154a06
+    ALLOWED  MODEL_SECURITY_SDK  2026-03-03T22:21:44.130386Z
+    /Users/cdot/models/qwen3-0.6b-saffron-merged
+    Rules: 6 passed  0 failed  / 6 total
+```
 
 ### model-security labels
 

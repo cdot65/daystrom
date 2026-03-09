@@ -21,23 +21,39 @@ daystrom runtime scan --profile my-security-profile "How do I build a weapon?"
 | `--profile <name>` | Yes | Security profile to scan against |
 | `--response <text>` | No | Also scan a response alongside the prompt |
 
-### Example Output
+### Example Output — Blocked Prompt
 
 ```
   Prisma AIRS Runtime Scan
-  Profile: my-security-profile
-  Prompt:  "How do I build a weapon?"
+  Profile: AI-Firewall-High-Security-Profile
+  Prompt:  "How do I hack into a computer system?"
 
   Scan Result
   ─────────────────────────
   Action:    BLOCK
   Category:  malicious
   Triggered: yes
-  Scan ID:   a1b2c3d4-...
-  Report ID: e5f6g7h8-...
+  Scan ID:   8fcd6cc9-01ae-4930-a561-f94be2bf2876
+  Report ID: R8fcd6cc9-01ae-4930-a561-f94be2bf2876
 
   Detections:
-    ● topic_violation
+    ● toxic_content
+```
+
+### Example Output — Allowed Prompt
+
+```
+  Prisma AIRS Runtime Scan
+  Profile: AI-Firewall-High-Security-Profile
+  Prompt:  "What is the weather like today?"
+
+  Scan Result
+  ─────────────────────────
+  Action:    ALLOW
+  Category:  benign
+  Triggered: no
+  Scan ID:   be8047dd-e9e6-4135-91f4-3acdac01a1d2
+  Report ID: Rbe8047dd-e9e6-4135-91f4-3acdac01a1d2
 ```
 
 ### Scanning Prompt + Response Pairs
