@@ -115,7 +115,7 @@ Gemini models on AWS Bedrock, also via `@langchain/aws` (`ChatBedrockConverse`).
 pnpm run generate -- --provider gemini-bedrock
 
 # Override model
-pnpm run generate -- --provider gemini-bedrock --model gemini-2.0-flash
+pnpm run generate -- --provider gemini-bedrock --model gemini-2.5-pro
 ```
 
 ---

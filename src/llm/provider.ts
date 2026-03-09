@@ -22,9 +22,9 @@ const DEFAULT_MODELS: Record<LlmProvider, string> = {
   'claude-api': 'claude-opus-4-6',
   'claude-vertex': 'claude-opus-4-6',
   'claude-bedrock': 'anthropic.claude-opus-4-6-v1',
-  'gemini-api': 'gemini-2.0-flash',
-  'gemini-vertex': 'gemini-2.0-flash',
-  'gemini-bedrock': 'gemini-2.0-flash',
+  'gemini-api': 'gemini-2.5-pro',
+  'gemini-vertex': 'gemini-2.5-pro',
+  'gemini-bedrock': 'gemini-2.5-pro',
 };
 
 /**

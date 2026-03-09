@@ -85,7 +85,7 @@ pnpm run generate
 pnpm run generate -- --provider gemini-api
 
 # Override model
-pnpm run generate -- --provider gemini-api --model gemini-2.0-flash
+pnpm run generate -- --provider gemini-api --model gemini-2.5-pro
 ```
 
 !!! tip "Getting an API key"

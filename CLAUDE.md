@@ -158,7 +158,7 @@ tests/
 
 ### LLM Service (`src/llm/`)
 - 6 providers: `claude-api` (default), `claude-vertex`, `claude-bedrock`, `gemini-api`, `gemini-vertex`, `gemini-bedrock`
-- Default model: `claude-opus-4-6` (Vertex: `claude-opus-4-6`, Bedrock: `anthropic.claude-opus-4-6-v1`), Gemini providers: `gemini-2.0-flash`
+- Default model: `claude-opus-4-6` (Vertex: `claude-opus-4-6`, Bedrock: `anthropic.claude-opus-4-6-v1`), Gemini providers: `gemini-2.5-pro`
 - `claude-vertex` default region: `global` (not `us-central1`)
 - All 4 calls use `withStructuredOutput(ZodSchema)` — 3 retries on parse failure
 - Memory injected via `{memorySection}` template variable

@@ -60,9 +60,9 @@ Optional JSON file at `~/.daystrom/config.json`. Keys use camelCase matching the
 | `claude-api` | `claude-opus-4-6` |
 | `claude-vertex` | `claude-opus-4-6` |
 | `claude-bedrock` | `anthropic.claude-opus-4-6-v1` |
-| `gemini-api` | `gemini-2.0-flash` |
-| `gemini-vertex` | `gemini-2.0-flash` |
-| `gemini-bedrock` | `gemini-2.0-flash` |
+| `gemini-api` | `gemini-2.5-pro` |
+| `gemini-vertex` | `gemini-2.5-pro` |
+| `gemini-bedrock` | `gemini-2.5-pro` |
 
 !!! warning "Concurrency tuning"
     `scanConcurrency` above 5 risks AIRS rate limiting. Increase cautiously.

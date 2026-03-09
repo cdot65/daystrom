@@ -96,7 +96,7 @@ Gemini models on Vertex AI via `@langchain/google-vertexai` (`ChatVertexAI`). Th
 pnpm run generate -- --provider gemini-vertex
 
 # Override model and region
-pnpm run generate -- --provider gemini-vertex --model gemini-2.0-flash \
+pnpm run generate -- --provider gemini-vertex --model gemini-2.5-pro \
   GOOGLE_CLOUD_LOCATION=europe-west1
 ```
 

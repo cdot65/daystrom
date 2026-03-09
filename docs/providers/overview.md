@@ -9,9 +9,9 @@ Daystrom supports **6 provider configurations** across three platforms. All use 
 | `claude-api` | `@langchain/anthropic` | API key | `claude-opus-4-6` |
 | `claude-vertex` | `@anthropic-ai/vertex-sdk` + `@langchain/anthropic` | GCP ADC | `claude-opus-4-6` |
 | `claude-bedrock` | `@langchain/aws` | IAM / default chain | `anthropic.claude-opus-4-6-v1` |
-| `gemini-api` | `@langchain/google-genai` | API key | `gemini-2.0-flash` |
-| `gemini-vertex` | `@langchain/google-vertexai` | GCP ADC | `gemini-2.0-flash` |
-| `gemini-bedrock` | `@langchain/aws` | IAM / default chain | `gemini-2.0-flash` |
+| `gemini-api` | `@langchain/google-genai` | API key | `gemini-2.5-pro` |
+| `gemini-vertex` | `@langchain/google-vertexai` | GCP ADC | `gemini-2.5-pro` |
+| `gemini-bedrock` | `@langchain/aws` | IAM / default chain | `gemini-2.5-pro` |
 
 ## Override the Default Model
 
@@ -33,7 +33,7 @@ export LLM_MODEL=claude-sonnet-4-20250514
     | Anthropic API | `claude-opus-4-6` |
     | Vertex AI (Claude) | `claude-opus-4-6` |
     | Bedrock (Claude) | `anthropic.claude-opus-4-6-v1` |
-    | Google AI / Vertex / Bedrock (Gemini) | `gemini-2.0-flash` |
+    | Google AI / Vertex / Bedrock (Gemini) | `gemini-2.5-pro` |
 
 ## Save Your Preference
 

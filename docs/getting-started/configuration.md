@@ -37,9 +37,9 @@ For settings you use across every run, create `~/.daystrom/config.json`:
 | Claude API | `claude-api` | `claude-opus-4-6` | `ANTHROPIC_API_KEY` |
 | Claude Vertex | `claude-vertex` | `claude-opus-4-6` | GCP ADC |
 | Claude Bedrock | `claude-bedrock` | `anthropic.claude-opus-4-6-v1` | AWS creds |
-| Gemini API | `gemini-api` | `gemini-2.0-flash` | `GOOGLE_API_KEY` |
-| Gemini Vertex | `gemini-vertex` | `gemini-2.0-flash` | GCP ADC |
-| Gemini Bedrock | `gemini-bedrock` | `gemini-2.0-flash` | AWS creds |
+| Gemini API | `gemini-api` | `gemini-2.5-pro` | `GOOGLE_API_KEY` |
+| Gemini Vertex | `gemini-vertex` | `gemini-2.5-pro` | GCP ADC |
+| Gemini Bedrock | `gemini-bedrock` | `gemini-2.5-pro` | AWS creds |
 
 !!! note "Claude Vertex region"
     The `claude-vertex` provider defaults to the `global` region, not `us-central1`. Override with `GOOGLE_CLOUD_LOCATION` if needed.
