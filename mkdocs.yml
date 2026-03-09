@@ -72,9 +72,20 @@ nav:
       - Installation: getting-started/installation.md
       - Configuration: getting-started/configuration.md
       - Quick Start: getting-started/quick-start.md
+  - Capabilities:
+      - Guardrail Generation:
+          - Overview: features/guardrail-generation.md
+          - Core Loop: architecture/core-loop.md
+          - Memory System: features/memory-system.md
+          - Metrics & Evaluation: features/metrics.md
+          - Topic Constraints: features/topic-constraints.md
+          - Resumable Runs: features/resumable-runs.md
+      - Runtime Security: features/runtime-security.md
+      - AI Red Teaming: features/red-team.md
+      - Model Security: features/model-security.md
+      - Profile Audits: features/profile-audits.md
   - Architecture:
       - Overview: architecture/overview.md
-      - Core Loop: architecture/core-loop.md
       - Design Decisions: architecture/design-decisions.md
   - LLM Providers:
       - Overview: providers/overview.md
@@ -82,13 +93,6 @@ nav:
       - Vertex AI: providers/vertex-ai.md
       - AWS Bedrock: providers/bedrock.md
       - Troubleshooting: providers/troubleshooting.md
-  - Features:
-      - Memory System: features/memory-system.md
-      - Metrics & Evaluation: features/metrics.md
-      - Topic Constraints: features/topic-constraints.md
-      - Resumable Runs: features/resumable-runs.md
-      - Red Team Scanning: features/red-team.md
-      - Model Security: features/model-security.md
   - Reference:
       - CLI Commands: reference/cli-commands.md
       - Configuration Options: reference/configuration.md

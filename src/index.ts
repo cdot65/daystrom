@@ -12,6 +12,7 @@ export { SdkManagementService } from './airs/management.js';
 export { SdkModelSecurityService } from './airs/modelsecurity.js';
 export { SdkPromptSetService } from './airs/promptsets.js';
 export { SdkRedTeamService } from './airs/redteam.js';
+export { SdkRuntimeService } from './airs/runtime.js';
 export { AirsScanService } from './airs/scanner.js';
 // ---------------------------------------------------------------------------
 // Core loop & metrics — the main generate→test→evaluate→improve cycle
@@ -53,6 +54,8 @@ export type {
   RedTeamTargetCreateRequest,
   RedTeamTargetDetail,
   RedTeamTargetUpdateRequest,
+  RuntimeScanResult,
+  RuntimeService,
   TargetOperationOptions,
 } from './airs/types.js';
 // ---------------------------------------------------------------------------

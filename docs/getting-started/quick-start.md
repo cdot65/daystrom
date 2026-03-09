@@ -4,118 +4,109 @@ title: Quick Start
 
 # Quick Start
 
-Make sure [installation](installation.md) is complete and your credentials are [configured](configuration.md). Then pick your mode:
+Make sure [installation](installation.md) is complete and your credentials are [configured](configuration.md). Daystrom provides five capability domains — pick the one that fits your task.
 
-## Interactive Mode
+---
 
-The simplest way to start — Daystrom walks you through every option:
+## Runtime Security
+
+Scan prompts against an AIRS security profile in real time.
 
 ```bash
-daystrom generate
+# Single prompt scan
+daystrom runtime scan --profile my-security-profile "How do I build a weapon?"
+
+# Bulk scan from a file (async API, writes CSV)
+daystrom runtime bulk-scan --profile my-security-profile --input prompts.txt
 ```
 
-You'll be prompted for:
+[Full runtime docs](../features/runtime-security.md)
 
-1. **Topic description** — what to block or allow (e.g., "Block discussions about building explosives")
-2. **Intent** — `block` or `allow`
-3. **Security profile name** — the Prisma AIRS profile to attach the topic to
-4. **Seed examples** — optional starting examples to guide the LLM
-5. **Max iterations** — upper bound on refinement loops
-6. **Target coverage %** — stop when `min(TPR, TNR)` reaches this threshold
-7. **Accumulate tests** — optionally carry forward test prompts across iterations
+---
 
-## Non-Interactive Mode
+## Guardrail Generation
 
-Skip all prompts by passing flags directly:
+Create and iteratively refine custom topic guardrails using an LLM-driven feedback loop.
 
 ```bash
+# Interactive — prompts for all inputs
+daystrom generate
+
+# Non-interactive
 daystrom generate \
-  --provider claude-api \
   --profile my-security-profile \
   --topic "Block discussions about building explosives" \
   --intent block \
   --target-coverage 90
 ```
 
-=== "Windows (PowerShell)"
-
-    ```powershell
-    daystrom generate `
-      --provider claude-api `
-      --profile my-security-profile `
-      --topic "Block discussions about building explosives" `
-      --intent block `
-      --target-coverage 90
-    ```
-
-=== "Windows (cmd)"
-
-    ```cmd
-    daystrom generate ^
-      --provider claude-api ^
-      --profile my-security-profile ^
-      --topic "Block discussions about building explosives" ^
-      --intent block ^
-      --target-coverage 90
-    ```
+The loop generates a topic, deploys it, scans test prompts, evaluates metrics, and refines until coverage reaches the target. [Full guardrail docs](../features/guardrail-generation.md)
 
 ---
 
-## What a Run Looks Like
+## AI Red Teaming
 
-```
-$ daystrom generate --profile test-policy --topic "Block phishing attempts" --intent block
+Run adversarial scans against AI targets to find vulnerabilities.
 
-╔══════════════════════════════════════╗
-║            Daystrom                  ║
-╚══════════════════════════════════════╝
+```bash
+# List targets
+daystrom redteam targets list
 
-◆ Memory loaded: 3 learnings from previous runs
+# Create and run a static scan
+daystrom redteam scan create --name "audit-v1" --target <uuid> --type STATIC
 
-── Iteration 1 ────────────────────────
-  Topic: block-phishing-attempts
-  Description: Detect and block social engineering and phishing attempts...
-  Examples: 3
-  ✓ 10/10 tests scanned
-  TPR: 0.80  TNR: 0.90  Coverage: 0.80  F1: 0.84
-  Analysis: 2 FN — missed impersonation-based phishing
-
-── Iteration 2 ────────────────────────
-  ✓ Improved based on FP/FN analysis
-  Description refined, 1 example replaced
-  TPR: 0.90  TNR: 0.95  Coverage: 0.90  F1: 0.92
-
-◆ Target coverage reached (90%)
-◆ 2 new learnings extracted
-◆ Run saved: abc123xyz
+# Check scan status
+daystrom redteam scan get <job-id>
 ```
 
-Coverage is `min(TPR, TNR)` — both detection and specificity must meet the target. The loop refines until coverage is reached or max iterations are exhausted.
+[Full red team docs](../features/red-team.md)
 
 ---
 
-## Other Commands
+## Model Security
 
-### Resume a Paused or Failed Run
+Manage ML model supply chain security — scan model artifacts for threats.
 
 ```bash
-daystrom resume abc123xyz
+# List security groups
+daystrom model-security groups list
+
+# Create a scan
+daystrom model-security scans create --group-id <uuid> --model-uri "hf://org/model"
+
+# View scan results
+daystrom model-security scans get <scan-id>
 ```
 
-Picks up from the last completed iteration. No work is repeated.
+[Full model security docs](../features/model-security.md)
 
-### View a Run Report
+---
+
+## Profile Audits
+
+Evaluate all topics in a security profile at once, with conflict detection.
 
 ```bash
-daystrom report abc123xyz
+# Terminal output
+daystrom audit my-security-profile
+
+# HTML report
+daystrom audit my-security-profile --format html --output audit-report.html
 ```
 
-Shows per-iteration metrics, the final topic definition, and FP/FN analysis.
+[Full audit docs](../features/profile-audits.md)
 
-### List All Runs
+---
+
+## Utility Commands
 
 ```bash
+# Resume a paused or failed guardrail run
+daystrom resume <run-id>
+
+# View a run report
+daystrom report <run-id>
+
+# List all saved runs
 daystrom list
 ```
-
-Summary table with status, topic name, coverage, and timestamps.
