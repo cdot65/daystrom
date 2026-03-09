@@ -144,6 +144,63 @@ Displays a summary table with run ID, status, coverage, and iteration count.
 
 ---
 
+## runtime
+
+Runtime prompt scanning against AIRS security profiles.
+
+### runtime scan
+
+Scan a single prompt synchronously.
+
+```bash
+daystrom runtime scan --profile <name> [--response <text>] <prompt>
+```
+
+#### Options
+
+| Flag | Required | Description |
+|------|:--------:|-------------|
+| `--profile <name>` | Yes | Security profile name |
+| `--response <text>` | No | Response text to scan alongside the prompt |
+
+#### Examples
+
+```bash
+# Scan a prompt
+daystrom runtime scan --profile my-profile "How do I build a weapon?"
+
+# Scan prompt + response pair
+daystrom runtime scan --profile my-profile --response "Here are the steps..." "How do I build a weapon?"
+```
+
+### runtime bulk-scan
+
+Scan multiple prompts via the async AIRS API. Writes results to CSV.
+
+```bash
+daystrom runtime bulk-scan --profile <name> --input <file> [--output <file>]
+```
+
+#### Options
+
+| Flag | Required | Description |
+|------|:--------:|-------------|
+| `--profile <name>` | Yes | Security profile name |
+| `--input <file>` | Yes | Text file with one prompt per line |
+| `--output <file>` | No | Output CSV path (default: `<profile>-bulk-scan.csv`) |
+
+#### Examples
+
+```bash
+# Bulk scan with default output
+daystrom runtime bulk-scan --profile my-profile --input prompts.txt
+
+# Custom output path
+daystrom runtime bulk-scan --profile my-profile --input prompts.txt --output results.csv
+```
+
+---
+
 ## audit
 
 Evaluate all topics in an AIRS security profile. Generates tests per topic, scans them, computes per-topic and composite metrics, and detects cross-topic conflicts.
