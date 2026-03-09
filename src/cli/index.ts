@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import 'dotenv/config';
 import { Command } from 'commander';
 import { registerAuditCommand } from './commands/audit.js';
@@ -10,6 +13,9 @@ import { registerRedteamCommand } from './commands/redteam.js';
 import { registerReportCommand } from './commands/report.js';
 import { registerResumeCommand } from './commands/resume.js';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf-8'));
+
 const program = new Command();
 
 program
@@ -17,7 +23,7 @@ program
   .description(
     'CLI and library for Palo Alto Prisma AIRS — guardrail refinement, AI red teaming, model security scanning, profile audits',
   )
-  .version('1.7.5');
+  .version(pkg.version);
 
 registerGenerateCommand(program);
 registerResumeCommand(program);

@@ -37,7 +37,7 @@ export function normalizeCategory(description: string): string {
     .filter((w) => w.length > 0 && !STOP_WORDS.has(w));
 
   const unique = [...new Set(words)].sort();
-  return unique.join('-');
+  return unique.length > 0 ? unique.join('-') : 'uncategorized';
 }
 
 /**

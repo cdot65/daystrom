@@ -45,6 +45,14 @@ describe('normalizeCategory', () => {
     const result = normalizeCategory('BLOCK Weapons');
     expect(result).toBe('block-weapons');
   });
+
+  it('returns "uncategorized" for stop-word-only input', () => {
+    expect(normalizeCategory('the and or')).toBe('uncategorized');
+  });
+
+  it('returns "uncategorized" for empty string', () => {
+    expect(normalizeCategory('')).toBe('uncategorized');
+  });
 });
 
 describe('MemoryStore', () => {

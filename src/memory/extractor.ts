@@ -103,7 +103,7 @@ export class LearningExtractor {
     for (const newL of incoming) {
       const match = merged.findIndex((e) => e.insight === newL.insight);
       if (match >= 0) {
-        // Corroborate: increment count, keep the better metrics
+        // Corroborate: increment count, keep existing metrics
         merged[match] = {
           ...merged[match],
           corroborations: merged[match].corroborations + 1,
