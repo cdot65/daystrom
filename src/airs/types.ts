@@ -29,6 +29,32 @@ export interface ScanResult {
 }
 
 // ---------------------------------------------------------------------------
+// Runtime scan result — normalized output from sync/async AIRS prompt scans
+// ---------------------------------------------------------------------------
+
+/** Normalized result from a runtime prompt scan (sync or async). */
+export interface RuntimeScanResult {
+  prompt: string;
+  response?: string;
+  scanId: string;
+  reportId: string;
+  action: 'allow' | 'block';
+  category: string;
+  triggered: boolean;
+  detections: Record<string, boolean>;
+}
+
+/** Contract for runtime scanning operations (sync + async). */
+export interface RuntimeService {
+  /** Scan a single prompt (and optional response) synchronously. */
+  scanPrompt(profileName: string, prompt: string, response?: string): Promise<RuntimeScanResult>;
+  /** Submit prompts for async bulk scanning, returns scan IDs. */
+  submitBulkScan(profileName: string, prompts: string[]): Promise<string[]>;
+  /** Poll async scan results until all complete. */
+  pollResults(scanIds: string[], intervalMs?: number): Promise<RuntimeScanResult[]>;
+}
+
+// ---------------------------------------------------------------------------
 // Service interfaces — contracts for scan and topic management adapters
 // ---------------------------------------------------------------------------
 
