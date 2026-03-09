@@ -52,11 +52,14 @@ Run adversarial scans against AI targets to find vulnerabilities.
 # List targets
 daystrom redteam targets list
 
-# Create and run a static scan
-daystrom redteam scan create --name "audit-v1" --target <uuid> --type STATIC
+# Run a static scan
+daystrom redteam scan --name "audit-v1" --target <uuid> --type STATIC
 
-# Check scan status
-daystrom redteam scan get <job-id>
+# List recent scans
+daystrom redteam list --limit 5
+
+# View attack categories
+daystrom redteam categories
 ```
 
 [Full red team docs](../features/red-team.md)
@@ -71,11 +74,14 @@ Manage ML model supply chain security — scan model artifacts for threats.
 # List security groups
 daystrom model-security groups list
 
-# Create a scan
-daystrom model-security scans create --group-id <uuid> --model-uri "hf://org/model"
+# Browse security rules
+daystrom model-security rules list
+
+# View rule instances in a group
+daystrom model-security rule-instances list <group-uuid>
 
 # View scan results
-daystrom model-security scans get <scan-id>
+daystrom model-security scans list
 ```
 
 [Full model security docs](../features/model-security.md)

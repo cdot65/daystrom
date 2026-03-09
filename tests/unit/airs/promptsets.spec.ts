@@ -368,7 +368,9 @@ describe('SdkPromptSetService', () => {
 
   describe('getPropertyNames', () => {
     it('returns property names', async () => {
-      mockGetPropertyNames.mockResolvedValue([{ name: 'category' }, { name: 'severity' }]);
+      mockGetPropertyNames.mockResolvedValue({
+        data: [{ name: 'category' }, { name: 'severity' }],
+      });
       const result = await service.getPropertyNames();
       expect(result).toEqual([{ name: 'category' }, { name: 'severity' }]);
     });
@@ -385,10 +387,12 @@ describe('SdkPromptSetService', () => {
 
   describe('getPropertyValues', () => {
     it('returns property values', async () => {
-      mockGetPropertyValues.mockResolvedValue([
-        { name: 'category', value: 'security' },
-        { name: 'category', value: 'safety' },
-      ]);
+      mockGetPropertyValues.mockResolvedValue({
+        data: [
+          { name: 'category', value: 'security' },
+          { name: 'category', value: 'safety' },
+        ],
+      });
       const result = await service.getPropertyValues('category');
       expect(result).toEqual([
         { name: 'category', value: 'security' },

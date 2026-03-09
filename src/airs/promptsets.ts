@@ -147,7 +147,8 @@ export class SdkPromptSetService implements PromptSetService {
 
   async getPropertyNames(): Promise<PropertyName[]> {
     const response = await this.client.customAttacks.getPropertyNames();
-    return response as unknown as PropertyName[];
+    const raw = response as unknown as { data?: PropertyName[] };
+    return raw.data ?? [];
   }
 
   async createPropertyName(name: string): Promise<PropertyName> {
@@ -157,7 +158,8 @@ export class SdkPromptSetService implements PromptSetService {
 
   async getPropertyValues(name: string): Promise<PropertyValue[]> {
     const response = await this.client.customAttacks.getPropertyValues(name);
-    return response as unknown as PropertyValue[];
+    const raw = response as unknown as { data?: PropertyValue[] };
+    return raw.data ?? [];
   }
 
   async createPropertyValue(name: string, value: string): Promise<PropertyValue> {
