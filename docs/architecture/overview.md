@@ -1,6 +1,6 @@
 # Architecture Overview
 
-Daystrom follows a modular architecture where each subsystem has a single responsibility. The core loop orchestrates everything but has no knowledge of how its output is displayed, stored, or consumed.
+Daystrom is a multi-capability CLI and library for Palo Alto Prisma AIRS. Each subsystem has a single responsibility and communicates through typed interfaces — the CLI layer orchestrates user interaction while service layers handle AIRS API communication.
 
 ## Module Structure
 
@@ -10,7 +10,7 @@ src/
 ├── config/           Zod-validated config schema + cascade loader
 ├── core/             Async generator loop, efficacy metrics, AIRS constraints
 ├── llm/              LangChain provider factory, structured output, prompts
-├── airs/             Scanner, Management (topic CRUD), Red Team, Prompt Sets, Model Security
+├── airs/             Scanner, Runtime, Management, Red Team, Prompt Sets, Model Security
 ├── memory/           Learning store, extractor, budget-aware injector
 ├── persistence/      JSON file store for run state
 ├── audit/            Profile-level multi-topic evaluation + conflict detection
@@ -18,9 +18,40 @@ src/
 └── index.ts          Library re-exports
 ```
 
-## Data Flow
+## Capability Domains
 
-A single `daystrom generate` run flows through these stages:
+Daystrom provides five capability domains, each backed by dedicated service and CLI layers:
+
+```mermaid
+graph LR
+    CLI[CLI Layer] --> GEN[Guardrail Generation]
+    CLI --> RT[Runtime Security]
+    CLI --> RED[AI Red Teaming]
+    CLI --> MS[Model Security]
+    CLI --> AUD[Profile Audits]
+
+    GEN --> AIRS_MGMT[AIRS Management API]
+    GEN --> AIRS_SCAN[AIRS Scan API]
+    GEN --> LLM[LLM Providers]
+    RT --> AIRS_SCAN
+    RED --> AIRS_RED[AIRS Red Team API]
+    MS --> AIRS_MS[AIRS Model Security API]
+    AUD --> AIRS_SCAN
+    AUD --> AIRS_MGMT
+    AUD --> LLM
+```
+
+| Domain | CLI Commands | Service Layer |
+|--------|-------------|---------------|
+| **Guardrail Generation** | `generate`, `resume`, `report`, `list` | Core loop + LLM + Scanner + Management |
+| **Runtime Security** | `runtime scan`, `runtime bulk-scan` | `SdkRuntimeService` (sync + async scan) |
+| **AI Red Teaming** | `redteam scan`, `redteam targets`, `redteam prompt-sets`, `redteam prompts`, `redteam properties` | `SdkRedTeamService` + `SdkPromptSetService` |
+| **Model Security** | `model-security groups`, `model-security rules`, `model-security scans`, `model-security labels` | `SdkModelSecurityService` |
+| **Profile Audits** | `audit` | Audit runner + Scanner + LLM |
+
+## Guardrail Generation Data Flow
+
+The guardrail generation loop (`daystrom generate`) is the most complex flow:
 
 ```mermaid
 graph TD
@@ -44,15 +75,28 @@ graph TD
 !!! info "Propagation delay"
     After deploying a topic, Daystrom waits a configurable delay (default 10s) before scanning. AIRS needs this time to propagate changes.
 
+## Runtime Security Data Flow
+
+```mermaid
+graph TD
+    S1[Single Prompt] --> SYNC[Sync Scan API]
+    SYNC --> V1[Verdict: action, category, detections]
+
+    S2[Bulk Prompts File] --> BATCH[Batch into groups of 5]
+    BATCH --> ASYNC[Async Scan API]
+    ASYNC --> POLL[Poll for completion]
+    POLL --> CSV[Write results CSV]
+```
+
 ## Modules at a Glance
 
 | Module | What it does |
 |--------|-------------|
-| **`cli/`** | Commander CLI with 7 command groups (`generate`, `resume`, `report`, `list`, `audit`, `redteam`, `model-security`), Inquirer prompts, and Chalk terminal output |
+| **`cli/`** | Commander CLI with 8 command groups (`generate`, `resume`, `report`, `list`, `runtime`, `audit`, `redteam`, `model-security`), Inquirer prompts, and Chalk terminal output |
 | **`config/`** | Zod schema with coercion and defaults; cascade loader merges CLI flags, env vars, config file, and defaults |
 | **`core/`** | AsyncGenerator loop that yields typed events, metric computation (TPR/TNR/F1), and AIRS constraint validation |
 | **`llm/`** | Factory for 6 LangChain providers, structured output with Zod schemas, and prompt templates for all 4 LLM calls |
-| **`airs/`** | Scan API with batched concurrency via `p-limit`, Management API for topic CRUD and profile linking, Red Team service for scan CRUD/polling/reports, Prompt Set service for custom prompt set management, Model Security service for security groups/rules/scans |
+| **`airs/`** | Scanner (sync scan + batched concurrency), Runtime (sync + async bulk scan with polling), Management (topic CRUD + profile linking), Red Team (scan CRUD/polling/reports), Prompt Sets (custom prompt set management), Model Security (groups/rules/scans) |
 | **`memory/`** | File-based learning store, LLM-driven extraction after each run, and budget-aware injection into future prompts |
 | **`persistence/`** | `JsonFileStore` serializes `RunState` to `~/.daystrom/runs/` for pause/resume support |
 | **`audit/`** | Profile-level multi-topic evaluation — generates tests per topic, computes per-topic and composite metrics, detects cross-topic conflicts |
