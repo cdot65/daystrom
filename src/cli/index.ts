@@ -12,6 +12,7 @@ import { registerModelSecurityCommand } from './commands/modelsecurity.js';
 import { registerRedteamCommand } from './commands/redteam.js';
 import { registerReportCommand } from './commands/report.js';
 import { registerResumeCommand } from './commands/resume.js';
+import { registerRuntimeCommand } from './commands/runtime.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf-8'));
@@ -29,6 +30,7 @@ registerGenerateCommand(program);
 registerResumeCommand(program);
 registerReportCommand(program);
 registerListCommand(program);
+registerRuntimeCommand(program);
 registerRedteamCommand(program);
 registerModelSecurityCommand(program);
 registerAuditCommand(program);

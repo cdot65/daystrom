@@ -41,13 +41,14 @@ TypeScript ESM, Node 20+, pnpm. LangChain.js w/ structured output (Zod). `@cdot6
 
 ```
 src/
-├── cli/                   # CLI entry, 7 command groups, interactive prompts, renderer
-│   ├── index.ts           # Commander program — registers generate/resume/report/list/audit/redteam/model-security
+├── cli/                   # CLI entry, 8 command groups, interactive prompts, renderer
+│   ├── index.ts           # Commander program — registers generate/resume/report/list/runtime/audit/redteam/model-security
 │   ├── commands/
 │   │   ├── generate.ts    # Main loop orchestration, wires all services
 │   │   ├── resume.ts      # Resume paused/failed run from disk
 │   │   ├── report.ts      # View run results by ID
 │   │   ├── list.ts        # List all saved runs
+│   │   ├── runtime.ts     # Runtime scanning (scan, bulk-scan)
 │   │   ├── audit.ts       # Profile-level multi-topic evaluation
 │   │   ├── redteam.ts     # Red team operations (scan, targets CRUD, prompt-sets CRUD, prompts CRUD, properties)
 │   │   └── modelsecurity.ts # Model security operations (groups, rules, rule-instances, scans, labels, pypi-auth)
@@ -68,6 +69,7 @@ src/
 │   └── prompts/           # ChatPromptTemplate definitions (4 files)
 ├── airs/
 │   ├── scanner.ts         # AirsScanService + DebugScanService — syncScan + scanBatch
+│   ├── runtime.ts         # SdkRuntimeService — sync scan, async bulk scan, poll results, CSV export
 │   ├── management.ts      # SdkManagementService — topic CRUD + profile linking
 │   ├── promptsets.ts      # SdkPromptSetService — custom prompt set CRUD via RedTeamClient
 │   ├── redteam.ts         # SdkRedTeamService — red team scan CRUD, polling, reports
@@ -136,6 +138,15 @@ tests/
 - AIRS rejects empty `topic-list` entries — only include entries with topics (no empty opposite-action entry)
 - Guardrail-level `action` must always be `'block'` to enforce violations
 - Topics can't be deleted while referenced by any profile revision
+
+### Runtime Scanning (`src/airs/runtime.ts`)
+- `SdkRuntimeService` wraps SDK `Scanner` for sync and async scanning
+- `scanPrompt()` — sync scan via `syncScan()`, normalizes to `RuntimeScanResult`
+- `submitBulkScan()` — batches prompts into groups of 5 `AsyncScanObject` items, calls `asyncScan()` per batch
+- `pollResults()` — polls `queryByScanIds()` every 5s until all scans COMPLETED or FAILED
+- `formatResultsCsv()` — static method producing CSV from results
+- CLI: `daystrom runtime scan --profile <name> [--response <text>] <prompt>`
+- CLI: `daystrom runtime bulk-scan --profile <name> --input <file> [--output <file>]`
 
 ### Red Team (`src/airs/redteam.ts`, `src/airs/promptsets.ts`)
 - `SdkRedTeamService` wraps `RedTeamClient` for scan CRUD, polling, reports, **target CRUD**
