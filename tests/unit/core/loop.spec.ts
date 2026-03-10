@@ -355,6 +355,7 @@ describe('runLoop', () => {
       2,
       0.9,
       'block',
+      expect.anything(),
     );
   });
 
@@ -383,6 +384,7 @@ describe('runLoop', () => {
       2,
       0.9,
       'allow',
+      expect.anything(),
     );
   });
 

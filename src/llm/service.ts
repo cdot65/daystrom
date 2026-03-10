@@ -209,12 +209,29 @@ export class LangChainLlmService implements LlmService {
     iteration: number,
     targetCoverage: number,
     intent: string,
+    bestContext?: { bestCoverage: number; bestIteration: number; bestTopic?: CustomTopic },
   ): Promise<CustomTopic> {
     const structured = this.model.withStructuredOutput(CustomTopicSchema);
     const chain = improveTopicPrompt.pipe(structured);
 
     const fps = results.filter((r) => !r.testCase.expectedTriggered && r.actualTriggered);
     const fns = results.filter((r) => r.testCase.expectedTriggered && !r.actualTriggered);
+
+    // Build best-context template variables
+    const bestCoverage = bestContext
+      ? `${(bestContext.bestCoverage * 100).toFixed(1)}%`
+      : `${(metrics.coverage * 100).toFixed(1)}%`;
+    const bestIteration = bestContext ? bestContext.bestIteration : iteration;
+
+    let bestTopicSection = '';
+    if (bestContext?.bestTopic && metrics.coverage < bestContext.bestCoverage) {
+      const bt = bestContext.bestTopic;
+      bestTopicSection = `REGRESSION WARNING: Coverage has dropped from ${(bestContext.bestCoverage * 100).toFixed(1)}% (iteration ${bestContext.bestIteration}) to ${(metrics.coverage * 100).toFixed(1)}%.
+The best-performing definition was:
+  Description: ${bt.description}
+  Examples: ${bt.examples.join(', ')}
+Consider reverting toward this simpler definition rather than adding more specificity.`;
+    }
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
@@ -230,6 +247,9 @@ export class LangChainLlmService implements LlmService {
           tpr: `${(metrics.truePositiveRate * 100).toFixed(1)}%`,
           tnr: `${(metrics.trueNegativeRate * 100).toFixed(1)}%`,
           accuracy: `${(metrics.accuracy * 100).toFixed(1)}%`,
+          bestCoverage,
+          bestIteration,
+          bestTopicSection,
           analysisSummary: analysis.summary,
           fpPatterns: analysis.falsePositivePatterns.join('; ') || 'None',
           fnPatterns: analysis.falseNegativePatterns.join('; ') || 'None',

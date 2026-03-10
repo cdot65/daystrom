@@ -177,6 +177,8 @@ tests/
 - All 4 calls use `withStructuredOutput(ZodSchema)` — 3 retries on parse failure
 - Memory injected via `{memorySection}` template variable
 - `clampTopic()` enforces AIRS constraints post-LLM (not Zod) — drops examples, trims description
+- `improveTopic()` accepts optional `bestContext` param `{ bestCoverage, bestIteration, bestTopic? }` — injects regression warnings into the prompt when coverage drops below the best iteration, and always shows best-iteration context
+- Improve-topic system prompt includes CRITICAL PLATFORM CONSTRAINT section warning against exclusion clauses and favoring shorter descriptions
 
 ### Memory System (`src/memory/`)
 - File-based at `~/.daystrom/memory/{category}.json`

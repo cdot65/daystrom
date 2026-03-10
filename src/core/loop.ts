@@ -41,6 +41,7 @@ export interface LlmService {
     iteration: number,
     targetCoverage: number,
     intent: string,
+    bestContext?: { bestCoverage: number; bestIteration: number; bestTopic?: CustomTopic },
   ): Promise<CustomTopic>;
 }
 
@@ -120,6 +121,11 @@ export async function* runLoop(
         i,
         targetCoverage,
         input.intent,
+        {
+          bestCoverage: runState.bestCoverage,
+          bestIteration: runState.bestIteration,
+          bestTopic: runState.iterations[runState.bestIteration - 1]?.topic,
+        },
       );
       // Force the name to stay consistent across iterations
       currentTopic = { ...currentTopic, name: lockedName };
