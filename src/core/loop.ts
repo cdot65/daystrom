@@ -498,6 +498,23 @@ export async function* runLoop(
     if (maxRegressions > 0 && runState.consecutiveRegressions >= maxRegressions) {
       break;
     }
+
+    // Plateau detection: coverage oscillating in narrow band without improvement (opt-in)
+    const plateauWindow = input.plateauWindow ?? 0;
+    const plateauBand = input.plateauBand ?? 0.05;
+    if (plateauWindow > 0 && runState.iterations.length >= plateauWindow + 1) {
+      const recent = runState.iterations.slice(-plateauWindow).map((r) => r.metrics.coverage);
+      const min = Math.min(...recent);
+      const max = Math.max(...recent);
+      if (max - min <= plateauBand && max < runState.bestCoverage + plateauBand) {
+        yield {
+          type: 'loop:plateau' as const,
+          band: [min, max],
+          bestCoverage: runState.bestCoverage,
+        };
+        break;
+      }
+    }
   }
 
   runState.status = 'completed';

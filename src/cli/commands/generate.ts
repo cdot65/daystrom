@@ -47,6 +47,8 @@ export function registerGenerateCommand(program: Command): void {
       'Stop after N consecutive coverage regressions (0 = disable)',
       '3',
     )
+    .option('--plateau-window <n>', 'Iterations to check for plateau (0 = disable)', '0')
+    .option('--plateau-band <pct>', 'Max coverage variance for plateau detection', '0.05')
     .option('--accumulate-tests', 'Carry forward test prompts across iterations', false)
     .option('--max-accumulated-tests <n>', 'Max accumulated test count cap')
     .option('--memory', 'Enable learning memory (default)')
@@ -74,6 +76,8 @@ export function registerGenerateCommand(program: Command): void {
             maxIterations: Number.parseInt(opts.maxIterations, 10),
             targetCoverage: Number.parseInt(opts.targetCoverage, 10) / 100,
             maxRegressions: Number.parseInt(opts.maxRegressions, 10),
+            plateauWindow: Number.parseInt(opts.plateauWindow, 10),
+            plateauBand: Number.parseFloat(opts.plateauBand),
             accumulateTests: opts.accumulateTests ?? false,
             maxAccumulatedTests: opts.maxAccumulatedTests
               ? Number.parseInt(opts.maxAccumulatedTests, 10)
@@ -192,6 +196,14 @@ export function registerGenerateCommand(program: Command): void {
             case 'topic:duplicate':
               console.log(
                 `  ⚠ Topic identical to iteration ${event.duplicateOfIteration} — skipping scan`,
+              );
+              break;
+            case 'loop:plateau':
+              console.log(
+                `  ⚠ Coverage plateaued at ${(event.band[0] * 100).toFixed(1)}–${(event.band[1] * 100).toFixed(1)}%`,
+              );
+              console.log(
+                `    Platform ceiling likely reached (best: ${(event.bestCoverage * 100).toFixed(1)}%)`,
               );
               break;
             case 'memory:extracted':
