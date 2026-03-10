@@ -32,6 +32,14 @@ export interface LlmService {
     metrics: EfficacyMetrics,
     intent: string,
   ): Promise<AnalysisReport>;
+  /** Simplify a topic that has regressed by removing exclusion clauses and shortening. */
+  simplifyTopic(
+    currentTopic: CustomTopic,
+    bestTopic: CustomTopic,
+    metrics: EfficacyMetrics,
+    analysis: AnalysisReport,
+    intent: string,
+  ): Promise<CustomTopic>;
   /** Refine a topic definition based on metrics and analysis from the previous iteration. */
   improveTopic(
     topic: CustomTopic,
@@ -89,6 +97,7 @@ export async function* runLoop(
     bestIteration: 0,
     bestCoverage: 0,
     consecutiveRegressions: 0,
+    hasTriedSimplification: false,
     status: 'running',
   };
 
@@ -342,7 +351,31 @@ export async function* runLoop(
       break;
     }
 
+    // Simplification strategy: after 2 consecutive regressions, try simplifying before early stop
+    const simplifyThreshold = 2;
     const maxRegressions = input.maxRegressions ?? 3;
+
+    if (
+      runState.consecutiveRegressions >= simplifyThreshold &&
+      !runState.hasTriedSimplification &&
+      runState.bestIteration > 0
+    ) {
+      const bestResult = runState.iterations[runState.bestIteration - 1];
+      if (bestResult) {
+        currentTopic = await deps.llm.simplifyTopic(
+          topic,
+          bestResult.topic,
+          metrics,
+          iterationResult.analysis,
+          input.intent,
+        );
+        currentTopic = { ...currentTopic, name: lockedName };
+        runState.hasTriedSimplification = true;
+        runState.consecutiveRegressions = 0;
+        yield { type: 'topic:simplified' as const, topic: currentTopic };
+      }
+    }
+
     if (maxRegressions > 0 && runState.consecutiveRegressions >= maxRegressions) {
       break;
     }

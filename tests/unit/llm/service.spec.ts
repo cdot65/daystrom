@@ -377,6 +377,65 @@ describe('LangChainLlmService', () => {
     });
   });
 
+  describe('simplifyTopic', () => {
+    const metrics = {
+      truePositives: 8,
+      trueNegatives: 9,
+      falsePositives: 1,
+      falseNegatives: 2,
+      truePositiveRate: 0.8,
+      trueNegativeRate: 0.9,
+      accuracy: 0.85,
+      coverage: 0.8,
+      f1Score: 0.84,
+      regressionCount: 0,
+    };
+    const analysis = {
+      summary: 'Regressing',
+      falsePositivePatterns: ['over-broad'],
+      falseNegativePatterns: [],
+      suggestions: ['simplify'],
+    };
+    const bestTopic = {
+      name: 'Weapons',
+      description: 'Weapons talk',
+      examples: ['gun', 'bomb'],
+    };
+
+    it('returns clamped simplified topic', async () => {
+      const simplified = {
+        name: 'Weapons',
+        description: 'Short desc',
+        examples: ['gun', 'bomb'],
+      };
+      const model = createMockModel(simplified);
+      const service = new LangChainLlmService(model as BaseChatModel);
+      const result = await service.simplifyTopic(validTopic, bestTopic, metrics, analysis, 'allow');
+      expect(result.name).toBe('Weapons');
+      expect(result.description).toBe('Short desc');
+    });
+
+    it('clamps long description from LLM', async () => {
+      const longDesc = 'X'.repeat(300);
+      const model = createMockModel({
+        name: 'Weapons',
+        description: longDesc,
+        examples: ['ex1', 'ex2'],
+      });
+      const service = new LangChainLlmService(model as BaseChatModel);
+      const result = await service.simplifyTopic(validTopic, bestTopic, metrics, analysis, 'allow');
+      expect(result.description.length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH);
+    });
+
+    it('throws after 3 failures', async () => {
+      const model = createFailingModel(new Error('simplify fail'));
+      const service = new LangChainLlmService(model as BaseChatModel);
+      await expect(
+        service.simplifyTopic(validTopic, bestTopic, metrics, analysis, 'allow'),
+      ).rejects.toThrow('simplify fail');
+    });
+  });
+
   describe('loadMemory', () => {
     it('returns 0 without injector', async () => {
       const model = createMockModel(validTopic);

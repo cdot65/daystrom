@@ -236,6 +236,7 @@ export function mockRunState(overrides: Partial<RunState> = {}): RunState {
     bestIteration: 1,
     bestCoverage: 1,
     consecutiveRegressions: 0,
+    hasTriedSimplification: false,
     status: 'completed',
     ...overrides,
   };
