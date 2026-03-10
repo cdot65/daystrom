@@ -10,6 +10,7 @@ import type {
   TestResult,
   UserInput,
 } from '../../../src/core/types.js';
+import type { ScanService } from '../../../src/airs/types.js';
 import type { LearningExtractor } from '../../../src/memory/extractor.js';
 import {
   createMockAllowScanService,
@@ -1795,6 +1796,205 @@ describe('runLoop', () => {
       const completeIdx = events.findIndex((e) => e.type === 'loop:complete');
       expect(psIdx).toBeGreaterThan(-1);
       expect(completeIdx).toBeGreaterThan(psIdx);
+    });
+  });
+
+  describe('warm-up probe', () => {
+    it('runs probe only on iteration 1 (block intent)', async () => {
+      const scanner = createMockScanService();
+      const deps = createDeps({ scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 2 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const probeReadyEvents = events.filter((e) => e.type === 'probe:ready');
+      expect(probeReadyEvents).toHaveLength(1);
+      // Should appear before the first test:progress
+      const probeIdx = events.findIndex((e) => e.type === 'probe:ready');
+      const firstTestIdx = events.findIndex((e) => e.type === 'test:progress');
+      expect(probeIdx).toBeLessThan(firstTestIdx);
+    });
+
+    it('retries when first probe scan does not match (block intent)', async () => {
+      let scanCallCount = 0;
+      const scanner: ScanService = {
+        scan: async (_profile: string, _prompt: string) => {
+          scanCallCount++;
+          // First 2 probe calls: not triggered. Third: triggered.
+          const triggered = scanCallCount >= 3;
+          return {
+            scanId: `scan-${scanCallCount}`,
+            reportId: `report-${scanCallCount}`,
+            action: triggered ? ('block' as const) : ('allow' as const),
+            triggered,
+            category: triggered ? 'malicious' : 'benign',
+          };
+        },
+        scanBatch: async (_profile: string, prompts: string[]) => {
+          return prompts.map((_, idx) => ({
+            scanId: `scan-batch-${idx}`,
+            reportId: `report-batch-${idx}`,
+            action: 'block' as const,
+            triggered: true,
+            category: 'malicious',
+          }));
+        },
+      };
+
+      const deps = createDeps({ scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 1 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const waitingEvents = events.filter((e) => e.type === 'probe:waiting');
+      const readyEvents = events.filter((e) => e.type === 'probe:ready');
+      expect(waitingEvents).toHaveLength(2);
+      expect(readyEvents).toHaveLength(1);
+      // Verify waiting events have correct attempt numbers
+      expect((waitingEvents[0] as { attempt: number }).attempt).toBe(1);
+      expect((waitingEvents[1] as { attempt: number }).attempt).toBe(2);
+      expect((readyEvents[0] as { attempts: number }).attempts).toBe(3);
+    });
+
+    it('proceeds even if probe never matches after all attempts', async () => {
+      const scanner: ScanService = {
+        scan: async () => ({
+          scanId: 'scan-probe',
+          reportId: 'report-probe',
+          action: 'allow' as const,
+          triggered: false,
+          category: 'benign',
+        }),
+        scanBatch: async (_profile: string, prompts: string[]) => {
+          return prompts.map((_, idx) => ({
+            scanId: `scan-batch-${idx}`,
+            reportId: `report-batch-${idx}`,
+            action: 'block' as const,
+            triggered: true,
+            category: 'malicious',
+          }));
+        },
+      };
+
+      const deps = createDeps({ scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 1 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      // Should have waiting events but no ready event
+      const waitingEvents = events.filter((e) => e.type === 'probe:waiting');
+      const readyEvents = events.filter((e) => e.type === 'probe:ready');
+      expect(waitingEvents.length).toBeGreaterThan(0);
+      expect(readyEvents).toHaveLength(0);
+      // Loop should still complete
+      expect(events.some((e) => e.type === 'loop:complete')).toBe(true);
+    });
+
+    it('skips probe when topic has no examples', async () => {
+      const llm = createMockLlm();
+      llm.generateTopic.mockResolvedValue({
+        name: 'No Examples',
+        description: 'A topic with no examples',
+        examples: [],
+      });
+      const deps = createDeps({ llm });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 1 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const probeEvents = events.filter(
+        (e) => e.type === 'probe:ready' || e.type === 'probe:waiting',
+      );
+      expect(probeEvents).toHaveLength(0);
+    });
+
+    it('uses category === benign for allow-intent probe', async () => {
+      let probeScanCount = 0;
+      const scanner: ScanService = {
+        scan: async (_profile: string, _prompt: string) => {
+          probeScanCount++;
+          // First probe: category malicious (not matched). Second: category benign (matched).
+          const matched = probeScanCount >= 2;
+          return {
+            scanId: `scan-${probeScanCount}`,
+            reportId: `report-${probeScanCount}`,
+            action: 'allow' as const,
+            triggered: false, // AIRS never sets triggered for allow-intent
+            category: matched ? 'benign' : 'malicious',
+          };
+        },
+        scanBatch: async (_profile: string, prompts: string[]) => {
+          return prompts.map((_, idx) => ({
+            scanId: `scan-batch-${idx}`,
+            reportId: `report-batch-${idx}`,
+            action: 'allow' as const,
+            triggered: false,
+            category: 'benign',
+          }));
+        },
+      };
+
+      const deps = createDeps({ scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        {
+          ...defaultInput,
+          intent: 'allow',
+          maxIterations: 1,
+        },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const waitingEvents = events.filter((e) => e.type === 'probe:waiting');
+      const readyEvents = events.filter((e) => e.type === 'probe:ready');
+      expect(waitingEvents).toHaveLength(1);
+      expect(readyEvents).toHaveLength(1);
+      expect((readyEvents[0] as { attempts: number }).attempts).toBe(2);
+    });
+
+    it('does not run probe on iteration 2+', async () => {
+      const scanner = createMockScanService();
+      const scanSpy = vi.spyOn(scanner, 'scan');
+      const deps = createDeps({ scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 3 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      // Probe events should only appear once (iteration 1)
+      const probeReadyEvents = events.filter((e) => e.type === 'probe:ready');
+      expect(probeReadyEvents).toHaveLength(1);
+      // scan() (used for probe) should be called exactly once per probe attempt
+      // on iteration 1 only — not on subsequent iterations
+      const iterStartEvents = events.filter((e) => e.type === 'iteration:start');
+      expect(iterStartEvents.length).toBeGreaterThan(1);
     });
   });
 });
