@@ -66,7 +66,7 @@ src/
 │   ├── provider.ts        # createLlmProvider() — factory for 6 LangChain providers
 │   ├── service.ts         # LangChainLlmService — generateTopic, generateTests, improveTopic, analyzeResults
 │   ├── schemas.ts         # Zod output schemas for structured LLM responses
-│   └── prompts/           # ChatPromptTemplate definitions (4 files)
+│   └── prompts/           # ChatPromptTemplate definitions (5 files)
 ├── airs/
 │   ├── scanner.ts         # AirsScanService + DebugScanService — syncScan + scanBatch
 │   ├── runtime.ts         # SdkRuntimeService — sync scan, async bulk scan, poll results, CSV export
@@ -117,7 +117,7 @@ tests/
 
 ### Core Loop (`src/core/loop.ts`)
 - `runLoop()` async generator yields typed `LoopEvent` discriminated unions
-- Events yielded by `runLoop()`: `iteration:start`, `generate:complete`, `apply:complete`, `tests:composed` (iter 2+, always-on composition), `tests:accumulated` (if accumulation enabled, iter 2+), `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete`, `topic:simplified` (after 2 consecutive regressions, once per run), `memory:extracted` (if memory enabled), `promptset:created` (if `--create-prompt-set`), `loop:complete`
+- Events yielded by `runLoop()`: `iteration:start`, `generate:complete`, `apply:complete`, `tests:composed` (iter 2+, always-on composition), `tests:accumulated` (if accumulation enabled, iter 2+), `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete`, `topic:duplicate` (when improveTopic/simplifyTopic returns identical topic), `topic:reverted` (tier 1 recovery), `topic:simplified` (tier 2 recovery), `loop:plateau` (opt-in plateau detection), `memory:extracted` (if memory enabled), `promptset:created` (if `--create-prompt-set`), `loop:complete`
 - Events defined in `LoopEvent` union but **not yielded** by `runLoop()`: `loop:paused` (reserved for future use), `memory:loaded` (emitted by CLI before loop starts)
 - `apply:complete` is yielded but intentionally unhandled in CLI commands (no user-facing output needed)
 - Topic name **locked after iteration 1** — only description+examples change thereafter
@@ -125,7 +125,10 @@ tests/
 - **Test composition** (always-on, iter 2+): carried FP/FN failures + regression tier (TP/TN re-scanned) + fresh LLM tests. `TestCase.source` tags each test's origin. `EfficacyMetrics.regressionCount` tracks regression-tier failures.
 - **Weighted category generation** (always-on, iter 2+): `computeCategoryBreakdown()` passes per-category error rates to the LLM prompt, biasing test generation toward weak areas
 - Optional test accumulation (`accumulateTests`) carries full test pool across iterations with case-insensitive dedup; `maxAccumulatedTests` caps growth
-- Stop conditions: `coverage >= targetCoverage` (default 0.9), or `consecutiveRegressions >= maxRegressions` (default 3, 0 = disabled). Coverage = `min(TPR, TNR)`
+- Stop conditions: `coverage >= targetCoverage` (default 0.9), `consecutiveRegressions >= maxRegressions` (default 3, 0 = disabled), or plateau detection (`--plateau-window`, opt-in). Coverage = `min(TPR, TNR)`
+- **3-tier recovery** on consecutive regressions: (1) revert to best-performing topic (no LLM), (2) LLM simplification, (3) early stop. Each tier gets 2 regressions before escalating.
+- **Duplicate detection**: `findDuplicateIteration()` compares description+examples against all prior iterations. Duplicates skip scanning, increment regression counter, and trigger recovery tiers.
+- **Plateau detection** (opt-in, `--plateau-window N`): if last N iterations are within ±band% without exceeding best, yields `loop:plateau` and stops.
 - **Early stopping on regression**: `RunState.consecutiveRegressions` tracks how many consecutive iterations failed to improve `bestCoverage`. Resets to 0 on improvement. `UserInput.maxRegressions` controls the threshold (default 3, 0 disables).
 - **Description simplification**: After 2 consecutive regressions, if `hasTriedSimplification` is false and a best iteration exists, the loop calls `simplifyTopic()` to strip exclusion clauses and shorten the description. Resets regression counter to 0. Only attempted once per run (`RunState.hasTriedSimplification`). If simplification also regresses, early stopping kicks in at `maxRegressions`.
 
