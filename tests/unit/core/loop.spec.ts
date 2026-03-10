@@ -1326,6 +1326,152 @@ describe('runLoop', () => {
     });
   });
 
+  describe('plateau detection', () => {
+    it('detects plateau when last N iterations are within band', async () => {
+      const llm = createMockLlm();
+      // All iterations return same coverage → plateau
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        {
+          ...defaultInput,
+          maxIterations: 20,
+          targetCoverage: 0.99,
+          maxRegressions: 0, // disable early stopping to test plateau
+          plateauWindow: 3,
+          plateauBand: 0.05,
+        },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const plateau = events.find((e) => e.type === 'loop:plateau');
+      expect(plateau).toBeDefined();
+      if (plateau?.type === 'loop:plateau') {
+        expect(plateau.band[1] - plateau.band[0]).toBeLessThanOrEqual(0.05);
+      }
+    });
+
+    it('does not trigger plateau in early iterations', async () => {
+      const llm = createMockLlm();
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        {
+          ...defaultInput,
+          maxIterations: 3, // fewer than plateauWindow + 1
+          targetCoverage: 0.99,
+          maxRegressions: 0,
+          plateauWindow: 3,
+        },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const plateau = events.find((e) => e.type === 'loop:plateau');
+      expect(plateau).toBeUndefined();
+    });
+
+    it('does not trigger plateau when coverage is improving', async () => {
+      const llm = createMockLlm();
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        // Each iteration triggers more patterns → improving coverage
+        if (scanCall <= 3) {
+          const patterns = [/weapon/i, /bomb/i, /gun/i].slice(0, scanCall);
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: patterns.some((pat) => pat.test(p)),
+            category: patterns.some((pat) => pat.test(p)) ? 'malicious' : 'benign',
+          }));
+        }
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        {
+          ...defaultInput,
+          maxIterations: 4,
+          targetCoverage: 0.99,
+          maxRegressions: 0,
+          plateauWindow: 3,
+        },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const plateau = events.find((e) => e.type === 'loop:plateau');
+      expect(plateau).toBeUndefined();
+    });
+
+    it('respects custom plateauWindow and plateauBand', async () => {
+      const llm = createMockLlm();
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+      const events: LoopEvent[] = [];
+
+      // With window=2 and band=0.1, plateau triggers sooner
+      for await (const event of runLoop(
+        {
+          ...defaultInput,
+          maxIterations: 20,
+          targetCoverage: 0.99,
+          maxRegressions: 0,
+          plateauWindow: 2,
+          plateauBand: 0.1,
+        },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const plateau = events.find((e) => e.type === 'loop:plateau');
+      expect(plateau).toBeDefined();
+      // With window=2, should trigger by iteration 3 (need 2+1 iterations)
+      const starts = events.filter((e) => e.type === 'iteration:start');
+      expect(starts.length).toBeLessThanOrEqual(5);
+    });
+
+    it('yields loop:plateau event with correct band values', async () => {
+      const llm = createMockLlm();
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        {
+          ...defaultInput,
+          maxIterations: 20,
+          targetCoverage: 0.99,
+          maxRegressions: 0,
+          plateauWindow: 3,
+        },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const plateau = events.find((e) => e.type === 'loop:plateau');
+      expect(plateau).toBeDefined();
+      if (plateau?.type === 'loop:plateau') {
+        expect(plateau.bestCoverage).toBeGreaterThanOrEqual(0);
+        expect(plateau.band).toHaveLength(2);
+        expect(plateau.band[0]).toBeLessThanOrEqual(plateau.band[1]);
+      }
+    });
+  });
+
   describe('test composition (carry-forward + regression)', () => {
     it('yields tests:composed on iteration 2+ with correct counts', async () => {
       const llm = createMockLlm();

@@ -22,6 +22,8 @@ export interface UserInput {
   maxIterations?: number;
   targetCoverage?: number;
   maxRegressions?: number;
+  plateauWindow?: number;
+  plateauBand?: number;
   accumulateTests?: boolean;
   maxAccumulatedTests?: number;
   createPromptSet?: boolean;
@@ -137,5 +139,6 @@ export type LoopEvent =
   | { type: 'memory:extracted'; learningCount: number }
   | { type: 'topic:simplified'; topic: CustomTopic }
   | { type: 'topic:reverted'; topic: CustomTopic; revertedToIteration: number }
+  | { type: 'loop:plateau'; band: [number, number]; bestCoverage: number }
   | { type: 'topic:duplicate'; topic: CustomTopic; duplicateOfIteration: number }
   | { type: 'promptset:created'; promptSetId: string; promptSetName: string; promptCount: number };
