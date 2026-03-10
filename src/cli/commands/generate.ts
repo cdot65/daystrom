@@ -144,6 +144,15 @@ export function registerGenerateCommand(program: Command): void {
             })
           : undefined;
 
+        // Warn about allow-intent coverage expectations
+        if (userInput.intent === 'allow') {
+          console.log(
+            '  \u26A0 Allow-intent topics typically achieve 40\u201370% coverage due to AIRS semantic matching.',
+          );
+          console.log('    Consider using --target-coverage 65 for realistic expectations.');
+          console.log();
+        }
+
         // Run the loop
         for await (const event of runLoop(userInput, {
           llm,
