@@ -217,10 +217,18 @@ describe('Loop Integration', () => {
         falseNegativePatterns: [],
         suggestions: ['improve'],
       }),
-      improveTopic: async () => ({
+      improveTopic: async () => {
+        testCall++;
+        return {
+          name: 'Weapons Discussion',
+          description: `Improved weapons block v${testCall}`,
+          examples: [`weapon example improved ${testCall}`],
+        };
+      },
+      simplifyTopic: async () => ({
         name: 'Weapons Discussion',
-        description: 'Improved weapons block',
-        examples: ['weapon example improved'],
+        description: 'Weapons block simplified',
+        examples: ['weapon example'],
       }),
     };
 

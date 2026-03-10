@@ -73,6 +73,20 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** Check if a topic definition matches any previous iteration's topic. Returns the iteration number or null. */
+function findDuplicateIteration(topic: CustomTopic, iterations: IterationResult[]): number | null {
+  for (const iter of iterations) {
+    if (
+      iter.topic.description === topic.description &&
+      iter.topic.examples.length === topic.examples.length &&
+      iter.topic.examples.every((e, idx) => e === topic.examples[idx])
+    ) {
+      return iter.iteration;
+    }
+  }
+  return null;
+}
+
 /**
  * Main refinement loop — generates, deploys, tests, and iteratively improves a topic.
  * Yields typed {@link LoopEvent} discriminated unions at each stage.
@@ -138,6 +152,59 @@ export async function* runLoop(
       );
       // Force the name to stay consistent across iterations
       currentTopic = { ...currentTopic, name: lockedName };
+
+      // Skip scanning if topic is identical to a previous iteration
+      const dupIter = findDuplicateIteration(currentTopic, runState.iterations);
+      if (dupIter !== null) {
+        yield {
+          type: 'topic:duplicate' as const,
+          topic: currentTopic,
+          duplicateOfIteration: dupIter,
+        };
+        runState.consecutiveRegressions++;
+        runState.currentIteration = i;
+        runState.updatedAt = new Date().toISOString();
+
+        // Try simplification if threshold reached (same logic as end-of-iteration)
+        const simplifyThreshold = 2;
+        if (
+          runState.consecutiveRegressions >= simplifyThreshold &&
+          !runState.hasTriedSimplification &&
+          runState.bestIteration > 0
+        ) {
+          const bestResult = runState.iterations[runState.bestIteration - 1];
+          if (bestResult) {
+            currentTopic = await deps.llm.simplifyTopic(
+              currentTopic,
+              bestResult.topic,
+              bestResult.metrics,
+              bestResult.analysis,
+              input.intent,
+            );
+            currentTopic = { ...currentTopic, name: lockedName };
+            runState.hasTriedSimplification = true;
+            runState.consecutiveRegressions = 0;
+            yield { type: 'topic:simplified' as const, topic: currentTopic };
+
+            // If simplified topic is also a duplicate, don't reset — count it
+            const simpDupIter = findDuplicateIteration(currentTopic, runState.iterations);
+            if (simpDupIter !== null) {
+              yield {
+                type: 'topic:duplicate' as const,
+                topic: currentTopic,
+                duplicateOfIteration: simpDupIter,
+              };
+              runState.consecutiveRegressions++;
+            }
+          }
+        }
+
+        const maxRegressions = input.maxRegressions ?? 3;
+        if (maxRegressions > 0 && runState.consecutiveRegressions >= maxRegressions) {
+          break;
+        }
+        continue;
+      }
     }
 
     /* v8 ignore next */
@@ -373,6 +440,17 @@ export async function* runLoop(
         runState.hasTriedSimplification = true;
         runState.consecutiveRegressions = 0;
         yield { type: 'topic:simplified' as const, topic: currentTopic };
+
+        // Check if simplified topic is a duplicate of a previous iteration
+        const simpDupIter = findDuplicateIteration(currentTopic, runState.iterations);
+        if (simpDupIter !== null) {
+          yield {
+            type: 'topic:duplicate' as const,
+            topic: currentTopic,
+            duplicateOfIteration: simpDupIter,
+          };
+          runState.consecutiveRegressions++;
+        }
       }
     }
 

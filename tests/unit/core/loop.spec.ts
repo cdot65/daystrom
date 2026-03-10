@@ -60,23 +60,29 @@ function createMockLlm() {
         falseNegativePatterns: [],
         suggestions: ['Keep current definition'],
       }),
-    improveTopic: vi
-      .fn<
-        (
-          topic: CustomTopic,
-          metrics: EfficacyMetrics,
-          analysis: AnalysisReport,
-          results: TestResult[],
-          iteration: number,
-          targetCoverage: number,
-          intent: string,
-        ) => Promise<CustomTopic>
-      >()
-      .mockResolvedValue({
-        name: 'Weapons Discussion v2',
-        description: 'Block all weapons-related conversations',
-        examples: ['How to make a weapon', 'Gun manufacturing', 'Ammunition sourcing'],
-      }),
+    improveTopic: (() => {
+      let improveCall = 0;
+      return vi
+        .fn<
+          (
+            topic: CustomTopic,
+            metrics: EfficacyMetrics,
+            analysis: AnalysisReport,
+            results: TestResult[],
+            iteration: number,
+            targetCoverage: number,
+            intent: string,
+          ) => Promise<CustomTopic>
+        >()
+        .mockImplementation(async () => {
+          improveCall++;
+          return {
+            name: `Weapons Discussion v${improveCall + 1}`,
+            description: `Block weapons-related conversations variant ${improveCall}`,
+            examples: ['How to make a weapon', 'Gun manufacturing', `Variant ${improveCall}`],
+          };
+        });
+    })(),
     simplifyTopic: vi
       .fn<
         (
@@ -993,6 +999,178 @@ describe('runLoop', () => {
         // Should eventually stop, not run all 20 iterations
         expect(complete.runState.iterations.length).toBeLessThan(20);
       }
+    });
+  });
+
+  describe('duplicate topic detection', () => {
+    it('skips scanning when improveTopic returns identical topic', async () => {
+      const llm = createMockLlm();
+      // improveTopic returns the same topic every time
+      llm.improveTopic.mockImplementation(async () => ({
+        name: 'Weapons Discussion',
+        description: 'Block conversations about weapons',
+        examples: ['How to make a weapon', 'Gun manufacturing'],
+      }));
+      const deps = createDeps({ llm, scanner: createMockScanService([/weapon/i]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 5, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const dupes = events.filter((e) => e.type === 'topic:duplicate');
+      // Iter 1 scans normally, iter 2+ should detect duplicate of iter 1
+      expect(dupes.length).toBeGreaterThanOrEqual(1);
+      if (dupes[0]?.type === 'topic:duplicate') {
+        expect(dupes[0].duplicateOfIteration).toBe(1);
+      }
+    });
+
+    it('increments consecutiveRegressions on duplicate', async () => {
+      const llm = createMockLlm();
+      // Always return same topic from improveTopic
+      llm.improveTopic.mockImplementation(async () => ({
+        name: 'Weapons Discussion',
+        description: 'Block conversations about weapons',
+        examples: ['How to make a weapon', 'Gun manufacturing'],
+      }));
+      const deps = createDeps({ llm, scanner: createMockScanService([/weapon/i]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 10, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const complete = events.find((e) => e.type === 'loop:complete');
+      expect(complete).toBeDefined();
+      if (complete?.type === 'loop:complete') {
+        expect(complete.runState.consecutiveRegressions).toBeGreaterThanOrEqual(3);
+      }
+    });
+
+    it('triggers early stopping when duplicates exhaust maxRegressions', async () => {
+      const llm = createMockLlm();
+      const dupTopic = {
+        name: 'Weapons Discussion',
+        description: 'Block conversations about weapons',
+        examples: ['How to make a weapon', 'Gun manufacturing'],
+      };
+      llm.improveTopic.mockImplementation(async () => ({ ...dupTopic }));
+      // Simplification also returns same topic → still a duplicate
+      llm.simplifyTopic.mockImplementation(async () => ({ ...dupTopic }));
+      const deps = createDeps({ llm, scanner: createMockScanService([/weapon/i]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 20, targetCoverage: 0.99, maxRegressions: 2 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const starts = events.filter((e) => e.type === 'iteration:start');
+      // Iter 1: scan, Iter 2: dup (reg 1), Iter 3: dup (reg 2 → simplify → dup, reg 1),
+      // Iter 4: dup (reg 2) → stop
+      expect(starts.length).toBeLessThanOrEqual(4);
+    });
+
+    it('does not flag topics with different descriptions as duplicates', async () => {
+      const llm = createMockLlm();
+      let improveCall = 0;
+      llm.improveTopic.mockImplementation(async () => {
+        improveCall++;
+        return {
+          name: 'Weapons Discussion',
+          description: `Variant ${improveCall}`,
+          examples: ['How to make a weapon', 'Gun manufacturing'],
+        };
+      });
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 3, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const dupes = events.filter((e) => e.type === 'topic:duplicate');
+      expect(dupes).toHaveLength(0);
+    });
+
+    it('does not flag topics with different examples as duplicates', async () => {
+      const llm = createMockLlm();
+      let improveCall = 0;
+      llm.improveTopic.mockImplementation(async () => {
+        improveCall++;
+        return {
+          name: 'Weapons Discussion',
+          description: 'Block conversations about weapons',
+          examples: [`Example ${improveCall}`],
+        };
+      });
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 3, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const dupes = events.filter((e) => e.type === 'topic:duplicate');
+      expect(dupes).toHaveLength(0);
+    });
+
+    it('detects duplicate after simplification', async () => {
+      const llm = createMockLlm();
+      // simplifyTopic returns the same topic as iteration 1
+      llm.simplifyTopic.mockImplementation(async () => ({
+        name: 'Weapons Discussion',
+        description: 'Block conversations about weapons',
+        examples: ['How to make a weapon', 'Gun manufacturing'],
+      }));
+
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon/i.test(p),
+            category: /weapon/i.test(p) ? 'malicious' : 'benign',
+          }));
+        }
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 10, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const simplified = events.filter((e) => e.type === 'topic:simplified');
+      const dupes = events.filter((e) => e.type === 'topic:duplicate');
+      expect(simplified).toHaveLength(1);
+      // Simplified topic matches iter 1 → duplicate detected
+      expect(dupes.length).toBeGreaterThanOrEqual(1);
     });
   });
 

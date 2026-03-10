@@ -135,4 +135,5 @@ export type LoopEvent =
   | { type: 'memory:loaded'; learningCount: number }
   | { type: 'memory:extracted'; learningCount: number }
   | { type: 'topic:simplified'; topic: CustomTopic }
+  | { type: 'topic:duplicate'; topic: CustomTopic; duplicateOfIteration: number }
   | { type: 'promptset:created'; promptSetId: string; promptSetName: string; promptCount: number };
