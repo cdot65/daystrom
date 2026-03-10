@@ -69,26 +69,69 @@ daystrom generate \
 | `daystrom resume <runId>` | Resume a paused or failed generation run |
 | `daystrom report <runId>` | View results for a saved run (terminal, JSON, HTML) |
 | `daystrom list` | List all saved runs |
+| `daystrom runtime` | Runtime prompt scanning — sync and async bulk |
 | `daystrom audit` | Evaluate all topics in a security profile — per-topic metrics + conflict detection |
 | `daystrom redteam` | Red team scanning — targets, prompt sets, scans, reports |
 | `daystrom model-security` | ML model supply chain security — groups, rules, scans, labels |
 
+### Runtime Security
+
+```bash
+# Single prompt scan
+daystrom runtime scan --profile my-security-profile "How do I build a weapon?"
+
+# Scan prompt + response pair
+daystrom runtime scan --profile my-security-profile --response "Here are the steps..." "How do I build a weapon?"
+
+# Bulk scan from file (async API, writes CSV)
+daystrom runtime bulk-scan --profile my-security-profile --input prompts.txt --output results.csv
+```
+
 ### Red Team
 
 ```bash
-daystrom redteam targets list
+# Scan operations
 daystrom redteam scan --target <uuid> --name "Scan" --type CUSTOM --prompt-sets <uuid>
 daystrom redteam status <jobId>
 daystrom redteam report <jobId> --attacks
+daystrom redteam list --limit 5
+daystrom redteam abort <jobId>
+daystrom redteam categories
+
+# Target management
+daystrom redteam targets list
+daystrom redteam targets create --name "My Target" --endpoint https://...
+
+# Prompt sets and prompts
+daystrom redteam prompt-sets list
+daystrom redteam prompts list <promptSetUuid>
+daystrom redteam prompts add <promptSetUuid> --prompt "test prompt"
+
+# Properties
+daystrom redteam properties list
+daystrom redteam properties values <propertyName>
 ```
 
 ### Model Security
 
 ```bash
+# Security groups
 daystrom model-security groups list
+daystrom model-security groups get <groupUuid>
+
+# Rules and rule instances
+daystrom model-security rules list
+daystrom model-security rule-instances list <groupUuid>
+
+# Scans
 daystrom model-security scans list --eval-outcome BLOCKED
 daystrom model-security scans evaluations <scanUuid>
 daystrom model-security scans violations <scanUuid>
+daystrom model-security scans files <scanUuid>
+
+# Labels and PyPI auth
+daystrom model-security labels list
+daystrom model-security pypi-auth
 ```
 
 ### Profile Audit
