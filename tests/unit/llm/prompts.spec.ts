@@ -177,7 +177,7 @@ Consider reverting toward this simpler definition rather than adding more specif
     expect(vars).toContain('memorySection');
   });
 
-  it('simplifyTopicPrompt system message includes simplification guidance', async () => {
+  it('simplifyTopicPrompt system message includes anti-specificity guidance', async () => {
     const messages = await simplifyTopicPrompt.formatMessages({
       currentName: 'Test',
       currentDescription: 'Long over-refined description with not X and excludes Y',
@@ -192,9 +192,33 @@ Consider reverting toward this simpler definition rather than adding more specif
       memorySection: '',
     });
     const systemContent = messages[0].content as string;
-    expect(systemContent).toContain('SIMPLIFICATION WORKS');
-    expect(systemContent).toContain('under 100 chars');
-    expect(systemContent).toContain('Exclusion clauses');
+    expect(systemContent).toContain('Do NOT add qualifiers');
+    expect(systemContent).toContain('UNDER 80 characters');
+    expect(systemContent).toContain('GOOD vs BAD');
+    expect(systemContent).toContain('Cooking recipes for specific dishes');
+  });
+
+  it('simplifyTopicPrompt human message leads with best-performing definition', async () => {
+    const messages = await simplifyTopicPrompt.formatMessages({
+      currentName: 'Test',
+      currentDescription: 'Over-refined version',
+      currentExamples: 'ex1, ex2, ex3',
+      bestCoverage: '66.0%',
+      bestDescription: 'Short best description',
+      bestExamples: 'ex1, ex2',
+      coverage: '40.0%',
+      tpr: '80.0%',
+      tnr: '40.0%',
+      intent: 'allow',
+      memorySection: '',
+    });
+    const humanContent = messages[1].content as string;
+    // Best definition should appear BEFORE current definition
+    const bestIdx = humanContent.indexOf('Short best description');
+    const currentIdx = humanContent.indexOf('Over-refined version');
+    expect(bestIdx).toBeGreaterThan(-1);
+    expect(currentIdx).toBeGreaterThan(-1);
+    expect(bestIdx).toBeLessThan(currentIdx);
   });
 
   it('improveTopicPrompt omits regression warning when coverage is at or above best', async () => {
