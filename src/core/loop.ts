@@ -111,6 +111,7 @@ export async function* runLoop(
     bestIteration: 0,
     bestCoverage: 0,
     consecutiveRegressions: 0,
+    hasRevertedToBest: false,
     hasTriedSimplification: false,
     status: 'running',
   };
@@ -165,10 +166,30 @@ export async function* runLoop(
         runState.currentIteration = i;
         runState.updatedAt = new Date().toISOString();
 
-        // Try simplification if threshold reached (same logic as end-of-iteration)
-        const simplifyThreshold = 2;
+        // Recovery: revert → simplify (same tiers as end-of-iteration)
+        const recoveryThreshold = 2;
+
+        // Tier 1: Revert to best
         if (
-          runState.consecutiveRegressions >= simplifyThreshold &&
+          runState.consecutiveRegressions >= recoveryThreshold &&
+          !runState.hasRevertedToBest &&
+          runState.bestIteration > 0
+        ) {
+          const bestResult = runState.iterations[runState.bestIteration - 1];
+          if (bestResult) {
+            currentTopic = { ...bestResult.topic };
+            runState.hasRevertedToBest = true;
+            runState.consecutiveRegressions = 0;
+            yield {
+              type: 'topic:reverted' as const,
+              topic: currentTopic,
+              revertedToIteration: runState.bestIteration,
+            };
+          }
+        }
+        // Tier 2: Simplify
+        else if (
+          runState.consecutiveRegressions >= recoveryThreshold &&
           !runState.hasTriedSimplification &&
           runState.bestIteration > 0
         ) {
@@ -418,12 +439,31 @@ export async function* runLoop(
       break;
     }
 
-    // Simplification strategy: after 2 consecutive regressions, try simplifying before early stop
-    const simplifyThreshold = 2;
+    // Recovery strategy: revert → simplify → stop
+    const recoveryThreshold = 2;
     const maxRegressions = input.maxRegressions ?? 3;
 
+    // Tier 1: Revert to best-performing definition (no LLM call)
     if (
-      runState.consecutiveRegressions >= simplifyThreshold &&
+      runState.consecutiveRegressions >= recoveryThreshold &&
+      !runState.hasRevertedToBest &&
+      runState.bestIteration > 0
+    ) {
+      const bestResult = runState.iterations[runState.bestIteration - 1];
+      if (bestResult) {
+        currentTopic = { ...bestResult.topic };
+        runState.hasRevertedToBest = true;
+        runState.consecutiveRegressions = 0;
+        yield {
+          type: 'topic:reverted' as const,
+          topic: currentTopic,
+          revertedToIteration: runState.bestIteration,
+        };
+      }
+    }
+    // Tier 2: LLM simplification (after revert already tried)
+    else if (
+      runState.consecutiveRegressions >= recoveryThreshold &&
       !runState.hasTriedSimplification &&
       runState.bestIteration > 0
     ) {
@@ -454,6 +494,7 @@ export async function* runLoop(
       }
     }
 
+    // Tier 3: Early stop
     if (maxRegressions > 0 && runState.consecutiveRegressions >= maxRegressions) {
       break;
     }

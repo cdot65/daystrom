@@ -179,6 +179,12 @@ export function registerGenerateCommand(program: Command): void {
             case 'iteration:complete':
               renderIterationSummary(event.result);
               break;
+            case 'topic:reverted':
+              console.log(
+                `  ↩ Reverted to best definition (iteration ${event.revertedToIteration})`,
+              );
+              renderTopic(event.topic);
+              break;
             case 'topic:simplified':
               console.log('  ⚡ Topic simplified after consecutive regressions');
               renderTopic(event.topic);

@@ -652,9 +652,10 @@ describe('runLoop', () => {
       }
 
       const starts = events.filter((e) => e.type === 'iteration:start');
-      // Iter 1: best (0.5). Iter 2: reg 1. Iter 3: reg 2 → simplify (reset to 0).
-      // Iter 4: reg 1. Iter 5: reg 2. Iter 6: reg 3 → stop
-      expect(starts).toHaveLength(6);
+      // Iter 1: best (0.5). Iter 2: reg 1. Iter 3: reg 2 → revert (reset to 0).
+      // Iter 4: reg 1. Iter 5: reg 2 → simplify (reset to 0).
+      // Iter 6: reg 1. Iter 7: reg 2. Iter 8: reg 3 → stop
+      expect(starts).toHaveLength(8);
     });
 
     it('resets regression count when coverage improves', async () => {
@@ -718,9 +719,10 @@ describe('runLoop', () => {
 
       const starts = events.filter((e) => e.type === 'iteration:start');
       // Iter 1: best (0.33). Iter 2: reg 1. Iter 3: improve (reset, 0.67).
-      // Iter 4: reg 1. Iter 5: reg 2 → simplify (reset to 0).
-      // Iter 6: reg 1. Iter 7: reg 2. Iter 8: reg 3 → stop
-      expect(starts).toHaveLength(8);
+      // Iter 4: reg 1. Iter 5: reg 2 → revert (reset to 0).
+      // Iter 6: reg 1. Iter 7: reg 2 → simplify (reset to 0).
+      // Iter 8: reg 1. Iter 9: reg 2. Iter 10: reg 3 → stop
+      expect(starts).toHaveLength(10);
     });
 
     it('maxRegressions: 0 disables early stopping', async () => {
@@ -814,6 +816,154 @@ describe('runLoop', () => {
         expect(complete.runState.bestIteration).toBe(1);
         expect(complete.bestResult.iteration).toBe(1);
       }
+    });
+  });
+
+  describe('revert-to-best strategy', () => {
+    it('reverts to best topic after 2 consecutive regressions', async () => {
+      const llm = createMockLlm();
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon/i.test(p),
+            category: /weapon/i.test(p) ? 'malicious' : 'benign',
+          }));
+        }
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 10, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const reverted = events.filter((e) => e.type === 'topic:reverted');
+      expect(reverted).toHaveLength(1);
+      if (reverted[0]?.type === 'topic:reverted') {
+        expect(reverted[0].revertedToIteration).toBe(1);
+        // Reverted topic matches iteration 1's topic
+        expect(reverted[0].topic.description).toBe('Block conversations about weapons');
+      }
+    });
+
+    it('revert fires before simplification', async () => {
+      const llm = createMockLlm();
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon/i.test(p),
+            category: /weapon/i.test(p) ? 'malicious' : 'benign',
+          }));
+        }
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 15, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const eventTypes = events.map((e) => e.type);
+      const revertIdx = eventTypes.indexOf('topic:reverted');
+      const simplifyIdx = eventTypes.indexOf('topic:simplified');
+      expect(revertIdx).toBeGreaterThan(-1);
+      expect(simplifyIdx).toBeGreaterThan(-1);
+      expect(revertIdx).toBeLessThan(simplifyIdx);
+    });
+
+    it('3-tier recovery: revert → simplify → stop', async () => {
+      const llm = createMockLlm();
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon/i.test(p),
+            category: /weapon/i.test(p) ? 'malicious' : 'benign',
+          }));
+        }
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 20, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const complete = events.find((e) => e.type === 'loop:complete');
+      expect(complete).toBeDefined();
+      if (complete?.type === 'loop:complete') {
+        expect(complete.runState.hasRevertedToBest).toBe(true);
+        expect(complete.runState.hasTriedSimplification).toBe(true);
+        expect(complete.runState.iterations.length).toBeLessThan(20);
+      }
+    });
+
+    it('hasRevertedToBest prevents double revert', async () => {
+      const llm = createMockLlm();
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon/i.test(p),
+            category: /weapon/i.test(p) ? 'malicious' : 'benign',
+          }));
+        }
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 20, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const reverted = events.filter((e) => e.type === 'topic:reverted');
+      expect(reverted).toHaveLength(1);
     });
   });
 
@@ -956,11 +1106,12 @@ describe('runLoop', () => {
         events.push(event);
       }
 
-      // After simplification at reg=2, counter resets to 0, then 3 more regressions to stop
-      // Iter 1: best. Iter 2: reg 1. Iter 3: reg 2 → simplify (reset to 0).
-      // Iter 4: reg 1. Iter 5: reg 2. Iter 6: reg 3 → stop (no 2nd simplification since already tried)
+      // 3-tier recovery: revert then simplify
+      // Iter 1: best. Iter 2: reg 1. Iter 3: reg 2 → revert (reset to 0).
+      // Iter 4: reg 1. Iter 5: reg 2 → simplify (reset to 0).
+      // Iter 6: reg 1. Iter 7: reg 2. Iter 8: reg 3 → stop
       const starts = events.filter((e) => e.type === 'iteration:start');
-      expect(starts).toHaveLength(6);
+      expect(starts).toHaveLength(8);
     });
 
     it('early stopping kicks in after simplification also regresses', async () => {
@@ -1075,9 +1226,10 @@ describe('runLoop', () => {
       }
 
       const starts = events.filter((e) => e.type === 'iteration:start');
-      // Iter 1: scan, Iter 2: dup (reg 1), Iter 3: dup (reg 2 → simplify → dup, reg 1),
-      // Iter 4: dup (reg 2) → stop
-      expect(starts.length).toBeLessThanOrEqual(4);
+      // Iter 1: scan, Iter 2: dup (reg 1), Iter 3: dup (reg 2 → revert, reset to 0),
+      // Iter 4: dup (reg 1), Iter 5: dup (reg 2 → simplify → dup, reg 1),
+      // Iter 6: dup (reg 2) → stop
+      expect(starts.length).toBeLessThanOrEqual(6);
     });
 
     it('does not flag topics with different descriptions as duplicates', async () => {
