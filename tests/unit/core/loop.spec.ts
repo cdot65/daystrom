@@ -596,6 +596,201 @@ describe('runLoop', () => {
     });
   });
 
+  describe('early stopping on coverage regression', () => {
+    it('stops after 3 consecutive regressions (default)', async () => {
+      const llm = createMockLlm();
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          // Iter 1: trigger only weapon → TPR 0.5, TNR 1.0 → coverage 0.5
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon/i.test(p),
+            category: /weapon/i.test(p) ? 'malicious' : 'benign',
+          }));
+        }
+        // Iter 2+: trigger nothing → coverage drops to 0 (regression)
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 10, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const starts = events.filter((e) => e.type === 'iteration:start');
+      // Iter 1: coverage 0.5 (best). Iter 2: 0 (reg 1). Iter 3: 0 (reg 2). Iter 4: 0 (reg 3 → stop)
+      expect(starts).toHaveLength(4);
+    });
+
+    it('resets regression count when coverage improves', async () => {
+      const llm = createMockLlm();
+      // Generate 3 positive + 3 negative so triggering 2/3 positives gives coverage < 1.0
+      llm.generateTests.mockResolvedValue({
+        positiveTests: [
+          { prompt: 'How to build a weapon', expectedTriggered: true, category: 'direct' },
+          { prompt: 'Bomb making instructions', expectedTriggered: true, category: 'direct' },
+          { prompt: 'Knife fighting guide', expectedTriggered: true, category: 'edge' },
+        ],
+        negativeTests: [
+          { prompt: 'Tell me about cats', expectedTriggered: false, category: 'benign' },
+          { prompt: 'Weather forecast', expectedTriggered: false, category: 'benign' },
+          { prompt: 'Cooking recipes', expectedTriggered: false, category: 'benign' },
+        ],
+      });
+
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        // Iter 1: trigger only 'weapon' → TPR 1/3, TNR 3/3 → coverage ≈ 0.33
+        if (scanCall === 1) {
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon/i.test(p) && !/bomb|knife|cat|weather|cook/i.test(p),
+            category: 'benign',
+          }));
+        }
+        // Iter 2: regress (trigger nothing)
+        if (scanCall === 2) {
+          return origBatch(profile, prompts, conc, sess);
+        }
+        // Iter 3: improve (trigger weapon + bomb but not knife → TPR 2/3, still < 1.0)
+        if (scanCall === 3) {
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon|bomb/i.test(p) && !/knife|cat|weather|cook/i.test(p),
+            category: 'benign',
+          }));
+        }
+        // Iter 4+: regress again
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 10, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const starts = events.filter((e) => e.type === 'iteration:start');
+      // Iter 1: best (0.33). Iter 2: reg 1. Iter 3: improve (reset, 0.67). Iter 4: reg 1. Iter 5: reg 2. Iter 6: reg 3 → stop
+      expect(starts).toHaveLength(6);
+    });
+
+    it('maxRegressions: 0 disables early stopping', async () => {
+      const llm = createMockLlm();
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon/i.test(p),
+            category: /weapon/i.test(p) ? 'malicious' : 'benign',
+          }));
+        }
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 5, targetCoverage: 0.99, maxRegressions: 0 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const starts = events.filter((e) => e.type === 'iteration:start');
+      // All 5 iterations should run despite continuous regressions
+      expect(starts).toHaveLength(5);
+    });
+
+    it('tracks consecutiveRegressions in RunState', async () => {
+      const llm = createMockLlm();
+      // All iterations return same coverage → every iter after 1 is a regression (equal, not better)
+      const deps = createDeps({ llm, scanner: createMockScanService([]) });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 10, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const complete = events.find((e) => e.type === 'loop:complete');
+      expect(complete).toBeDefined();
+      if (complete?.type === 'loop:complete') {
+        expect(complete.runState.consecutiveRegressions).toBe(3);
+      }
+    });
+
+    it('preserves best iteration when early stopping triggers', async () => {
+      const llm = createMockLlm();
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          // Iter 1: best coverage
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon|bomb/i.test(p),
+            category: /weapon|bomb/i.test(p) ? 'malicious' : 'benign',
+          }));
+        }
+        // All subsequent: regress
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 10, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const complete = events.find((e) => e.type === 'loop:complete');
+      expect(complete).toBeDefined();
+      if (complete?.type === 'loop:complete') {
+        expect(complete.runState.bestIteration).toBe(1);
+        expect(complete.bestResult.iteration).toBe(1);
+      }
+    });
+  });
+
   describe('test composition (carry-forward + regression)', () => {
     it('yields tests:composed on iteration 2+ with correct counts', async () => {
       const llm = createMockLlm();

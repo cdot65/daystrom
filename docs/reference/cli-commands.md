@@ -25,6 +25,7 @@ daystrom generate [options]
 | `--intent <block\|allow>` | `block` | Whether matching prompts are blocked or allowed |
 | `--max-iterations <n>` | `20` | Maximum refinement iterations |
 | `--target-coverage <n>` | `90` | Coverage percentage to stop at |
+| `--max-regressions <n>` | `3` | Stop after N consecutive coverage regressions (0 = disable) |
 | `--accumulate-tests` | off | Carry forward test prompts across iterations |
 | `--max-accumulated-tests <n>` | unlimited | Cap on accumulated test count |
 | `--no-memory` | memory on | Disable cross-run learning |

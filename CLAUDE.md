@@ -125,7 +125,8 @@ tests/
 - **Test composition** (always-on, iter 2+): carried FP/FN failures + regression tier (TP/TN re-scanned) + fresh LLM tests. `TestCase.source` tags each test's origin. `EfficacyMetrics.regressionCount` tracks regression-tier failures.
 - **Weighted category generation** (always-on, iter 2+): `computeCategoryBreakdown()` passes per-category error rates to the LLM prompt, biasing test generation toward weak areas
 - Optional test accumulation (`accumulateTests`) carries full test pool across iterations with case-insensitive dedup; `maxAccumulatedTests` caps growth
-- Stop: `coverage >= targetCoverage` (default 0.9). Coverage = `min(TPR, TNR)`
+- Stop conditions: `coverage >= targetCoverage` (default 0.9), or `consecutiveRegressions >= maxRegressions` (default 3, 0 = disabled). Coverage = `min(TPR, TNR)`
+- **Early stopping on regression**: `RunState.consecutiveRegressions` tracks how many consecutive iterations failed to improve `bestCoverage`. Resets to 0 on improvement. `UserInput.maxRegressions` controls the threshold (default 3, 0 disables).
 
 ### AIRS Integration (`src/airs/`)
 - **Scanner**: `Scanner.syncScan()` via SDK, detection = `prompt_detected.topic_violation` (fallback: `topic_guardrails_details`), extracts `category` from response

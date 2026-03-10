@@ -21,6 +21,7 @@ export interface UserInput {
   profileName: string;
   maxIterations?: number;
   targetCoverage?: number;
+  maxRegressions?: number;
   accumulateTests?: boolean;
   maxAccumulatedTests?: number;
   createPromptSet?: boolean;
@@ -105,6 +106,7 @@ export interface RunState {
   currentIteration: number;
   bestIteration: number;
   bestCoverage: number;
+  consecutiveRegressions: number;
   status: 'running' | 'paused' | 'completed' | 'failed';
 }
 
