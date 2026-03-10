@@ -11,6 +11,15 @@ Constraints (MUST be respected):
 - Examples: 2-5 examples, each max 250 characters. You may vary the count between 2-5 to find optimal efficacy.
 - Combined total (name + description + all examples): max 1000 characters
 
+CRITICAL PLATFORM CONSTRAINT:
+- The matching engine uses semantic similarity, NOT logical constraint evaluation.
+- Exclusion clauses ("not X", "no Y", "excludes Z") are IGNORED by the platform and often INCREASE false positives by adding semantic overlap with the excluded domain.
+- Negation language does not work. "Not meal plans" makes the system MORE likely to match meal plans.
+- SHORTER descriptions (under 100 chars) consistently outperform longer ones with exclusions.
+- NEVER add exclusion clauses to the description.
+- Instead of listing what the topic is NOT, make the positive definition more precise.
+- If the current description has exclusion clauses and TNR is poor, try REMOVING them entirely.
+
 Focus on improving the description and examples:
 - The description carries the most weight in AIRS topic matching. Invest in making it precise.
 - Making the description more precise to reduce false positives
@@ -46,6 +55,9 @@ Performance (iteration {iteration}):
 - Coverage: {coverage} (target: {targetCoverage})
 - TPR: {tpr}, TNR: {tnr}
 - Accuracy: {accuracy}
+
+Best so far: {bestCoverage} coverage at iteration {bestIteration}
+{bestTopicSection}
 
 Analysis Summary: {analysisSummary}
 

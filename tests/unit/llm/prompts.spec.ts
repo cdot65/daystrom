@@ -63,5 +63,129 @@ describe('prompt templates', () => {
     expect(vars).toContain('iteration');
     expect(vars).toContain('intent');
     expect(vars).toContain('memorySection');
+    expect(vars).toContain('bestCoverage');
+    expect(vars).toContain('bestIteration');
+    expect(vars).toContain('bestTopicSection');
+  });
+
+  it('improveTopicPrompt system message includes platform constraint warning', async () => {
+    const messages = await improveTopicPrompt.formatMessages({
+      currentName: 'Test',
+      currentDescription: 'Test desc',
+      currentExamples: 'ex1, ex2',
+      exampleCount: 2,
+      iteration: 2,
+      coverage: '50.0%',
+      targetCoverage: '90.0%',
+      tpr: '50.0%',
+      tnr: '50.0%',
+      accuracy: '50.0%',
+      bestCoverage: '60.0%',
+      bestIteration: 1,
+      bestTopicSection: '',
+      analysisSummary: 'summary',
+      fpPatterns: 'None',
+      fnPatterns: 'None',
+      specificFPs: 'None',
+      specificFNs: 'None',
+      suggestions: 'suggestion',
+      intent: 'block',
+      memorySection: '',
+    });
+    const systemContent = messages[0].content as string;
+    expect(systemContent).toContain('CRITICAL PLATFORM CONSTRAINT');
+    expect(systemContent).toContain('Exclusion clauses');
+    expect(systemContent).toContain('SHORTER descriptions');
+  });
+
+  it('improveTopicPrompt includes best context in human message', async () => {
+    const messages = await improveTopicPrompt.formatMessages({
+      currentName: 'Test',
+      currentDescription: 'Test desc',
+      currentExamples: 'ex1, ex2',
+      exampleCount: 2,
+      iteration: 3,
+      coverage: '50.0%',
+      targetCoverage: '90.0%',
+      tpr: '50.0%',
+      tnr: '50.0%',
+      accuracy: '50.0%',
+      bestCoverage: '70.0%',
+      bestIteration: 2,
+      bestTopicSection: '',
+      analysisSummary: 'summary',
+      fpPatterns: 'None',
+      fnPatterns: 'None',
+      specificFPs: 'None',
+      specificFNs: 'None',
+      suggestions: 'suggestion',
+      intent: 'block',
+      memorySection: '',
+    });
+    const humanContent = messages[1].content as string;
+    expect(humanContent).toContain('Best so far: 70.0% coverage at iteration 2');
+  });
+
+  it('improveTopicPrompt includes regression warning when coverage regresses', async () => {
+    const regressionWarning = `REGRESSION WARNING: Coverage has dropped from 70.0% (iteration 2) to 50.0%.
+The best-performing definition was:
+  Description: Best desc
+  Examples: ex1, ex2
+Consider reverting toward this simpler definition rather than adding more specificity.`;
+
+    const messages = await improveTopicPrompt.formatMessages({
+      currentName: 'Test',
+      currentDescription: 'Test desc',
+      currentExamples: 'ex1, ex2',
+      exampleCount: 2,
+      iteration: 3,
+      coverage: '50.0%',
+      targetCoverage: '90.0%',
+      tpr: '50.0%',
+      tnr: '50.0%',
+      accuracy: '50.0%',
+      bestCoverage: '70.0%',
+      bestIteration: 2,
+      bestTopicSection: regressionWarning,
+      analysisSummary: 'summary',
+      fpPatterns: 'None',
+      fnPatterns: 'None',
+      specificFPs: 'None',
+      specificFNs: 'None',
+      suggestions: 'suggestion',
+      intent: 'block',
+      memorySection: '',
+    });
+    const humanContent = messages[1].content as string;
+    expect(humanContent).toContain('REGRESSION WARNING');
+    expect(humanContent).toContain('Best desc');
+  });
+
+  it('improveTopicPrompt omits regression warning when coverage is at or above best', async () => {
+    const messages = await improveTopicPrompt.formatMessages({
+      currentName: 'Test',
+      currentDescription: 'Test desc',
+      currentExamples: 'ex1, ex2',
+      exampleCount: 2,
+      iteration: 3,
+      coverage: '70.0%',
+      targetCoverage: '90.0%',
+      tpr: '70.0%',
+      tnr: '70.0%',
+      accuracy: '70.0%',
+      bestCoverage: '70.0%',
+      bestIteration: 2,
+      bestTopicSection: '',
+      analysisSummary: 'summary',
+      fpPatterns: 'None',
+      fnPatterns: 'None',
+      specificFPs: 'None',
+      specificFNs: 'None',
+      suggestions: 'suggestion',
+      intent: 'block',
+      memorySection: '',
+    });
+    const humanContent = messages[1].content as string;
+    expect(humanContent).not.toContain('REGRESSION WARNING');
   });
 });

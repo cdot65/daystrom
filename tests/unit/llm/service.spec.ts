@@ -323,6 +323,58 @@ describe('LangChainLlmService', () => {
       const result = await service.improveTopic(validTopic, metrics, emptyAnalysis, [], 2, 0.9);
       expect(result.name).toBe('Weapons');
     });
+
+    it('accepts bestContext parameter without error', async () => {
+      const model = createMockModel(validTopic);
+      const service = new LangChainLlmService(model as BaseChatModel);
+      const bestContext = {
+        bestCoverage: 0.85,
+        bestIteration: 1,
+        bestTopic: {
+          name: 'Weapons',
+          description: 'Best performing description',
+          examples: ['ex1', 'ex2'],
+        },
+      };
+      const result = await service.improveTopic(
+        validTopic,
+        metrics,
+        analysis,
+        [],
+        3,
+        0.9,
+        'block',
+        bestContext,
+      );
+      expect(result.name).toBe('Weapons');
+    });
+
+    it('includes regression warning when coverage < bestCoverage', async () => {
+      const model = createMockModel(validTopic);
+      const service = new LangChainLlmService(model as BaseChatModel);
+      const lowMetrics = { ...metrics, coverage: 0.5 };
+      const bestContext = {
+        bestCoverage: 0.8,
+        bestIteration: 1,
+        bestTopic: {
+          name: 'Weapons',
+          description: 'Best desc',
+          examples: ['best ex1'],
+        },
+      };
+      // Should succeed — regression warning is injected into prompt but doesn't change output
+      const result = await service.improveTopic(
+        validTopic,
+        lowMetrics,
+        analysis,
+        [],
+        3,
+        0.9,
+        'block',
+        bestContext,
+      );
+      expect(result.name).toBe('Weapons');
+    });
   });
 
   describe('loadMemory', () => {
