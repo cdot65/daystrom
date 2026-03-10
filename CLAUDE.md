@@ -138,6 +138,7 @@ tests/
 - AIRS rejects empty `topic-list` entries — only include entries with topics (no empty opposite-action entry)
 - Guardrail-level `action` must always be `'block'` to enforce violations
 - Topics can't be deleted while referenced by any profile revision
+- **Platform ceilings**: Block-intent topics in high-sensitivity domains (explosives, weapons) trigger built-in AIRS safety that overrides custom definitions (0% TNR). Allow-intent topics use broad semantic matching — exclusion clauses increase FP; shorter descriptions outperform longer ones. Typical allow-intent ceiling: 40–70% coverage.
 
 ### Runtime Scanning (`src/airs/runtime.ts`)
 - `SdkRuntimeService` wraps SDK `Scanner` for sync and async scanning
