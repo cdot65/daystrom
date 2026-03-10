@@ -172,6 +172,66 @@ describe('SdkRuntimeService', () => {
     });
   });
 
+  describe('submitBulkScan — edge cases', () => {
+    it('returns empty array for empty prompts', async () => {
+      const scanIds = await service.submitBulkScan('p', []);
+      expect(mockScannerInstance.asyncScan).not.toHaveBeenCalled();
+      expect(scanIds).toEqual([]);
+    });
+
+    it('exactly 5 prompts creates 1 batch (not 2)', async () => {
+      mockScannerInstance.asyncScan.mockResolvedValue({
+        received: '2026-03-09T00:00:00Z',
+        scan_id: 'batch-5',
+      });
+
+      const prompts = Array.from({ length: 5 }, (_, i) => `p${i}`);
+      const scanIds = await service.submitBulkScan('profile', prompts);
+      expect(mockScannerInstance.asyncScan).toHaveBeenCalledTimes(1);
+      expect(scanIds).toHaveLength(1);
+      expect(mockScannerInstance.asyncScan.mock.calls[0][0]).toHaveLength(5);
+    });
+
+    it('6 prompts creates 2 batches (5 + 1)', async () => {
+      mockScannerInstance.asyncScan
+        .mockResolvedValueOnce({ received: '2026-03-09T00:00:00Z', scan_id: 'batch-a' })
+        .mockResolvedValueOnce({ received: '2026-03-09T00:00:00Z', scan_id: 'batch-b' });
+
+      const prompts = Array.from({ length: 6 }, (_, i) => `p${i}`);
+      const scanIds = await service.submitBulkScan('profile', prompts);
+      expect(mockScannerInstance.asyncScan).toHaveBeenCalledTimes(2);
+      expect(scanIds).toEqual(['batch-a', 'batch-b']);
+      expect(mockScannerInstance.asyncScan.mock.calls[0][0]).toHaveLength(5);
+      expect(mockScannerInstance.asyncScan.mock.calls[1][0]).toHaveLength(1);
+    });
+  });
+
+  describe('pollResults — edge cases', () => {
+    it('handles mix of COMPLETED and FAILED statuses in single poll', async () => {
+      mockScannerInstance.queryByScanIds.mockResolvedValueOnce([
+        {
+          scan_id: 's1',
+          status: 'COMPLETED',
+          result: { scan_id: 's1', report_id: 'r1', action: 'block', category: 'malicious' },
+        },
+        { scan_id: 's2', status: 'FAILED' },
+        {
+          scan_id: 's3',
+          status: 'COMPLETED',
+          result: { scan_id: 's3', report_id: 'r3', action: 'allow', category: 'benign' },
+        },
+      ]);
+
+      const results = await service.pollResults(['s1', 's2', 's3'], 10);
+      expect(results).toHaveLength(3);
+      expect(results[0].action).toBe('block');
+      expect(results[1].action).toBe('allow');
+      expect(results[1].category).toBe('error');
+      expect(results[2].action).toBe('allow');
+      expect(results[2].category).toBe('benign');
+    });
+  });
+
   describe('formatResultsCsv', () => {
     it('produces CSV with header and data rows', () => {
       const results = [
@@ -220,6 +280,31 @@ describe('SdkRuntimeService', () => {
 
       const csv = SdkRuntimeService.formatResultsCsv(results);
       expect(csv).toContain('"say ""hello"""');
+    });
+
+    it('handles prompts with commas (CSV escaping)', () => {
+      const results = [
+        {
+          prompt: 'hello, world, test',
+          response: undefined,
+          scanId: 's1',
+          reportId: 'r1',
+          action: 'allow' as const,
+          category: 'benign',
+          triggered: false,
+          detections: {},
+        },
+      ];
+
+      const csv = SdkRuntimeService.formatResultsCsv(results);
+      const lines = csv.split('\n');
+      // prompt is wrapped in quotes so commas don't break CSV parsing
+      expect(lines[1]).toBe('"hello, world, test","allow","benign","false","s1","r1"');
+    });
+
+    it('returns header only for empty results array', () => {
+      const csv = SdkRuntimeService.formatResultsCsv([]);
+      expect(csv).toBe('prompt,action,category,triggered,scan_id,report_id');
     });
   });
 });
