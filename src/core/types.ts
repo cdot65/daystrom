@@ -141,4 +141,6 @@ export type LoopEvent =
   | { type: 'topic:reverted'; topic: CustomTopic; revertedToIteration: number }
   | { type: 'loop:plateau'; band: [number, number]; bestCoverage: number }
   | { type: 'topic:duplicate'; topic: CustomTopic; duplicateOfIteration: number }
-  | { type: 'promptset:created'; promptSetId: string; promptSetName: string; promptCount: number };
+  | { type: 'promptset:created'; promptSetId: string; promptSetName: string; promptCount: number }
+  | { type: 'probe:waiting'; attempt: number; maxAttempts: number }
+  | { type: 'probe:ready'; attempts: number };

@@ -67,6 +67,10 @@ export interface LoopDependencies {
   memory?: { extractor: LearningExtractor };
   /** Optional prompt set service for creating custom prompt sets from test cases. */
   promptSets?: PromptSetService;
+  /** Interval (ms) between warm-up probe retries. Default 5000. */
+  probeIntervalMs?: number;
+  /** Max warm-up probe attempts on iteration 1. Default 6. */
+  maxProbeAttempts?: number;
 }
 
 function delay(ms: number): Promise<void> {
@@ -280,6 +284,44 @@ export async function* runLoop(
     // Wait for propagation
     if (propagationDelay > 0) {
       await delay(propagationDelay);
+    }
+
+    // Warm-up probe: verify topic is active before first scan.
+    // Iteration 1 requires both topic creation AND profile revision propagation,
+    // which takes longer than the content-only updates on iteration 2+.
+    if (i === 1 && topic.examples.length > 0) {
+      const probePrompt = topic.examples[0];
+      const maxProbeAttempts = deps.maxProbeAttempts ?? 6;
+      const probeIntervalMs = deps.probeIntervalMs ?? 5000;
+
+      for (let attempt = 1; attempt <= maxProbeAttempts; attempt++) {
+        const probeResult = await deps.scanner.scan(
+          input.profileName,
+          probePrompt,
+          `daystrom-${runState.id.slice(0, 7)}-probe`,
+        );
+
+        let matched: boolean;
+        if (input.intent === 'allow' && probeResult.category) {
+          matched = probeResult.category === 'benign';
+        } else {
+          matched = probeResult.triggered;
+        }
+
+        if (matched) {
+          yield { type: 'probe:ready' as const, attempts: attempt };
+          break;
+        }
+
+        if (attempt < maxProbeAttempts) {
+          yield {
+            type: 'probe:waiting' as const,
+            attempt,
+            maxAttempts: maxProbeAttempts,
+          };
+          await delay(probeIntervalMs);
+        }
+      }
     }
 
     // Step 3: Generate test cases (with category breakdown for weighted generation)

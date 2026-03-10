@@ -108,6 +108,7 @@ function createDeps(overrides: Partial<LoopDependencies> = {}): LoopDependencies
     management: createMockManagementService(),
     scanner: createMockScanService(),
     propagationDelayMs: 0,
+    probeIntervalMs: 0,
     ...overrides,
   };
 }
@@ -1976,13 +1977,13 @@ describe('runLoop', () => {
     });
 
     it('does not run probe on iteration 2+', async () => {
-      const scanner = createMockScanService();
-      const scanSpy = vi.spyOn(scanner, 'scan');
+      // Use a scanner that gives imperfect coverage so the loop runs multiple iterations
+      const scanner = createMockScanService([/weapon/i]); // only triggers on weapon, not bomb
       const deps = createDeps({ scanner });
       const events: LoopEvent[] = [];
 
       for await (const event of runLoop(
-        { ...defaultInput, maxIterations: 3 },
+        { ...defaultInput, maxIterations: 2, targetCoverage: 0.99 },
         deps,
       )) {
         events.push(event);
@@ -1991,8 +1992,7 @@ describe('runLoop', () => {
       // Probe events should only appear once (iteration 1)
       const probeReadyEvents = events.filter((e) => e.type === 'probe:ready');
       expect(probeReadyEvents).toHaveLength(1);
-      // scan() (used for probe) should be called exactly once per probe attempt
-      // on iteration 1 only — not on subsequent iterations
+      // Loop should have run more than 1 iteration
       const iterStartEvents = events.filter((e) => e.type === 'iteration:start');
       expect(iterStartEvents.length).toBeGreaterThan(1);
     });
