@@ -1976,6 +1976,60 @@ describe('runLoop', () => {
       expect((readyEvents[0] as { attempts: number }).attempts).toBe(2);
     });
 
+    it('probe:ready appears after apply:complete and before test:progress', async () => {
+      const deps = createDeps();
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 1 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const applyIdx = events.findIndex((e) => e.type === 'apply:complete');
+      const probeIdx = events.findIndex((e) => e.type === 'probe:ready');
+      const testIdx = events.findIndex((e) => e.type === 'test:progress');
+      expect(applyIdx).toBeGreaterThan(-1);
+      expect(probeIdx).toBeGreaterThan(applyIdx);
+      expect(probeIdx).toBeLessThan(testIdx);
+    });
+
+    it('respects custom maxProbeAttempts', async () => {
+      const scanner: ScanService = {
+        scan: async () => ({
+          scanId: 'scan-probe',
+          reportId: 'report-probe',
+          action: 'allow' as const,
+          triggered: false,
+          category: 'benign',
+        }),
+        scanBatch: async (_profile: string, prompts: string[]) => {
+          return prompts.map((_, idx) => ({
+            scanId: `scan-batch-${idx}`,
+            reportId: `report-batch-${idx}`,
+            action: 'block' as const,
+            triggered: true,
+            category: 'malicious',
+          }));
+        },
+      };
+
+      const deps = createDeps({ scanner, maxProbeAttempts: 3 });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 1 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      // Should emit waiting events up to maxProbeAttempts - 1
+      const waitingEvents = events.filter((e) => e.type === 'probe:waiting');
+      expect(waitingEvents).toHaveLength(2); // attempts 1 and 2 (not 3, since 3 is the last)
+    });
+
     it('does not run probe on iteration 2+', async () => {
       // Use a scanner that gives imperfect coverage so the loop runs multiple iterations
       const scanner = createMockScanService([/weapon/i]); // only triggers on weapon, not bomb
