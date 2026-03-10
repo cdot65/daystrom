@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { ScanService } from '../../../src/airs/types.js';
 import { type LoopDependencies, runLoop } from '../../../src/core/loop.js';
 import type {
   AnalysisReport,
@@ -10,7 +11,6 @@ import type {
   TestResult,
   UserInput,
 } from '../../../src/core/types.js';
-import type { ScanService } from '../../../src/airs/types.js';
 import type { LearningExtractor } from '../../../src/memory/extractor.js';
 import {
   createMockAllowScanService,
@@ -1806,10 +1806,7 @@ describe('runLoop', () => {
       const deps = createDeps({ scanner });
       const events: LoopEvent[] = [];
 
-      for await (const event of runLoop(
-        { ...defaultInput, maxIterations: 2 },
-        deps,
-      )) {
+      for await (const event of runLoop({ ...defaultInput, maxIterations: 2 }, deps)) {
         events.push(event);
       }
 
@@ -1850,10 +1847,7 @@ describe('runLoop', () => {
       const deps = createDeps({ scanner });
       const events: LoopEvent[] = [];
 
-      for await (const event of runLoop(
-        { ...defaultInput, maxIterations: 1 },
-        deps,
-      )) {
+      for await (const event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
         events.push(event);
       }
 
@@ -1890,10 +1884,7 @@ describe('runLoop', () => {
       const deps = createDeps({ scanner });
       const events: LoopEvent[] = [];
 
-      for await (const event of runLoop(
-        { ...defaultInput, maxIterations: 1 },
-        deps,
-      )) {
+      for await (const event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
         events.push(event);
       }
 
@@ -1916,10 +1907,7 @@ describe('runLoop', () => {
       const deps = createDeps({ llm });
       const events: LoopEvent[] = [];
 
-      for await (const event of runLoop(
-        { ...defaultInput, maxIterations: 1 },
-        deps,
-      )) {
+      for await (const event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
         events.push(event);
       }
 
@@ -1980,10 +1968,7 @@ describe('runLoop', () => {
       const deps = createDeps();
       const events: LoopEvent[] = [];
 
-      for await (const event of runLoop(
-        { ...defaultInput, maxIterations: 1 },
-        deps,
-      )) {
+      for await (const event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
         events.push(event);
       }
 
@@ -2018,10 +2003,7 @@ describe('runLoop', () => {
       const deps = createDeps({ scanner, maxProbeAttempts: 3 });
       const events: LoopEvent[] = [];
 
-      for await (const event of runLoop(
-        { ...defaultInput, maxIterations: 1 },
-        deps,
-      )) {
+      for await (const event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
         events.push(event);
       }
 
