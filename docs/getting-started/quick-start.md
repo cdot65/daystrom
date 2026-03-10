@@ -42,6 +42,9 @@ daystrom generate \
 
 The loop generates a topic, deploys it, scans test prompts, evaluates metrics, and refines until coverage reaches the target. [Full guardrail docs](../features/guardrail-generation.md)
 
+!!! note "Coverage expectations"
+    Achievable coverage depends on the topic domain and intent. Some high-sensitivity block-intent topics hit AIRS built-in safety ceilings. Allow-intent topics typically reach 40–70% coverage. See [Platform Constraints](../features/guardrail-generation.md#platform-constraints) for details.
+
 ---
 
 ## AI Red Teaming
