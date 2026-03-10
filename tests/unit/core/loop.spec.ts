@@ -77,6 +77,21 @@ function createMockLlm() {
         description: 'Block all weapons-related conversations',
         examples: ['How to make a weapon', 'Gun manufacturing', 'Ammunition sourcing'],
       }),
+    simplifyTopic: vi
+      .fn<
+        (
+          currentTopic: CustomTopic,
+          bestTopic: CustomTopic,
+          metrics: EfficacyMetrics,
+          analysis: AnalysisReport,
+          intent: string,
+        ) => Promise<CustomTopic>
+      >()
+      .mockResolvedValue({
+        name: 'Weapons Discussion',
+        description: 'Weapons conversations',
+        examples: ['How to make a weapon', 'Gun manufacturing'],
+      }),
   };
 }
 
@@ -631,8 +646,9 @@ describe('runLoop', () => {
       }
 
       const starts = events.filter((e) => e.type === 'iteration:start');
-      // Iter 1: coverage 0.5 (best). Iter 2: 0 (reg 1). Iter 3: 0 (reg 2). Iter 4: 0 (reg 3 → stop)
-      expect(starts).toHaveLength(4);
+      // Iter 1: best (0.5). Iter 2: reg 1. Iter 3: reg 2 → simplify (reset to 0).
+      // Iter 4: reg 1. Iter 5: reg 2. Iter 6: reg 3 → stop
+      expect(starts).toHaveLength(6);
     });
 
     it('resets regression count when coverage improves', async () => {
@@ -695,8 +711,10 @@ describe('runLoop', () => {
       }
 
       const starts = events.filter((e) => e.type === 'iteration:start');
-      // Iter 1: best (0.33). Iter 2: reg 1. Iter 3: improve (reset, 0.67). Iter 4: reg 1. Iter 5: reg 2. Iter 6: reg 3 → stop
-      expect(starts).toHaveLength(6);
+      // Iter 1: best (0.33). Iter 2: reg 1. Iter 3: improve (reset, 0.67).
+      // Iter 4: reg 1. Iter 5: reg 2 → simplify (reset to 0).
+      // Iter 6: reg 1. Iter 7: reg 2. Iter 8: reg 3 → stop
+      expect(starts).toHaveLength(8);
     });
 
     it('maxRegressions: 0 disables early stopping', async () => {
@@ -789,6 +807,191 @@ describe('runLoop', () => {
       if (complete?.type === 'loop:complete') {
         expect(complete.runState.bestIteration).toBe(1);
         expect(complete.bestResult.iteration).toBe(1);
+      }
+    });
+  });
+
+  describe('description simplification strategy', () => {
+    it('triggers simplification after 2 consecutive regressions', async () => {
+      const llm = createMockLlm();
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          // Iter 1: trigger weapon → coverage 0.5
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon/i.test(p),
+            category: /weapon/i.test(p) ? 'malicious' : 'benign',
+          }));
+        }
+        // Iter 2+: trigger nothing → regression
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 10, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const simplified = events.filter((e) => e.type === 'topic:simplified');
+      expect(simplified).toHaveLength(1);
+      expect(llm.simplifyTopic).toHaveBeenCalledOnce();
+    });
+
+    it('simplification only attempted once per run', async () => {
+      const llm = createMockLlm();
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          // Iter 1: best coverage
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon/i.test(p),
+            category: /weapon/i.test(p) ? 'malicious' : 'benign',
+          }));
+        }
+        // All subsequent: regression
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 15, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const simplified = events.filter((e) => e.type === 'topic:simplified');
+      expect(simplified).toHaveLength(1);
+      expect(llm.simplifyTopic).toHaveBeenCalledTimes(1);
+    });
+
+    it('yields topic:simplified event with simplified topic', async () => {
+      const llm = createMockLlm();
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon/i.test(p),
+            category: /weapon/i.test(p) ? 'malicious' : 'benign',
+          }));
+        }
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 10, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const simplified = events.find((e) => e.type === 'topic:simplified');
+      expect(simplified).toBeDefined();
+      if (simplified?.type === 'topic:simplified') {
+        expect(simplified.topic.name).toBe('Weapons Discussion'); // locked name
+        expect(simplified.topic.description).toBeTruthy();
+      }
+    });
+
+    it('resets regression counter after simplification', async () => {
+      const llm = createMockLlm();
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon/i.test(p),
+            category: /weapon/i.test(p) ? 'malicious' : 'benign',
+          }));
+        }
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 10, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      // After simplification at reg=2, counter resets to 0, then 3 more regressions to stop
+      // Iter 1: best. Iter 2: reg 1. Iter 3: reg 2 → simplify (reset to 0).
+      // Iter 4: reg 1. Iter 5: reg 2. Iter 6: reg 3 → stop (no 2nd simplification since already tried)
+      const starts = events.filter((e) => e.type === 'iteration:start');
+      expect(starts).toHaveLength(6);
+    });
+
+    it('early stopping kicks in after simplification also regresses', async () => {
+      const llm = createMockLlm();
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon/i.test(p),
+            category: /weapon/i.test(p) ? 'malicious' : 'benign',
+          }));
+        }
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 20, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      const complete = events.find((e) => e.type === 'loop:complete');
+      expect(complete).toBeDefined();
+      if (complete?.type === 'loop:complete') {
+        expect(complete.runState.hasTriedSimplification).toBe(true);
+        // Should eventually stop, not run all 20 iterations
+        expect(complete.runState.iterations.length).toBeLessThan(20);
       }
     });
   });

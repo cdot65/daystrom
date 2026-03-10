@@ -117,7 +117,7 @@ tests/
 
 ### Core Loop (`src/core/loop.ts`)
 - `runLoop()` async generator yields typed `LoopEvent` discriminated unions
-- Events yielded by `runLoop()`: `iteration:start`, `generate:complete`, `apply:complete`, `tests:composed` (iter 2+, always-on composition), `tests:accumulated` (if accumulation enabled, iter 2+), `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete`, `memory:extracted` (if memory enabled), `promptset:created` (if `--create-prompt-set`), `loop:complete`
+- Events yielded by `runLoop()`: `iteration:start`, `generate:complete`, `apply:complete`, `tests:composed` (iter 2+, always-on composition), `tests:accumulated` (if accumulation enabled, iter 2+), `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete`, `topic:simplified` (after 2 consecutive regressions, once per run), `memory:extracted` (if memory enabled), `promptset:created` (if `--create-prompt-set`), `loop:complete`
 - Events defined in `LoopEvent` union but **not yielded** by `runLoop()`: `loop:paused` (reserved for future use), `memory:loaded` (emitted by CLI before loop starts)
 - `apply:complete` is yielded but intentionally unhandled in CLI commands (no user-facing output needed)
 - Topic name **locked after iteration 1** — only description+examples change thereafter
@@ -127,6 +127,7 @@ tests/
 - Optional test accumulation (`accumulateTests`) carries full test pool across iterations with case-insensitive dedup; `maxAccumulatedTests` caps growth
 - Stop conditions: `coverage >= targetCoverage` (default 0.9), or `consecutiveRegressions >= maxRegressions` (default 3, 0 = disabled). Coverage = `min(TPR, TNR)`
 - **Early stopping on regression**: `RunState.consecutiveRegressions` tracks how many consecutive iterations failed to improve `bestCoverage`. Resets to 0 on improvement. `UserInput.maxRegressions` controls the threshold (default 3, 0 disables).
+- **Description simplification**: After 2 consecutive regressions, if `hasTriedSimplification` is false and a best iteration exists, the loop calls `simplifyTopic()` to strip exclusion clauses and shorten the description. Resets regression counter to 0. Only attempted once per run (`RunState.hasTriedSimplification`). If simplification also regresses, early stopping kicks in at `maxRegressions`.
 
 ### AIRS Integration (`src/airs/`)
 - **Scanner**: `Scanner.syncScan()` via SDK, detection = `prompt_detected.topic_violation` (fallback: `topic_guardrails_details`), extracts `category` from response
@@ -174,7 +175,7 @@ tests/
 - 6 providers: `claude-api` (default), `claude-vertex`, `claude-bedrock`, `gemini-api`, `gemini-vertex`, `gemini-bedrock`
 - Default model: `claude-opus-4-6` (Vertex: `claude-opus-4-6`, Bedrock: `anthropic.claude-opus-4-6-v1`), Gemini providers: `gemini-2.5-pro`
 - `claude-vertex` default region: `global` (not `us-central1`)
-- All 4 calls use `withStructuredOutput(ZodSchema)` — 3 retries on parse failure
+- All 5 calls (generateTopic, generateTests, analyzeResults, improveTopic, simplifyTopic) use `withStructuredOutput(ZodSchema)` — 3 retries on parse failure
 - Memory injected via `{memorySection}` template variable
 - `clampTopic()` enforces AIRS constraints post-LLM (not Zod) — drops examples, trims description
 - `improveTopic()` accepts optional `bestContext` param `{ bestCoverage, bestIteration, bestTopic? }` — injects regression warnings into the prompt when coverage drops below the best iteration, and always shows best-iteration context

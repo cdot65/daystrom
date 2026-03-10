@@ -6,6 +6,7 @@ import {
   generateTopicPrompt,
 } from '../../../src/llm/prompts/generate-topic.js';
 import { improveTopicPrompt } from '../../../src/llm/prompts/improve-topic.js';
+import { simplifyTopicPrompt } from '../../../src/llm/prompts/simplify-topic.js';
 
 describe('buildSeedExamplesSection', () => {
   it('returns empty string for undefined', () => {
@@ -159,6 +160,41 @@ Consider reverting toward this simpler definition rather than adding more specif
     const humanContent = messages[1].content as string;
     expect(humanContent).toContain('REGRESSION WARNING');
     expect(humanContent).toContain('Best desc');
+  });
+
+  it('simplifyTopicPrompt has expected input variables', () => {
+    const vars = simplifyTopicPrompt.inputVariables;
+    expect(vars).toContain('currentName');
+    expect(vars).toContain('currentDescription');
+    expect(vars).toContain('currentExamples');
+    expect(vars).toContain('bestCoverage');
+    expect(vars).toContain('bestDescription');
+    expect(vars).toContain('bestExamples');
+    expect(vars).toContain('coverage');
+    expect(vars).toContain('tpr');
+    expect(vars).toContain('tnr');
+    expect(vars).toContain('intent');
+    expect(vars).toContain('memorySection');
+  });
+
+  it('simplifyTopicPrompt system message includes simplification guidance', async () => {
+    const messages = await simplifyTopicPrompt.formatMessages({
+      currentName: 'Test',
+      currentDescription: 'Long over-refined description with not X and excludes Y',
+      currentExamples: 'ex1, ex2, ex3',
+      bestCoverage: '66.0%',
+      bestDescription: 'Short clear description',
+      bestExamples: 'ex1, ex2',
+      coverage: '40.0%',
+      tpr: '80.0%',
+      tnr: '40.0%',
+      intent: 'allow',
+      memorySection: '',
+    });
+    const systemContent = messages[0].content as string;
+    expect(systemContent).toContain('SIMPLIFICATION WORKS');
+    expect(systemContent).toContain('under 100 chars');
+    expect(systemContent).toContain('Exclusion clauses');
   });
 
   it('improveTopicPrompt omits regression warning when coverage is at or above best', async () => {

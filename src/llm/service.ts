@@ -22,6 +22,7 @@ import { analyzeResultsPrompt } from './prompts/analyze-results.js';
 import { generateTestsPrompt } from './prompts/generate-tests.js';
 import { buildSeedExamplesSection, generateTopicPrompt } from './prompts/generate-topic.js';
 import { improveTopicPrompt } from './prompts/improve-topic.js';
+import { simplifyTopicPrompt } from './prompts/simplify-topic.js';
 import {
   type AnalysisReportOutput,
   AnalysisReportSchema,
@@ -256,6 +257,56 @@ Consider reverting toward this simpler definition rather than adding more specif
           specificFPs: fps.map((r) => `- "${r.testCase.prompt}"`).join('\n') || 'None',
           specificFNs: fns.map((r) => `- "${r.testCase.prompt}"`).join('\n') || 'None',
           suggestions: analysis.suggestions.join('; '),
+          intent,
+          memorySection: this.memorySection,
+        });
+        const result = clampTopic(raw as unknown as CustomTopicOutput);
+
+        const errors = validateTopic(result);
+        if (errors.length === 0) return result;
+
+        if (attempt === MAX_RETRIES - 1) {
+          throw new Error(
+            `LLM output violates constraints after ${MAX_RETRIES} attempts: ${errors.map((e) => e.message).join(', ')}`,
+          );
+        }
+      } catch (err) {
+        if (attempt === MAX_RETRIES - 1) throw err;
+      }
+    }
+
+    /* v8 ignore next */
+    throw new Error('Unreachable');
+  }
+
+  async simplifyTopic(
+    currentTopic: CustomTopic,
+    bestTopic: CustomTopic,
+    metrics: EfficacyMetrics,
+    _analysis: AnalysisReport,
+    intent: string,
+  ): Promise<CustomTopic> {
+    const structured = this.model.withStructuredOutput(CustomTopicSchema);
+    const chain = simplifyTopicPrompt.pipe(structured);
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const raw = await chain.invoke({
+          currentName: currentTopic.name,
+          currentDescription: currentTopic.description,
+          currentExamples:
+            currentTopic.examples.length > 0
+              ? currentTopic.examples.join(', ')
+              : 'None (description-only)',
+          bestCoverage: `${(metrics.coverage * 100).toFixed(1)}%`,
+          bestDescription: bestTopic.description,
+          bestExamples:
+            bestTopic.examples.length > 0
+              ? bestTopic.examples.join(', ')
+              : 'None (description-only)',
+          coverage: `${(metrics.coverage * 100).toFixed(1)}%`,
+          tpr: `${(metrics.truePositiveRate * 100).toFixed(1)}%`,
+          tnr: `${(metrics.trueNegativeRate * 100).toFixed(1)}%`,
           intent,
           memorySection: this.memorySection,
         });

@@ -179,6 +179,10 @@ export function registerGenerateCommand(program: Command): void {
             case 'iteration:complete':
               renderIterationSummary(event.result);
               break;
+            case 'topic:simplified':
+              console.log('  ⚡ Topic simplified after consecutive regressions');
+              renderTopic(event.topic);
+              break;
             case 'memory:extracted':
               renderMemoryExtracted(event.learningCount);
               break;

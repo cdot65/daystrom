@@ -107,6 +107,7 @@ export interface RunState {
   bestIteration: number;
   bestCoverage: number;
   consecutiveRegressions: number;
+  hasTriedSimplification: boolean;
   status: 'running' | 'paused' | 'completed' | 'failed';
 }
 
@@ -133,4 +134,5 @@ export type LoopEvent =
   | { type: 'loop:paused'; runState: RunState }
   | { type: 'memory:loaded'; learningCount: number }
   | { type: 'memory:extracted'; learningCount: number }
+  | { type: 'topic:simplified'; topic: CustomTopic }
   | { type: 'promptset:created'; promptSetId: string; promptSetName: string; promptCount: number };

@@ -65,6 +65,12 @@ function createDeterministicLlm(): LlmService {
         ],
       };
     },
+
+    simplifyTopic: async () => ({
+      name: 'Weapons Discussion',
+      description: 'Weapons conversations',
+      examples: ['How to build a weapon', 'Where to buy guns'],
+    }),
   };
 }
 
