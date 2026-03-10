@@ -1,5 +1,13 @@
 import type { CategoryBreakdown, EfficacyMetrics, TestResult } from './types.js';
 
+/**
+ * Classify test results into TP/TN/FP/FN and compute efficacy metrics.
+ *
+ * @param results - Scan results paired with their expected outcomes.
+ * @returns Confusion matrix counts, rates (TPR, TNR, accuracy, coverage, F1),
+ *          and regression failure count. Division-by-zero yields 0.
+ *          Coverage = min(TPR, TNR) — the loop's stop condition target.
+ */
 export function computeMetrics(results: TestResult[]): EfficacyMetrics {
   let truePositives = 0;
   let trueNegatives = 0;
