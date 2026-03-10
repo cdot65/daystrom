@@ -183,6 +183,11 @@ export function registerGenerateCommand(program: Command): void {
               console.log('  ⚡ Topic simplified after consecutive regressions');
               renderTopic(event.topic);
               break;
+            case 'topic:duplicate':
+              console.log(
+                `  ⚠ Topic identical to iteration ${event.duplicateOfIteration} — skipping scan`,
+              );
+              break;
             case 'memory:extracted':
               renderMemoryExtracted(event.learningCount);
               break;
