@@ -202,6 +202,14 @@ export function registerGenerateCommand(program: Command): void {
               console.log('  ⚡ Topic simplified after consecutive regressions');
               renderTopic(event.topic);
               break;
+            case 'probe:waiting':
+              console.log(
+                `  ⏳ Waiting for topic propagation (attempt ${event.attempt}/${event.maxAttempts})...`,
+              );
+              break;
+            case 'probe:ready':
+              console.log(`  ✓ Topic active after ${event.attempts} probe(s)`);
+              break;
             case 'topic:duplicate':
               console.log(
                 `  ⚠ Topic identical to iteration ${event.duplicateOfIteration} — skipping scan`,

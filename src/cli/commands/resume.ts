@@ -135,6 +135,14 @@ export function registerResumeCommand(program: Command): void {
             case 'iteration:complete':
               renderIterationSummary(event.result);
               break;
+            case 'probe:waiting':
+              console.log(
+                `  ⏳ Waiting for topic propagation (attempt ${event.attempt}/${event.maxAttempts})...`,
+              );
+              break;
+            case 'probe:ready':
+              console.log(`  ✓ Topic active after ${event.attempts} probe(s)`);
+              break;
             case 'promptset:created':
               console.log(
                 `  ✓ Custom prompt set created: ${event.promptSetName} (${event.promptCount} prompts)`,
