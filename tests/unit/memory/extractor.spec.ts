@@ -83,6 +83,7 @@ function makeRunState(overrides: Partial<RunState> = {}): RunState {
     currentIteration: 2,
     bestIteration: 2,
     bestCoverage: 0.9,
+    consecutiveRegressions: 0,
     status: 'completed',
     ...overrides,
   };

@@ -87,6 +87,7 @@ export async function* runLoop(
     currentIteration: 0,
     bestIteration: 0,
     bestCoverage: 0,
+    consecutiveRegressions: 0,
     status: 'running',
   };
 
@@ -321,14 +322,22 @@ export async function* runLoop(
     if (metrics.coverage > runState.bestCoverage) {
       runState.bestCoverage = metrics.coverage;
       runState.bestIteration = i;
+      runState.consecutiveRegressions = 0;
+    } else {
+      runState.consecutiveRegressions++;
     }
 
     runState.updatedAt = new Date().toISOString();
 
     yield { type: 'iteration:complete', result: iterationResult };
 
-    // Check stop condition
+    // Check stop conditions
     if (metrics.coverage >= targetCoverage) {
+      break;
+    }
+
+    const maxRegressions = input.maxRegressions ?? 3;
+    if (maxRegressions > 0 && runState.consecutiveRegressions >= maxRegressions) {
       break;
     }
   }

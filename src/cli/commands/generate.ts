@@ -42,6 +42,11 @@ export function registerGenerateCommand(program: Command): void {
     .option('--intent <intent>', 'Intent: block or allow')
     .option('--max-iterations <n>', 'Max iterations', '20')
     .option('--target-coverage <n>', 'Target coverage %', '90')
+    .option(
+      '--max-regressions <n>',
+      'Stop after N consecutive coverage regressions (0 = disable)',
+      '3',
+    )
     .option('--accumulate-tests', 'Carry forward test prompts across iterations', false)
     .option('--max-accumulated-tests <n>', 'Max accumulated test count cap')
     .option('--memory', 'Enable learning memory (default)')
@@ -68,6 +73,7 @@ export function registerGenerateCommand(program: Command): void {
             profileName: opts.profile,
             maxIterations: Number.parseInt(opts.maxIterations, 10),
             targetCoverage: Number.parseInt(opts.targetCoverage, 10) / 100,
+            maxRegressions: Number.parseInt(opts.maxRegressions, 10),
             accumulateTests: opts.accumulateTests ?? false,
             maxAccumulatedTests: opts.maxAccumulatedTests
               ? Number.parseInt(opts.maxAccumulatedTests, 10)

@@ -19,6 +19,7 @@ function makeRunState(overrides: Partial<RunState> = {}): RunState {
     currentIteration: 0,
     bestIteration: 0,
     bestCoverage: 0,
+    consecutiveRegressions: 0,
     status: 'running',
     ...overrides,
   };
