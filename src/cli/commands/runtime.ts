@@ -70,6 +70,7 @@ export function registerRuntimeCommand(program: Command): void {
       'Input file — .csv (extracts prompt column) or .txt (one per line)',
     )
     .option('--output <file>', 'Output CSV file path')
+    .option('--session-id <id>', 'Session ID for grouping scans in AIRS dashboard')
     .action(async (opts) => {
       try {
         const config = await loadConfig({});
@@ -86,18 +87,21 @@ export function registerRuntimeCommand(program: Command): void {
           process.exit(1);
         }
 
+        const sessionId = opts.sessionId ?? `daystrom-bulk-${Date.now().toString(36)}`;
+
         const service = new SdkRuntimeService(config.airsApiKey);
         console.log(chalk.bold.cyan('\n  Prisma AIRS Bulk Scan'));
-        console.log(chalk.dim(`  Profile: ${opts.profile}`));
-        console.log(chalk.dim(`  Prompts: ${prompts.length}`));
-        console.log(chalk.dim(`  Batches: ${Math.ceil(prompts.length / 5)}\n`));
+        console.log(chalk.dim(`  Profile:  ${opts.profile}`));
+        console.log(chalk.dim(`  Session:  ${sessionId}`));
+        console.log(chalk.dim(`  Prompts:  ${prompts.length}`));
+        console.log(chalk.dim(`  Batches:  ${Math.ceil(prompts.length / 5)}\n`));
 
         console.log(chalk.dim('  Submitting async scans...'));
-        const scanIds = await service.submitBulkScan(opts.profile, prompts);
+        const scanIds = await service.submitBulkScan(opts.profile, prompts, sessionId);
 
         const stateDir = config.dataDir.replace(/\/runs$/, '/bulk-scans');
         const statePath = await saveBulkScanState(
-          { scanIds, profile: opts.profile, promptCount: prompts.length },
+          { scanIds, profile: opts.profile, promptCount: prompts.length, sessionId },
           stateDir,
         );
         console.log(chalk.dim(`  Scan IDs saved: ${statePath}`));

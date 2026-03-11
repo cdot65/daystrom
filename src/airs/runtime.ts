@@ -64,7 +64,11 @@ export class SdkRuntimeService implements RuntimeService {
     };
   }
 
-  async submitBulkScan(profileName: string, prompts: string[]): Promise<string[]> {
+  async submitBulkScan(
+    profileName: string,
+    prompts: string[],
+    sessionId?: string,
+  ): Promise<string[]> {
     const scanIds: string[] = [];
 
     for (let i = 0; i < prompts.length; i += BATCH_SIZE) {
@@ -74,6 +78,7 @@ export class SdkRuntimeService implements RuntimeService {
         scan_req: {
           ai_profile: { profile_name: profileName },
           contents: [{ prompt }],
+          ...(sessionId ? { session_id: sessionId } : {}),
         },
       }));
 

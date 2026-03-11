@@ -5,6 +5,7 @@ export interface BulkScanState {
   scanIds: string[];
   profile: string;
   promptCount: number;
+  sessionId?: string;
   timestamp?: string;
 }
 
