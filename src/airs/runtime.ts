@@ -3,6 +3,25 @@ import type { RuntimeScanResult, RuntimeService } from './types.js';
 
 const BATCH_SIZE = 5;
 const DEFAULT_POLL_INTERVAL_MS = 5000;
+const DEFAULT_MAX_RETRIES = 5;
+const DEFAULT_BASE_DELAY_MS = 10_000;
+
+export interface PollRetryOptions {
+  /** Max retries per rate-limit error before giving up. Default: 5. */
+  maxRetries?: number;
+  /** Base delay in ms for exponential backoff. Default: 10000. */
+  baseDelayMs?: number;
+  /** Called on each retry with (attempt, delayMs). */
+  onRetry?: (attempt: number, delayMs: number) => void;
+}
+
+function isRateLimitError(err: unknown): boolean {
+  if (err instanceof Error) {
+    const msg = err.message.toLowerCase();
+    return msg.includes('rate limit') || msg.includes('rate_limit') || msg.includes('429');
+  }
+  return false;
+}
 
 export class SdkRuntimeService implements RuntimeService {
   private scanner: InstanceType<typeof Scanner>;
@@ -76,17 +95,35 @@ export class SdkRuntimeService implements RuntimeService {
   async pollResults(
     scanIds: string[],
     intervalMs = DEFAULT_POLL_INTERVAL_MS,
+    retryOpts?: PollRetryOptions,
   ): Promise<RuntimeScanResult[]> {
+    const maxRetries = retryOpts?.maxRetries ?? DEFAULT_MAX_RETRIES;
+    const baseDelay = retryOpts?.baseDelayMs ?? DEFAULT_BASE_DELAY_MS;
     const completed = new Map<string, RuntimeScanResult>();
     const pending = new Set(scanIds);
+    let consecutiveRetries = 0;
 
     while (pending.size > 0) {
       const batch = [...pending].slice(0, 5);
-      const results = await this.scanner.queryByScanIds(batch);
 
-      for (const r of results) {
-        const id = r.scan_id ?? '';
-        const status = r.status ?? '';
+      let results: unknown[];
+      try {
+        results = await this.scanner.queryByScanIds(batch);
+        consecutiveRetries = 0;
+      } catch (err) {
+        if (isRateLimitError(err) && consecutiveRetries < maxRetries) {
+          consecutiveRetries++;
+          const delayMs = baseDelay * 2 ** (consecutiveRetries - 1);
+          retryOpts?.onRetry?.(consecutiveRetries, delayMs);
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+          continue;
+        }
+        throw err;
+      }
+
+      for (const r of results as Array<Record<string, unknown>>) {
+        const id = (r.scan_id as string) ?? '';
+        const status = (r.status as string) ?? '';
 
         if (status === 'COMPLETED' && r.result) {
           const result = r.result as Record<string, unknown>;
