@@ -3,6 +3,8 @@ import { z } from 'zod';
 export const CustomTopicSchema = z.object({
   name: z.string().min(1),
   description: z.string().min(1),
+  // min(2) at LLM layer: ensures meaningful test coverage. AIRS allows fewer,
+  // but the LLM should always produce at least 2 examples for effective scanning.
   examples: z.array(z.string().min(1)).min(2).max(5),
 });
 

@@ -3,6 +3,7 @@ import { Content, init, Scanner } from '@cdot65/prisma-airs-sdk';
 import pLimit from 'p-limit';
 import type { ScanResult, ScanService } from './types.js';
 
+/** Scans prompts against AIRS security profiles via the Prisma AIRS SDK. */
 export class AirsScanService implements ScanService {
   private scanner: InstanceType<typeof Scanner>;
 
@@ -11,6 +12,7 @@ export class AirsScanService implements ScanService {
     this.scanner = new Scanner();
   }
 
+  /** Scan a single prompt synchronously and return the normalized result. */
   async scan(profileName: string, prompt: string, sessionId?: string): Promise<ScanResult> {
     const content = new Content({ prompt });
     const response = await this.scanner.syncScan(
@@ -34,6 +36,7 @@ export class AirsScanService implements ScanService {
     };
   }
 
+  /** Scan multiple prompts concurrently (default 5) and return results in order. */
   async scanBatch(
     profileName: string,
     prompts: string[],
