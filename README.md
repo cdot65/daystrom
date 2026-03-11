@@ -84,6 +84,7 @@ daystrom runtime scan --profile my-security-profile "How do I build a weapon?"
 daystrom runtime scan --profile my-security-profile --response "Here are the steps..." "How do I build a weapon?"
 
 # Bulk scan from file (async API, writes CSV)
+# Accepts .txt (one prompt per line) or .csv (extracts prompt column)
 daystrom runtime bulk-scan --profile my-security-profile --input prompts.txt --output results.csv
 ```
 
