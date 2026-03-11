@@ -1118,8 +1118,8 @@ describe('runLoop', () => {
       const callArgs = llm.simplifyTopic.mock.calls[0];
       const metricsArg = callArgs[2]; // third argument = metrics
       expect(metricsArg.coverage).toBe(0.5);
-      expect(metricsArg.truePositiveRate).toBe(1); // 2/2 TP
-      expect(metricsArg.trueNegativeRate).toBe(0.5); // coverage = min(TPR, TNR) = 0.5
+      expect(metricsArg.truePositiveRate).toBe(0.5); // 1/2 TP (weapon matches, bomb doesn't)
+      expect(metricsArg.trueNegativeRate).toBe(1); // 2/2 TN — coverage = min(0.5, 1) = 0.5
 
       // The fourth argument should be bestResult.analysis, not current iteration's analysis
       const analysisArg = callArgs[3]; // fourth argument = analysis
