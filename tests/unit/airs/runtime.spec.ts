@@ -232,6 +232,88 @@ describe('SdkRuntimeService', () => {
     });
   });
 
+  describe('pollResults — rate limit retry', () => {
+    it('retries on rate limit error and succeeds', async () => {
+      const rateLimitError = new Error('Rate limit exceeded');
+
+      mockScannerInstance.queryByScanIds
+        .mockRejectedValueOnce(rateLimitError)
+        .mockRejectedValueOnce(rateLimitError)
+        .mockResolvedValueOnce([
+          {
+            scan_id: 's1',
+            status: 'COMPLETED',
+            result: { scan_id: 's1', report_id: 'r1', action: 'allow', category: 'benign' },
+          },
+        ]);
+
+      const results = await service.pollResults(['s1'], 10, { baseDelayMs: 10 });
+      expect(results).toHaveLength(1);
+      expect(results[0].action).toBe('allow');
+      expect(mockScannerInstance.queryByScanIds).toHaveBeenCalledTimes(3);
+    });
+
+    it('throws after exhausting max retries', async () => {
+      const rateLimitError = new Error('Rate limit exceeded');
+      // Need enough rejections to exceed maxRetries (3 retries + 1 initial = 4 calls)
+      for (let i = 0; i < 4; i++) {
+        mockScannerInstance.queryByScanIds.mockRejectedValueOnce(rateLimitError);
+      }
+
+      await expect(
+        service.pollResults(['s1'], 10, { maxRetries: 3, baseDelayMs: 10 }),
+      ).rejects.toThrow('Rate limit exceeded');
+      expect(mockScannerInstance.queryByScanIds).toHaveBeenCalledTimes(4);
+    });
+
+    it('does not retry on non-rate-limit errors', async () => {
+      const otherError = new Error('Network timeout');
+      mockScannerInstance.queryByScanIds.mockRejectedValueOnce(otherError);
+
+      await expect(service.pollResults(['s1'], 10)).rejects.toThrow('Network timeout');
+      expect(mockScannerInstance.queryByScanIds).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls onRetry callback when retrying', async () => {
+      const rateLimitError = new Error('Rate limit exceeded');
+      const onRetry = vi.fn();
+
+      mockScannerInstance.queryByScanIds
+        .mockRejectedValueOnce(rateLimitError)
+        .mockResolvedValueOnce([
+          {
+            scan_id: 's1',
+            status: 'COMPLETED',
+            result: { scan_id: 's1', report_id: 'r1', action: 'block', category: 'malicious' },
+          },
+        ]);
+
+      await service.pollResults(['s1'], 10, { baseDelayMs: 10, onRetry });
+      expect(onRetry).toHaveBeenCalledTimes(1);
+      expect(onRetry).toHaveBeenCalledWith(1, expect.any(Number));
+    });
+
+    it('resets retry counter after successful poll', async () => {
+      const rateLimitError = new Error('Rate limit exceeded');
+
+      mockScannerInstance.queryByScanIds
+        .mockRejectedValueOnce(rateLimitError)
+        .mockResolvedValueOnce([{ scan_id: 's1', status: 'PENDING' }])
+        .mockRejectedValueOnce(rateLimitError)
+        .mockResolvedValueOnce([
+          {
+            scan_id: 's1',
+            status: 'COMPLETED',
+            result: { scan_id: 's1', report_id: 'r1', action: 'allow', category: 'benign' },
+          },
+        ]);
+
+      const results = await service.pollResults(['s1'], 10, { maxRetries: 2, baseDelayMs: 10 });
+      expect(results).toHaveLength(1);
+      expect(mockScannerInstance.queryByScanIds).toHaveBeenCalledTimes(4);
+    });
+  });
+
   describe('formatResultsCsv', () => {
     it('produces CSV with header and data rows', () => {
       const results = [

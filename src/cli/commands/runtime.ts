@@ -103,7 +103,15 @@ export function registerRuntimeCommand(program: Command): void {
         console.log(chalk.dim(`  Scan IDs saved: ${statePath}`));
         console.log(chalk.dim(`  Submitted ${scanIds.length} batch(es), polling for results...`));
 
-        const results = await service.pollResults(scanIds);
+        const results = await service.pollResults(scanIds, undefined, {
+          onRetry: (attempt, delayMs) => {
+            console.log(
+              chalk.yellow(
+                `  ⚠ Rate limited — retry ${attempt} in ${(delayMs / 1000).toFixed(0)}s...`,
+              ),
+            );
+          },
+        });
 
         // Attach prompts to results
         for (let i = 0; i < results.length && i < prompts.length; i++) {
@@ -150,7 +158,15 @@ export function registerRuntimeCommand(program: Command): void {
         console.log(chalk.dim(`  Prompts:  ${state.promptCount}\n`));
 
         console.log(chalk.dim('  Polling for results...'));
-        const results = await service.pollResults(state.scanIds);
+        const results = await service.pollResults(state.scanIds, undefined, {
+          onRetry: (attempt, delayMs) => {
+            console.log(
+              chalk.yellow(
+                `  ⚠ Rate limited — retry ${attempt} in ${(delayMs / 1000).toFixed(0)}s...`,
+              ),
+            );
+          },
+        });
 
         const outputPath = opts.output ?? `${state.profile.replace(/\s+/g, '-')}-bulk-scan.csv`;
         const csv = SdkRuntimeService.formatResultsCsv(results);

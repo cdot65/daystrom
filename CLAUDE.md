@@ -153,7 +153,7 @@ tests/
 - `SdkRuntimeService` wraps SDK `Scanner` for sync and async scanning
 - `scanPrompt()` — sync scan via `syncScan()`, normalizes to `RuntimeScanResult`
 - `submitBulkScan()` — batches prompts into groups of 5 `AsyncScanObject` items, calls `asyncScan()` per batch
-- `pollResults()` — polls `queryByScanIds()` every 5s until all scans COMPLETED or FAILED
+- `pollResults()` — polls `queryByScanIds()` every 5s until all scans COMPLETED or FAILED; retries on rate limit with exponential backoff (default 5 retries, 10s base delay)
 - `formatResultsCsv()` — static method producing CSV from results
 - CLI: `daystrom runtime scan --profile <name> [--response <text>] <prompt>`
 - CLI: `daystrom runtime bulk-scan --profile <name> --input <file> [--output <file>]`
