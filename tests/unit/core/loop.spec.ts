@@ -1079,6 +1079,55 @@ describe('runLoop', () => {
       }
     });
 
+    it('passes bestResult.metrics (not current metrics) to simplifyTopic in end-of-iteration recovery', async () => {
+      const llm = createMockLlm();
+      let scanCall = 0;
+      const scanner = createMockScanService([]);
+      const origBatch = scanner.scanBatch;
+      scanner.scanBatch = async (profile, prompts, conc, sess) => {
+        scanCall++;
+        if (scanCall === 1) {
+          // Iter 1: best coverage — trigger weapon prompts → 0.5 coverage
+          return prompts.map((p) => ({
+            scanId: 's1',
+            reportId: 'r1',
+            action: 'block' as const,
+            triggered: /weapon/i.test(p),
+            category: /weapon/i.test(p) ? 'malicious' : 'benign',
+          }));
+        }
+        // Iter 2+: trigger nothing → regression (0% coverage)
+        return origBatch(profile, prompts, conc, sess);
+      };
+
+      const deps = createDeps({ llm, scanner });
+      const events: LoopEvent[] = [];
+
+      for await (const event of runLoop(
+        { ...defaultInput, maxIterations: 10, targetCoverage: 0.99 },
+        deps,
+      )) {
+        events.push(event);
+      }
+
+      // Verify simplifyTopic was called
+      expect(llm.simplifyTopic).toHaveBeenCalledOnce();
+
+      // The third argument should be bestResult.metrics (iter 1 = 0.5 coverage),
+      // NOT the current iteration's regressed metrics (0% coverage)
+      const callArgs = llm.simplifyTopic.mock.calls[0];
+      const metricsArg = callArgs[2]; // third argument = metrics
+      expect(metricsArg.coverage).toBe(0.5);
+      expect(metricsArg.truePositiveRate).toBe(1); // 2/2 TP
+      expect(metricsArg.trueNegativeRate).toBe(0.5); // coverage = min(TPR, TNR) = 0.5
+
+      // The fourth argument should be bestResult.analysis, not current iteration's analysis
+      const analysisArg = callArgs[3]; // fourth argument = analysis
+      // bestResult is iteration 1 — the analysis was generated for that iteration
+      // It should NOT be the regressed iteration's analysis
+      expect(analysisArg).toBeDefined();
+    });
+
     it('resets regression counter after simplification', async () => {
       const llm = createMockLlm();
       let scanCall = 0;
