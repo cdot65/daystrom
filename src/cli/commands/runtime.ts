@@ -4,6 +4,7 @@ import type { Command } from 'commander';
 import { SdkRuntimeService } from '../../airs/runtime.js';
 import type { RuntimeScanResult } from '../../airs/types.js';
 import { loadConfig } from '../../config/loader.js';
+import { loadBulkScanState, saveBulkScanState } from '../bulk-scan-state.js';
 import { parseInputFile } from '../parse-input.js';
 import { renderError } from '../renderer.js';
 
@@ -93,6 +94,13 @@ export function registerRuntimeCommand(program: Command): void {
 
         console.log(chalk.dim('  Submitting async scans...'));
         const scanIds = await service.submitBulkScan(opts.profile, prompts);
+
+        const stateDir = config.dataDir.replace(/\/runs$/, '/bulk-scans');
+        const statePath = await saveBulkScanState(
+          { scanIds, profile: opts.profile, promptCount: prompts.length },
+          stateDir,
+        );
+        console.log(chalk.dim(`  Scan IDs saved: ${statePath}`));
         console.log(chalk.dim(`  Submitted ${scanIds.length} batch(es), polling for results...`));
 
         const results = await service.pollResults(scanIds);
@@ -110,6 +118,48 @@ export function registerRuntimeCommand(program: Command): void {
         const allowed = results.filter((r) => r.action === 'allow').length;
 
         console.log(chalk.bold('\n  Bulk Scan Complete'));
+        console.log(chalk.dim('  ─────────────────────────'));
+        console.log(`  Total:   ${results.length}`);
+        console.log(`  Blocked: ${chalk.red(String(blocked))}`);
+        console.log(`  Allowed: ${chalk.green(String(allowed))}`);
+        console.log(`  Output:  ${chalk.cyan(outputPath)}\n`);
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  runtime
+    .command('resume-poll <stateFile>')
+    .description('Resume polling for a previously submitted bulk scan')
+    .option('--output <file>', 'Output CSV file path')
+    .action(async (stateFile: string, opts) => {
+      try {
+        const config = await loadConfig({});
+        if (!config.airsApiKey) {
+          renderError('PANW_AI_SEC_API_KEY is required');
+          process.exit(1);
+        }
+
+        const state = await loadBulkScanState(stateFile);
+        const service = new SdkRuntimeService(config.airsApiKey);
+
+        console.log(chalk.bold.cyan('\n  Prisma AIRS Resume Poll'));
+        console.log(chalk.dim(`  Profile:  ${state.profile}`));
+        console.log(chalk.dim(`  Scan IDs: ${state.scanIds.length}`));
+        console.log(chalk.dim(`  Prompts:  ${state.promptCount}\n`));
+
+        console.log(chalk.dim('  Polling for results...'));
+        const results = await service.pollResults(state.scanIds);
+
+        const outputPath = opts.output ?? `${state.profile.replace(/\s+/g, '-')}-bulk-scan.csv`;
+        const csv = SdkRuntimeService.formatResultsCsv(results);
+        await writeFile(outputPath, csv, 'utf-8');
+
+        const blocked = results.filter((r) => r.action === 'block').length;
+        const allowed = results.filter((r) => r.action === 'allow').length;
+
+        console.log(chalk.bold('\n  Resume Poll Complete'));
         console.log(chalk.dim('  ─────────────────────────'));
         console.log(`  Total:   ${results.length}`);
         console.log(`  Blocked: ${chalk.red(String(blocked))}`);
