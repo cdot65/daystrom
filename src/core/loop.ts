@@ -514,8 +514,8 @@ export async function* runLoop(
         currentTopic = await deps.llm.simplifyTopic(
           topic,
           bestResult.topic,
-          metrics,
-          iterationResult.analysis,
+          bestResult.metrics,
+          bestResult.analysis,
           input.intent,
         );
         currentTopic = { ...currentTopic, name: lockedName };
