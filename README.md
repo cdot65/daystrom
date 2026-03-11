@@ -130,7 +130,7 @@ daystrom model-security scans violations <scanUuid>
 daystrom model-security scans files <scanUuid>
 
 # Labels and PyPI auth
-daystrom model-security labels list
+daystrom model-security labels keys
 daystrom model-security pypi-auth
 ```
 
