@@ -52,6 +52,7 @@ src/
 │   │   ├── audit.ts       # Profile-level multi-topic evaluation
 │   │   ├── redteam.ts     # Red team operations (scan, targets CRUD, prompt-sets CRUD, prompts CRUD, properties)
 │   │   └── modelsecurity.ts # Model security operations (groups, rules, rule-instances, scans, labels, pypi-auth)
+│   ├── parse-input.ts     # Input file parsing — CSV (prompt column) or plain text (line-per-prompt)
 │   ├── prompts.ts         # Inquirer interactive input collection
 │   └── renderer.ts        # Terminal output (chalk)
 ├── config/
@@ -99,9 +100,10 @@ src/
 └── index.ts               # Library exports
 
 tests/
-├── unit/                  # 25 spec files
+├── unit/                  # 26 spec files
 │   ├── airs/              # scanner.spec.ts, management.spec.ts, modelsecurity.spec.ts, promptsets.spec.ts, redteam.spec.ts, runtime.spec.ts
 │   ├── audit/             # evaluator.spec.ts, runner.spec.ts, report.spec.ts
+│   ├── cli/               # parse-input.spec.ts
 │   ├── config/            # schema.spec.ts, loader.spec.ts
 │   ├── core/              # loop.spec.ts, metrics.spec.ts, constraints.spec.ts
 │   ├── llm/               # provider.spec.ts, schemas.spec.ts, service.spec.ts, prompts.spec.ts
@@ -154,6 +156,7 @@ tests/
 - `formatResultsCsv()` — static method producing CSV from results
 - CLI: `daystrom runtime scan --profile <name> [--response <text>] <prompt>`
 - CLI: `daystrom runtime bulk-scan --profile <name> --input <file> [--output <file>]`
+- Input file parsing: `.csv` files extract the `prompt` column by header; `.txt`/extensionless use line-per-prompt
 
 ### Red Team (`src/airs/redteam.ts`, `src/airs/promptsets.ts`)
 - `SdkRedTeamService` wraps `RedTeamClient` for scan CRUD, polling, reports, **target CRUD**

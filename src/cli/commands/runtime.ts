@@ -4,6 +4,7 @@ import type { Command } from 'commander';
 import { SdkRuntimeService } from '../../airs/runtime.js';
 import type { RuntimeScanResult } from '../../airs/types.js';
 import { loadConfig } from '../../config/loader.js';
+import { parseInputFile } from '../parse-input.js';
 import { renderError } from '../renderer.js';
 
 function renderScanResult(result: RuntimeScanResult): void {
@@ -63,7 +64,10 @@ export function registerRuntimeCommand(program: Command): void {
     .command('bulk-scan')
     .description('Scan multiple prompts via the async AIRS API')
     .requiredOption('--profile <name>', 'Security profile name')
-    .requiredOption('--input <file>', 'Input file with one prompt per line')
+    .requiredOption(
+      '--input <file>',
+      'Input file — .csv (extracts prompt column) or .txt (one per line)',
+    )
     .option('--output <file>', 'Output CSV file path')
     .action(async (opts) => {
       try {
@@ -74,10 +78,7 @@ export function registerRuntimeCommand(program: Command): void {
         }
 
         const raw = await readFile(opts.input, 'utf-8');
-        const prompts = raw
-          .split('\n')
-          .map((l) => l.trim())
-          .filter((l) => l.length > 0);
+        const prompts = parseInputFile(raw, opts.input);
 
         if (prompts.length === 0) {
           renderError('No prompts found in input file');
