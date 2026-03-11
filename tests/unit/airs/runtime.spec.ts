@@ -315,13 +315,18 @@ describe('SdkRuntimeService', () => {
       expect(onRetry).toHaveBeenCalledWith(1, expect.any(Number));
     });
 
-    it('resets retry counter after successful poll', async () => {
+    it('decays retry counter on success instead of resetting to 0', async () => {
       const rateLimitError = new Error('Rate limit exceeded');
+      const onRetry = vi.fn();
 
+      // Rate limit twice → retry escalates to 2
+      // Then succeed → decays to 1 (not 0)
+      // Then rate limit again → retry at level 2 (1+1), not back to 1
       mockScannerInstance.queryByScanIds
-        .mockRejectedValueOnce(rateLimitError)
-        .mockResolvedValueOnce([{ scan_id: 's1', status: 'PENDING' }])
-        .mockRejectedValueOnce(rateLimitError)
+        .mockRejectedValueOnce(rateLimitError) // retry 1
+        .mockRejectedValueOnce(rateLimitError) // retry 2
+        .mockResolvedValueOnce([{ scan_id: 's1', status: 'PENDING' }]) // success, decay to 1
+        .mockRejectedValueOnce(rateLimitError) // retry 2 (decayed 1 + 1)
         .mockResolvedValueOnce([
           {
             scan_id: 's1',
@@ -330,9 +335,39 @@ describe('SdkRuntimeService', () => {
           },
         ]);
 
-      const results = await service.pollResults(['s1'], 10, { maxRetries: 2, baseDelayMs: 10 });
+      const results = await service.pollResults(['s1'], 10, {
+        maxRetries: 5,
+        baseDelayMs: 10,
+        onRetry,
+      });
       expect(results).toHaveLength(1);
-      expect(mockScannerInstance.queryByScanIds).toHaveBeenCalledTimes(4);
+      // Verify retry levels escalated: 1, 2, then after decay: 2
+      expect(onRetry).toHaveBeenCalledTimes(3);
+      expect(onRetry.mock.calls[0][0]).toBe(1); // first retry
+      expect(onRetry.mock.calls[1][0]).toBe(2); // second retry
+      expect(onRetry.mock.calls[2][0]).toBe(2); // after decay from 2→1, then +1=2
+    });
+
+    it('queries all pending IDs per sweep in batches of 5', async () => {
+      // 12 scan IDs = 3 batches of 5,5,2 per sweep
+      const ids = Array.from({ length: 12 }, (_, i) => `s${i}`);
+
+      // All complete on first sweep (3 batch queries)
+      for (let i = 0; i < 12; i += 5) {
+        const batch = ids.slice(i, i + 5);
+        mockScannerInstance.queryByScanIds.mockResolvedValueOnce(
+          batch.map((id) => ({
+            scan_id: id,
+            status: 'COMPLETED',
+            result: { scan_id: id, report_id: `r-${id}`, action: 'allow', category: 'benign' },
+          })),
+        );
+      }
+
+      const results = await service.pollResults(ids, 10, { baseDelayMs: 10 });
+      expect(results).toHaveLength(12);
+      // Should have made 3 batch queries in one sweep
+      expect(mockScannerInstance.queryByScanIds).toHaveBeenCalledTimes(3);
     });
   });
 

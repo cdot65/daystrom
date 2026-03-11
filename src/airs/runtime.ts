@@ -106,64 +106,84 @@ export class SdkRuntimeService implements RuntimeService {
     const baseDelay = retryOpts?.baseDelayMs ?? DEFAULT_BASE_DELAY_MS;
     const completed = new Map<string, RuntimeScanResult>();
     const pending = new Set(scanIds);
-    let consecutiveRetries = 0;
+    let retryLevel = 0;
 
     while (pending.size > 0) {
-      const batch = [...pending].slice(0, 5);
+      // Query all pending IDs in batches of 5 per sweep
+      const pendingIds = [...pending];
+      for (let b = 0; b < pendingIds.length; b += 5) {
+        const batch = pendingIds.slice(b, b + 5);
 
-      let results: unknown[];
-      try {
-        results = await this.scanner.queryByScanIds(batch);
-        consecutiveRetries = 0;
-      } catch (err) {
-        if (isRateLimitError(err) && consecutiveRetries < maxRetries) {
-          consecutiveRetries++;
-          const delayMs = baseDelay * 2 ** (consecutiveRetries - 1);
-          retryOpts?.onRetry?.(consecutiveRetries, delayMs);
-          await new Promise((resolve) => setTimeout(resolve, delayMs));
-          continue;
+        let results: unknown[];
+        try {
+          results = await this.scanner.queryByScanIds(batch);
+          // Decay retry level on success (don't reset to 0)
+          if (retryLevel > 0) retryLevel = Math.max(0, retryLevel - 1);
+        } catch (err) {
+          if (isRateLimitError(err) && retryLevel < maxRetries) {
+            retryLevel++;
+            const delayMs = baseDelay * 2 ** (retryLevel - 1);
+            retryOpts?.onRetry?.(retryLevel, delayMs);
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+            break; // restart sweep from the beginning
+          }
+          throw err;
         }
-        throw err;
-      }
 
-      for (const r of results as Array<Record<string, unknown>>) {
-        const id = (r.scan_id as string) ?? '';
-        const status = (r.status as string) ?? '';
+        this.processQueryResults(results, completed, pending);
 
-        if (status === 'COMPLETED' && r.result) {
-          const result = r.result as Record<string, unknown>;
-          completed.set(id, {
-            prompt: '', // not available from async API
-            response: undefined, // not available from async API
-            scanId: (result.scan_id as string) ?? id,
-            reportId: (result.report_id as string) ?? '',
-            action: result.action === 'block' ? 'block' : 'allow',
-            category: (result.category as string) ?? 'unknown',
-            triggered: false, // not available from async API — always false
-            detections: {}, // not available from async API
-          });
-          pending.delete(id);
-        } else if (status === 'FAILED') {
-          completed.set(id, {
-            prompt: '', // not available from async API
-            response: undefined, // not available from async API
-            scanId: id,
-            reportId: '',
-            action: 'allow', // safe default for failed scans
-            category: 'error',
-            triggered: false, // not available from async API — always false
-            detections: {}, // not available from async API
-          });
-          pending.delete(id);
+        // Small inter-batch delay to avoid hammering the API
+        if (b + 5 < pendingIds.length) {
+          const batchDelay = retryLevel > 0 ? baseDelay : Math.min(baseDelay, 1000);
+          await new Promise((resolve) => setTimeout(resolve, batchDelay));
         }
       }
 
       if (pending.size > 0) {
-        await new Promise((resolve) => setTimeout(resolve, intervalMs));
+        const sweepDelay = retryLevel > 0 ? baseDelay * 2 ** retryLevel : intervalMs;
+        await new Promise((resolve) => setTimeout(resolve, sweepDelay));
       }
     }
 
     return scanIds.map((id) => completed.get(id) as RuntimeScanResult);
+  }
+
+  private processQueryResults(
+    results: unknown[],
+    completed: Map<string, RuntimeScanResult>,
+    pending: Set<string>,
+  ): void {
+    for (const r of results as Array<Record<string, unknown>>) {
+      const id = (r.scan_id as string) ?? '';
+      const status = (r.status as string) ?? '';
+
+      if (status === 'COMPLETED' && r.result) {
+        const result = r.result as Record<string, unknown>;
+        completed.set(id, {
+          prompt: '', // not available from async API
+          response: undefined, // not available from async API
+          scanId: (result.scan_id as string) ?? id,
+          reportId: (result.report_id as string) ?? '',
+          action: result.action === 'block' ? 'block' : 'allow',
+          category: (result.category as string) ?? 'unknown',
+          triggered: false, // not available from async API — always false
+          detections: {}, // not available from async API
+        });
+        pending.delete(id);
+      } else if (status === 'FAILED') {
+        completed.set(id, {
+          prompt: '', // not available from async API
+          response: undefined, // not available from async API
+          scanId: id,
+          reportId: '',
+          action: 'allow', // safe default for failed scans
+          category: 'error',
+          triggered: false, // not available from async API — always false
+          detections: {}, // not available from async API
+        });
+        pending.delete(id);
+      }
+    }
   }
 
   static formatResultsCsv(results: RuntimeScanResult[]): string {

@@ -116,11 +116,12 @@ iteration,prompt,category,result
 
 ### Rate Limit Handling
 
-If the AIRS API returns a rate limit error during polling, Daystrom retries automatically with exponential backoff (10s, 20s, 40s, 80s, 160s). You'll see retry messages in the terminal:
+If the AIRS API returns a rate limit error during polling, Daystrom retries automatically with exponential backoff. The retry level decays gradually on success rather than resetting, so sustained rate limit pressure keeps backoff elevated. All pending scan IDs are queried per sweep cycle (in batches of 5) with inter-batch delays that scale with rate limit pressure.
 
 ```
   ⚠ Rate limited — retry 1 in 10s...
   ⚠ Rate limited — retry 2 in 20s...
+  ⚠ Rate limited — retry 3 in 40s...
 ```
 
 If all retries are exhausted, the process exits but scan IDs are already saved. Resume with:
