@@ -99,7 +99,7 @@ src/
 └── index.ts               # Library exports
 
 tests/
-├── unit/                  # 26 spec files
+├── unit/                  # 25 spec files
 │   ├── airs/              # scanner.spec.ts, management.spec.ts, modelsecurity.spec.ts, promptsets.spec.ts, redteam.spec.ts, runtime.spec.ts
 │   ├── audit/             # evaluator.spec.ts, runner.spec.ts, report.spec.ts
 │   ├── config/            # schema.spec.ts, loader.spec.ts
@@ -226,4 +226,37 @@ tests/
 
 ## Environment Variables
 
-See `.env.example`. Required: `ANTHROPIC_API_KEY` (or provider equivalent), `PANW_AI_SEC_API_KEY`, `PANW_MGMT_CLIENT_ID`, `PANW_MGMT_CLIENT_SECRET`, `PANW_MGMT_TSG_ID`.
+See `.env.example` for the full list. Config priority: CLI flags > env vars > `~/.daystrom/config.json` > Zod defaults.
+
+### Required (one set per provider)
+
+| Variable | Purpose |
+|----------|---------|
+| `ANTHROPIC_API_KEY` | Claude API provider |
+| `GOOGLE_API_KEY` | Gemini API provider |
+| `GOOGLE_CLOUD_PROJECT` | Vertex AI (Claude or Gemini) |
+| `GOOGLE_CLOUD_LOCATION` | Vertex AI region (default: `us-central1`, Claude Vertex: `global`) |
+| `AWS_REGION` | Bedrock region (default: `us-east-1`) |
+| `AWS_ACCESS_KEY_ID` | Bedrock auth |
+| `AWS_SECRET_ACCESS_KEY` | Bedrock auth |
+| `PANW_AI_SEC_API_KEY` | Prisma AIRS Scanner API |
+| `PANW_MGMT_CLIENT_ID` | Prisma AIRS Management OAuth2 |
+| `PANW_MGMT_CLIENT_SECRET` | Prisma AIRS Management OAuth2 |
+| `PANW_MGMT_TSG_ID` | Prisma AIRS Tenant Service Group |
+
+### Optional
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `LLM_PROVIDER` | `claude-api` | LLM provider selection |
+| `LLM_MODEL` | per-provider | Override model name |
+| `PANW_MGMT_ENDPOINT` | SDK default | Management API endpoint |
+| `PANW_MGMT_TOKEN_ENDPOINT` | SDK default | Management API token endpoint |
+| `SCAN_CONCURRENCY` | `5` | Concurrent AIRS scans (1-20) |
+| `PROPAGATION_DELAY_MS` | `10000` | Wait after topic create/update (ms) |
+| `ACCUMULATE_TESTS` | `false` | Carry test pool across iterations |
+| `MAX_ACCUMULATED_TESTS` | — | Cap on accumulated tests |
+| `DATA_DIR` | `~/.daystrom/runs` | Run state persistence directory |
+| `MEMORY_ENABLED` | `true` | Cross-run learning memory |
+| `MEMORY_DIR` | `~/.daystrom/memory` | Memory store directory |
+| `MAX_MEMORY_CHARS` | `3000` | Memory injection budget (500-10000) |

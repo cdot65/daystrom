@@ -65,6 +65,14 @@ export class SdkRuntimeService implements RuntimeService {
     return scanIds;
   }
 
+  /**
+   * Poll async scan results until all complete or fail.
+   *
+   * Note: The async query API (`queryByScanIds`) does not return `prompt`,
+   * `response`, `triggered`, or `detections` fields. These are set to
+   * defaults (`''`, `undefined`, `false`, `{}`) in the returned results.
+   * Use `scanPrompt()` (sync API) when these fields are needed.
+   */
   async pollResults(
     scanIds: string[],
     intervalMs = DEFAULT_POLL_INTERVAL_MS,
@@ -83,26 +91,26 @@ export class SdkRuntimeService implements RuntimeService {
         if (status === 'COMPLETED' && r.result) {
           const result = r.result as Record<string, unknown>;
           completed.set(id, {
-            prompt: '',
-            response: undefined,
+            prompt: '', // not available from async API
+            response: undefined, // not available from async API
             scanId: (result.scan_id as string) ?? id,
             reportId: (result.report_id as string) ?? '',
             action: result.action === 'block' ? 'block' : 'allow',
             category: (result.category as string) ?? 'unknown',
-            triggered: false,
-            detections: {},
+            triggered: false, // not available from async API — always false
+            detections: {}, // not available from async API
           });
           pending.delete(id);
         } else if (status === 'FAILED') {
           completed.set(id, {
-            prompt: '',
-            response: undefined,
+            prompt: '', // not available from async API
+            response: undefined, // not available from async API
             scanId: id,
             reportId: '',
-            action: 'allow',
+            action: 'allow', // safe default for failed scans
             category: 'error',
-            triggered: false,
-            detections: {},
+            triggered: false, // not available from async API — always false
+            detections: {}, // not available from async API
           });
           pending.delete(id);
         }
