@@ -110,6 +110,28 @@ describe('SdkRuntimeService', () => {
       expect(secondCall).toHaveLength(2);
     });
 
+    it('passes session_id in scan_req when provided', async () => {
+      mockScannerInstance.asyncScan.mockResolvedValue({
+        received: '2026-03-09T00:00:00Z',
+        scan_id: 'session-scan',
+      });
+
+      await service.submitBulkScan('my-profile', ['test prompt'], 'my-session-123');
+      const scanObj = mockScannerInstance.asyncScan.mock.calls[0][0][0];
+      expect(scanObj.scan_req.session_id).toBe('my-session-123');
+    });
+
+    it('omits session_id when not provided', async () => {
+      mockScannerInstance.asyncScan.mockResolvedValue({
+        received: '2026-03-09T00:00:00Z',
+        scan_id: 'no-session',
+      });
+
+      await service.submitBulkScan('my-profile', ['test prompt']);
+      const scanObj = mockScannerInstance.asyncScan.mock.calls[0][0][0];
+      expect(scanObj.scan_req.session_id).toBeUndefined();
+    });
+
     it('handles single prompt', async () => {
       mockScannerInstance.asyncScan.mockResolvedValue({
         received: '2026-03-09T00:00:00Z',

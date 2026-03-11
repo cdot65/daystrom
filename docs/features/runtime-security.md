@@ -102,6 +102,7 @@ iteration,prompt,category,result
 | `--profile <name>` | Yes | Security profile to scan against |
 | `--input <file>` | Yes | `.csv` (extracts prompt column) or `.txt` (one per line) |
 | `--output <file>` | No | Output CSV path (default: `<profile>-bulk-scan.csv`) |
+| `--session-id <id>` | No | Session ID for grouping scans in AIRS dashboard (auto-generated if omitted) |
 
 ### How It Works
 
