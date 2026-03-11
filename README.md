@@ -69,7 +69,7 @@ daystrom generate \
 | `daystrom resume <runId>` | Resume a paused or failed generation run |
 | `daystrom report <runId>` | View results for a saved run (terminal, JSON, HTML) |
 | `daystrom list` | List all saved runs |
-| `daystrom runtime` | Runtime prompt scanning — sync and async bulk |
+| `daystrom runtime` | Runtime prompt scanning — sync, async bulk, and resume-poll |
 | `daystrom audit` | Evaluate all topics in a security profile — per-topic metrics + conflict detection |
 | `daystrom redteam` | Red team scanning — targets, prompt sets, scans, reports |
 | `daystrom model-security` | ML model supply chain security — groups, rules, scans, labels |
@@ -86,6 +86,9 @@ daystrom runtime scan --profile my-security-profile --response "Here are the ste
 # Bulk scan from file (async API, writes CSV)
 # Accepts .txt (one prompt per line) or .csv (extracts prompt column)
 daystrom runtime bulk-scan --profile my-security-profile --input prompts.txt --output results.csv
+
+# Resume polling if bulk-scan was interrupted (scan IDs saved to ~/.daystrom/bulk-scans/)
+daystrom runtime resume-poll ~/.daystrom/bulk-scans/2026-03-11T12-00-00-000Z.bulk-scan.json
 ```
 
 ### Red Team
