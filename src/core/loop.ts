@@ -267,14 +267,15 @@ export async function* runLoop(
         topicId = response.topic_id;
       }
 
-      // Determine guardrail-level action.
-      // --set-profile-allow: guardrail default is 'allow', only block-topic matches get blocked.
-      // Without it: guardrail default is 'block', requires companion allow topic.
-      const guardrailAction = input.setProfileAllow ? 'allow' : 'block';
+      // Guardrail-level action is the INVERSE of topic intent:
+      // block-intent → guardrailAction='allow' (default: allow, block topics carve out violations)
+      // allow-intent → guardrailAction='block' (default: block, allow topics whitelist content)
+      const guardrailAction = input.intent === 'block' ? 'allow' : 'block';
 
-      if (input.intent === 'block' && !input.setProfileAllow) {
-        // Two-phase: generate companion allow topic for block-intent profiles.
-        // AIRS requires a non-empty allow list when guardrail action is "block".
+      if (input.intent === 'block') {
+        // Two-phase: generate domain-specific allow companion for block-intent.
+        // AIRS needs both allow + block topics sharing the same vocabulary domain
+        // for the matching engine to distinguish benign from malicious content.
         companionTopic = await deps.llm.generateCompanionTopic(topic.name, topic.description);
         yield { type: 'companion:generated', topic: companionTopic };
 
@@ -303,7 +304,7 @@ export async function* runLoop(
         yield { type: 'companion:created', topicId: companionTopicId, topic: companionTopic };
         runState.companionTopic = companionTopic;
 
-        // Wire both topics to profile
+        // Wire both topics to profile with guardrailAction='allow'
         await deps.management.assignTopicsToProfile(
           input.profileName,
           [
@@ -313,7 +314,7 @@ export async function* runLoop(
           guardrailAction,
         );
       } else {
-        // --set-profile-allow or allow-intent: single topic, no companion needed.
+        // Allow-intent: single topic, guardrailAction='block'
         await deps.management.assignTopicsToProfile(
           input.profileName,
           [{ topicId, topicName: topic.name, action: input.intent }],
@@ -327,6 +328,24 @@ export async function* runLoop(
         examples: topic.examples,
         active: true,
       });
+
+      // Re-assign topics to profile so AIRS references the new topic revision.
+      // AIRS pins topic content to the revision in the profile — without this,
+      // the profile would still reference the pre-update revision.
+      const guardrailAction = input.intent === 'block' ? 'allow' : 'block';
+      const topicEntries: Array<{
+        topicId: string;
+        topicName: string;
+        action: 'allow' | 'block';
+      }> = [{ topicId, topicName: topic.name, action: input.intent }];
+      if (input.intent === 'block' && companionTopicId && companionTopic) {
+        topicEntries.unshift({
+          topicId: companionTopicId,
+          topicName: companionTopic.name,
+          action: 'allow',
+        });
+      }
+      await deps.management.assignTopicsToProfile(input.profileName, topicEntries, guardrailAction);
     }
 
     yield { type: 'apply:complete', topicId };

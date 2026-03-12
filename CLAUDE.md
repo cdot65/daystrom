@@ -124,7 +124,7 @@ tests/
 - Events defined in `LoopEvent` union but **not yielded** by `runLoop()`: `loop:paused` (reserved for future use), `memory:loaded` (emitted by CLI before loop starts)
 - `apply:complete` is yielded but intentionally unhandled in CLI commands (no user-facing output needed)
 - **Warm-up probe** (iter 1 only): after propagation delay, scans `topic.examples[0]` via `scanner.scan()` in a retry loop (default 6 attempts, 5s interval) to verify topic+profile revision are active before full test suite. Skipped if topic has no examples. Configurable via `LoopDependencies.probeIntervalMs` and `maxProbeAttempts`
-- **Two-phase generation** (block-intent only): AIRS requires a non-empty allow topic list when default action is "block". On iter 1, after generating the block topic, the loop generates a broad companion allow topic via `LlmService.generateCompanionTopic()`, creates it via management API, and wires both to the profile via `assignTopicsToProfile()`. The companion is one-shot (no refinement). Iter 2+ only updates the block topic content — profile references stay valid. `RunState.companionTopic` persists the companion for reporting. Allow-intent runs skip this entirely.
+- **Two-phase generation** (block-intent only): AIRS needs BOTH allow and block topics sharing the same vocabulary domain. On iter 1, generates a domain-specific allow companion via `LlmService.generateCompanionTopic()` that covers the benign/legitimate side of the same domain (e.g., "Legal Tax Planning" as companion to "Tax Evasion"). Wires both to profile with `guardrailAction='allow'` (default: allow everything, block topic carves out violations). Companion is one-shot (no refinement). Iter 2+ only updates block topic content. Allow-intent runs use `guardrailAction='block'` with a single topic.
 - Topic name **locked after iteration 1** — only description+examples change thereafter
 - `analyzeResults()` and `improveTopic()` receive intent param — prioritizes FN for block, FP for allow
 - **Test composition** (always-on, iter 2+): carried FP/FN failures + regression tier (TP/TN re-scanned) + fresh LLM tests. `TestCase.source` tags each test's origin. `EfficacyMetrics.regressionCount` tracks regression-tier failures.
@@ -146,10 +146,11 @@ tests/
 - Profile updates create **new revisions with new UUIDs** — always reference profiles by name, never ID
 - Topics must be added to profile's `model-protection` → `topic-guardrails` → `topic-list`
 - AIRS rejects empty `topic-list` entries — only include entries with topics (no empty opposite-action entry)
-- **Block-intent requires allow topic**: AIRS profiles with `default action: block` need a non-empty allow topic list. `assignTopicsToProfile()` wires both the block topic and a companion allow topic; `assignTopicToProfile()` delegates to it for single-topic compat.
-- Guardrail-level `action` must always be `'block'` to enforce violations
+- **Block-intent requires domain-specific allow topic**: AIRS needs BOTH allow and block topics sharing the same vocabulary domain. `assignTopicsToProfile()` wires both with `guardrailAction='allow'` for block-intent (default: allow everything, block topics carve out violations). Allow-intent uses `guardrailAction='block'`.
+- **CRITICAL: topic-list `revision` field**: AIRS pins topic content to the `revision` number in the profile's topic-list. Omitting it defaults to revision 0 (original creation content). `assignTopicsToProfile()` fetches current topic revisions via `listTopics()` and includes them.
+- **CRITICAL: always scan by profile NAME**, never by profile ID/UUID. Scanning by name always uses the latest profile version; scanning by ID pins to a versioned snapshot.
 - Topics can't be deleted while referenced by any profile revision
-- **Platform ceilings**: Block-intent topics in high-sensitivity domains (explosives, weapons) trigger built-in AIRS safety that overrides custom definitions (0% TNR). Allow-intent topics use broad semantic matching — exclusion clauses increase FP; shorter descriptions outperform longer ones. Typical allow-intent ceiling: 40–70% coverage.
+- **Platform ceilings**: Block-intent topics in high-sensitivity domains (explosives, weapons) trigger built-in AIRS safety that overrides custom definitions (0% TNR). Allow-intent topics use broad semantic matching — exclusion clauses increase FP; shorter descriptions outperform longer ones. Typical block-intent ceiling: 40–50% coverage due to vocabulary overlap between allow and block domains.
 
 ### Runtime Scanning (`src/airs/runtime.ts`)
 - `SdkRuntimeService` wraps SDK `Scanner` for sync and async scanning

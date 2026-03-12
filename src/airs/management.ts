@@ -52,6 +52,10 @@ export class SdkManagementService implements ManagementService {
    * Sets one or more custom topics on a profile's topic-guardrails config.
    * Replaces any existing topics — previous runs' stale topics are cleared.
    * Groups topics by action; skips empty action groups (AIRS rejects them).
+   *
+   * CRITICAL: Each topic entry MUST include the current `revision` number.
+   * AIRS pins topic content to the revision specified in the profile — omitting
+   * it defaults to revision 0 (original content), not the latest.
    */
   async assignTopicsToProfile(
     profileName: string,
@@ -64,6 +68,11 @@ export class SdkManagementService implements ManagementService {
     if (!profile?.profile_id) {
       throw new Error(`Profile "${profileName}" not found`);
     }
+
+    // Fetch current topic revisions — AIRS requires the revision field to
+    // reference the correct topic content snapshot.
+    const allTopics = await this.listTopics();
+    const revisionMap = new Map(allTopics.map((t) => [t.topic_id, t.revision ?? 0]));
 
     // Deep clone the policy to mutate
     const policy = JSON.parse(JSON.stringify(profile.policy ?? {}));
@@ -91,17 +100,24 @@ export class SdkManagementService implements ManagementService {
     // 'allow' = allow all unless explicitly blocked (only block topics needed).
     topicGuardrails.action = guardrailAction ?? 'block';
 
-    // Group topics by action, build topic-list entries (skip empty groups).
-    const byAction = new Map<string, Array<{ topic_id: string; topic_name: string }>>();
+    // Group topics by action, build topic-list entries with revision (skip empty groups).
+    const byAction = new Map<
+      string,
+      Array<{ topic_id: string; topic_name: string; revision: number }>
+    >();
     for (const t of topics) {
       const group = byAction.get(t.action) ?? [];
-      group.push({ topic_id: t.topicId, topic_name: t.topicName });
+      group.push({
+        topic_id: t.topicId,
+        topic_name: t.topicName,
+        revision: revisionMap.get(t.topicId) ?? 0,
+      });
       byAction.set(t.action, group);
     }
 
     const topicList: Array<{
       action: string;
-      topic: Array<{ topic_id: string; topic_name: string }>;
+      topic: Array<{ topic_id: string; topic_name: string; revision: number }>;
     }> = [];
     for (const [action, group] of byAction) {
       topicList.push({ action, topic: group });

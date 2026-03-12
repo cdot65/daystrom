@@ -59,11 +59,6 @@ export function registerGenerateCommand(program: Command): void {
     .option('--create-prompt-set', 'Create custom prompt set from test cases after loop', false)
     .option('--prompt-set-name <name>', 'Override auto-generated prompt set name')
     .option('--save-tests <path>', 'Save best iteration test cases to CSV')
-    .option(
-      '--set-profile-allow',
-      "Set topic-guardrails default to 'allow' (skip companion topic, only block-topic matches blocked)",
-      false,
-    )
     .action(async (opts) => {
       try {
         renderHeader();
@@ -92,7 +87,6 @@ export function registerGenerateCommand(program: Command): void {
               : undefined,
             createPromptSet: opts.createPromptSet ?? false,
             promptSetName: opts.promptSetName,
-            setProfileAllow: opts.setProfileAllow ?? false,
           };
         } else {
           userInput = await collectUserInput();
