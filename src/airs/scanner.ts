@@ -23,7 +23,7 @@ export class AirsScanService implements ScanService {
 
     const action = response.action === 'block' ? 'block' : 'allow';
     const detected = response.prompt_detected as Record<string, unknown> | undefined;
-    const triggered = !!(detected?.topic_guardrails_details || detected?.topic_violation);
+    const triggered = detected?.topic_violation === true;
     const category = (response.category as string) ?? undefined;
 
     return {

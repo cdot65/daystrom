@@ -108,9 +108,9 @@ export function createMockScanService(
 
 /**
  * Mock scanner simulating AIRS allow-intent behavior.
- * Matching prompts → category: 'benign' (content matched the allow topic).
- * Non-matching prompts → category: 'malicious' (content not in allowed set).
- * triggered is always false for allow topics; action is always 'allow'.
+ * Matching prompts → topic_violation: true (topic guardrail matched).
+ * Non-matching prompts → topic_violation: false (not matched).
+ * Uses triggered (= topic_violation) as sole detection signal.
  */
 export function createMockAllowScanService(allowPatterns: RegExp[] = []): ScanService {
   return {
@@ -120,7 +120,7 @@ export function createMockAllowScanService(allowPatterns: RegExp[] = []): ScanSe
         scanId: `scan-${Date.now()}`,
         reportId: `report-${Date.now()}`,
         action: 'allow',
-        triggered: false, // AIRS never sets topic_violation for allow-intent topics
+        triggered: matches,
         category: matches ? 'benign' : 'malicious',
       };
     },
@@ -137,7 +137,7 @@ export function createMockAllowScanService(allowPatterns: RegExp[] = []): ScanSe
           scanId: `scan-${Date.now()}`,
           reportId: `report-${Date.now()}`,
           action: 'allow',
-          triggered: false,
+          triggered: matches,
           category: matches ? 'benign' : 'malicious',
         });
       }

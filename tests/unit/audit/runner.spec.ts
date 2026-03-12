@@ -136,21 +136,21 @@ describe('runAudit', () => {
     }
   });
 
-  it('uses allow-intent detection for allow topics', async () => {
+  it('uses triggered (topic_violation) for allow topics', async () => {
     const allowScanner = {
       scan: async (): Promise<ScanResult> => ({
         scanId: 'scan-1',
         reportId: 'report-1',
         action: 'allow' as const,
-        triggered: false,
-        category: 'benign', // matched allow topic
+        triggered: true, // topic_violation: true
+        category: 'benign',
       }),
       scanBatch: async (_p: string, prompts: string[]): Promise<ScanResult[]> =>
         prompts.map(() => ({
           scanId: 'scan-1',
           reportId: 'report-1',
           action: 'allow' as const,
-          triggered: false,
+          triggered: true,
           category: 'benign',
         })),
     };
@@ -166,7 +166,7 @@ describe('runAudit', () => {
       const positiveTest = complete.result.topics[0].testResults.find(
         (r) => r.testCase.expectedTriggered,
       );
-      // category=benign means allow topic matched → actualTriggered=true
+      // triggered=true (topic_violation) → actualTriggered=true
       expect(positiveTest?.actualTriggered).toBe(true);
     }
   });

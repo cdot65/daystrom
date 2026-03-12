@@ -101,14 +101,14 @@ src/
 └── index.ts               # Library exports
 
 tests/
-├── unit/                  # 27 spec files
+├── unit/                  # 28 spec files
 │   ├── airs/              # scanner.spec.ts, management.spec.ts, modelsecurity.spec.ts, promptsets.spec.ts, redteam.spec.ts, runtime.spec.ts
 │   ├── audit/             # evaluator.spec.ts, runner.spec.ts, report.spec.ts
 │   ├── cli/               # parse-input.spec.ts, bulk-scan-state.spec.ts
 │   ├── config/            # schema.spec.ts, loader.spec.ts
 │   ├── core/              # loop.spec.ts, metrics.spec.ts, constraints.spec.ts
 │   ├── llm/               # provider.spec.ts, schemas.spec.ts, service.spec.ts, prompts.spec.ts
-│   ├── memory/            # store.spec.ts, extractor.spec.ts, injector.spec.ts, diff.spec.ts
+│   ├── memory/            # store.spec.ts, extractor.spec.ts, injector.spec.ts, diff.spec.ts, prompts.spec.ts
 │   ├── persistence/       # store.spec.ts
 │   └── report/            # json.spec.ts, html.spec.ts
 ├── integration/           # loop.integration.spec.ts (full loop w/ mocks)
@@ -137,8 +137,8 @@ tests/
 - **Description simplification**: After 2 consecutive regressions, if `hasTriedSimplification` is false and a best iteration exists, the loop calls `simplifyTopic()` to strip exclusion clauses and shorten the description. Resets regression counter to 0. Only attempted once per run (`RunState.hasTriedSimplification`). If simplification also regresses, early stopping kicks in at `maxRegressions`.
 
 ### AIRS Integration (`src/airs/`)
-- **Scanner**: `Scanner.syncScan()` via SDK, detection = `prompt_detected.topic_violation` (fallback: `topic_guardrails_details`), extracts `category` from response
-- **Allow-intent detection via `category`**: For allow topics, AIRS never sets `triggered: true` and `action` is unreliable. The loop uses `category === 'benign'` (topic matched) vs `'malicious'` (no match), falling back to `triggered` when `category` is absent
+- **Scanner**: `Scanner.syncScan()` via SDK, detection = `prompt_detected.topic_violation === true` (sole signal, no fallbacks). `category` still extracted for weighted test generation but not used for detection
+- **Detection**: Both block and allow intents use `triggered` (= `topic_violation`) as the sole guardrail detection signal. No category-based or action-based detection.
 - **`DebugScanService`**: Wrapper that appends raw scan responses to a JSONL file when `--debug-scans` is passed
 - **Prompt sets**: `SdkPromptSetService` wraps `RedTeamClient.customAttacks` for custom prompt set CRUD; `--create-prompt-set` auto-creates a prompt set from the best iteration's test cases
 - **Management**: `ManagementClient` for topic CRUD + profile linking via OAuth2
@@ -213,7 +213,7 @@ tests/
 ### Audit (`src/audit/`)
 - `runAudit()` async generator yields `AuditEvent` discriminated union: `topics:loaded`, `tests:generated`, `scan:progress`, `evaluate:complete`, `audit:complete`
 - Reads all topics from profile via `getProfileTopics()`, generates tests per topic (tagged with `targetTopic`), batch scans, evaluates per-topic + composite metrics
-- Allow-intent detection uses `category === 'benign'` (topic matched); block uses `triggered`
+- Both intents use `triggered` (= `prompt_detected.topic_violation`) as sole detection signal
 - `detectConflicts()` finds FN/FP overlaps between topic pairs — same prompt failing as FN for topic A and FP for topic B
 - `getProfileTopics()` reads profile policy `model-protection → topic-guardrails → topic-list`, cross-references with `listTopics()` for full details
 
