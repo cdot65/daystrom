@@ -48,7 +48,7 @@ src/
 │   │   ├── resume.ts      # Resume paused/failed run from disk
 │   │   ├── report.ts      # View run results by ID
 │   │   ├── list.ts        # List all saved runs
-│   │   ├── runtime.ts     # Runtime scanning (scan, bulk-scan)
+│   │   ├── runtime.ts     # Runtime scanning (scan, bulk-scan, resume-poll)
 │   │   ├── audit.ts       # Profile-level multi-topic evaluation
 │   │   ├── redteam.ts     # Red team operations (scan, targets CRUD, prompt-sets CRUD, prompts CRUD, properties)
 │   │   └── modelsecurity.ts # Model security operations (groups, rules, rule-instances, scans, labels, pypi-auth)
@@ -219,10 +219,10 @@ tests/
 
 ## AIRS Constraints (`src/core/constraints.ts`)
 
-- Topic name: 100 chars max
-- Description: 250 chars max
-- Each example: 250 chars max, 5 examples max
-- Combined (desc + all examples): 1000 chars max
+- Topic name: 100 bytes (UTF-8) max
+- Description: 250 bytes (UTF-8) max
+- Each example: 250 bytes (UTF-8) max, 5 examples max
+- Combined (desc + all examples): 1000 bytes (UTF-8) max
 
 ## Critical Details
 
