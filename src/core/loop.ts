@@ -267,9 +267,14 @@ export async function* runLoop(
         topicId = response.topic_id;
       }
 
-      // Two-phase: generate companion allow topic for block-intent profiles.
-      // AIRS requires a non-empty allow list when default action is "block".
-      if (input.intent === 'block') {
+      // Determine guardrail-level action.
+      // --set-profile-allow: guardrail default is 'allow', only block-topic matches get blocked.
+      // Without it: guardrail default is 'block', requires companion allow topic.
+      const guardrailAction = input.setProfileAllow ? 'allow' : 'block';
+
+      if (input.intent === 'block' && !input.setProfileAllow) {
+        // Two-phase: generate companion allow topic for block-intent profiles.
+        // AIRS requires a non-empty allow list when guardrail action is "block".
         companionTopic = await deps.llm.generateCompanionTopic(topic.name, topic.description);
         yield { type: 'companion:generated', topic: companionTopic };
 
@@ -299,17 +304,20 @@ export async function* runLoop(
         runState.companionTopic = companionTopic;
 
         // Wire both topics to profile
-        await deps.management.assignTopicsToProfile(input.profileName, [
-          { topicId: companionTopicId, topicName: companionTopic.name, action: 'allow' },
-          { topicId, topicName: topic.name, action: 'block' },
-        ]);
-      } else {
-        // Allow-intent: single topic, no companion needed
-        await deps.management.assignTopicToProfile(
+        await deps.management.assignTopicsToProfile(
           input.profileName,
-          topicId,
-          topic.name,
-          input.intent,
+          [
+            { topicId: companionTopicId, topicName: companionTopic.name, action: 'allow' },
+            { topicId, topicName: topic.name, action: 'block' },
+          ],
+          guardrailAction,
+        );
+      } else {
+        // --set-profile-allow or allow-intent: single topic, no companion needed.
+        await deps.management.assignTopicsToProfile(
+          input.profileName,
+          [{ topicId, topicName: topic.name, action: input.intent }],
+          guardrailAction,
         );
       }
     } else {

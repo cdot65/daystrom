@@ -28,6 +28,8 @@ export interface UserInput {
   maxAccumulatedTests?: number;
   createPromptSet?: boolean;
   promptSetName?: string;
+  /** Set topic-guardrails default action to 'allow' instead of 'block'. */
+  setProfileAllow?: boolean;
 }
 
 // ---------------------------------------------------------------------------

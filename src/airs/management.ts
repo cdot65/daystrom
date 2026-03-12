@@ -56,6 +56,7 @@ export class SdkManagementService implements ManagementService {
   async assignTopicsToProfile(
     profileName: string,
     topics: Array<{ topicId: string; topicName: string; action: 'allow' | 'block' }>,
+    guardrailAction?: 'allow' | 'block',
   ): Promise<void> {
     // Find profile by name
     const { ai_profiles } = await this.client.profiles.list();
@@ -85,9 +86,10 @@ export class SdkManagementService implements ManagementService {
       modelProtection.push(topicGuardrails);
     }
 
-    // Ensure the guardrail-level action is always 'block' so violations are enforced.
-    // The allow/block distinction is controlled by which topic-list entry the topic is in.
-    topicGuardrails.action = 'block';
+    // Guardrail-level action controls default behavior for topic-guardrails layer.
+    // 'block' = block all unless explicitly allowed (requires allow topics).
+    // 'allow' = allow all unless explicitly blocked (only block topics needed).
+    topicGuardrails.action = guardrailAction ?? 'block';
 
     // Group topics by action, build topic-list entries (skip empty groups).
     const byAction = new Map<string, Array<{ topic_id: string; topic_name: string }>>();

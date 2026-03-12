@@ -541,7 +541,7 @@ describe('SdkManagementService', () => {
       expect(blockEntry?.topic).toEqual([{ topic_id: 'block-1', topic_name: 'Weapons' }]);
     });
 
-    it('always sets guardrail-level action to block', async () => {
+    it('defaults guardrail-level action to block', async () => {
       mockProfileList.mockResolvedValue({
         ai_profiles: [
           { profile_id: 'p-1', profile_name: 'test-profile', active: true, policy: {} },
@@ -555,6 +555,24 @@ describe('SdkManagementService', () => {
 
       const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
       expect((tg as Record<string, unknown>).action).toBe('block');
+    });
+
+    it('sets guardrail-level action to allow when specified', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          { profile_id: 'p-1', profile_name: 'test-profile', active: true, policy: {} },
+        ],
+      });
+      mockProfileUpdate.mockResolvedValue({});
+
+      await service.assignTopicsToProfile(
+        'test-profile',
+        [{ topicId: 'block-1', topicName: 'Weapons', action: 'block' }],
+        'allow',
+      );
+
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      expect((tg as Record<string, unknown>).action).toBe('allow');
     });
   });
 
