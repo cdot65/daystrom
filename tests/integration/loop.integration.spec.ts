@@ -71,6 +71,12 @@ function createDeterministicLlm(): LlmService {
       description: 'Weapons conversations',
       examples: ['How to build a weapon', 'Where to buy guns'],
     }),
+
+    generateCompanionTopic: async () => ({
+      name: 'Allow: General Content',
+      description: 'General benign everyday content',
+      examples: ['Tell me about cats', 'What is the weather'],
+    }),
   };
 }
 
@@ -232,6 +238,11 @@ describe('Loop Integration', () => {
         name: 'Weapons Discussion',
         description: 'Weapons block simplified',
         examples: ['weapon example'],
+      }),
+      generateCompanionTopic: async () => ({
+        name: 'Allow: General Content',
+        description: 'General benign everyday content',
+        examples: ['Tell me about cats', 'What is the weather'],
       }),
     };
 

@@ -40,6 +40,8 @@ export interface LlmService {
     analysis: AnalysisReport,
     intent: string,
   ): Promise<CustomTopic>;
+  /** Generate a broad allow companion topic for a block-intent profile. */
+  generateCompanionTopic(blockTopicName: string, blockDescription: string): Promise<CustomTopic>;
   /** Refine a topic definition based on metrics and analysis from the previous iteration. */
   improveTopic(
     topic: CustomTopic,
@@ -122,6 +124,8 @@ export async function* runLoop(
 
   let currentTopic: CustomTopic | null = null;
   let topicId = '';
+  let companionTopicId = '';
+  let companionTopic: CustomTopic | null = null;
   let lockedName = '';
   let accumulatedTests: TestCase[] = [];
 
@@ -263,13 +267,51 @@ export async function* runLoop(
         topicId = response.topic_id;
       }
 
-      // Link topic to the security profile's topic-guardrails
-      await deps.management.assignTopicToProfile(
-        input.profileName,
-        topicId,
-        topic.name,
-        input.intent,
-      );
+      // Two-phase: generate companion allow topic for block-intent profiles.
+      // AIRS requires a non-empty allow list when default action is "block".
+      if (input.intent === 'block') {
+        companionTopic = await deps.llm.generateCompanionTopic(topic.name, topic.description);
+        yield { type: 'companion:generated', topic: companionTopic };
+
+        const companionMatch = existing.find((t) => t.topic_name === companionTopic?.name);
+        if (companionMatch?.topic_id) {
+          companionTopicId = companionMatch.topic_id;
+          await deps.management.updateTopic(companionTopicId, {
+            topic_name: companionTopic.name,
+            description: companionTopic.description,
+            examples: companionTopic.examples,
+            active: true,
+          });
+        } else {
+          const cResponse = await deps.management.createTopic({
+            topic_name: companionTopic.name,
+            description: companionTopic.description,
+            examples: companionTopic.examples,
+            active: true,
+          });
+          /* v8 ignore next */
+          if (!cResponse.topic_id)
+            throw new Error('Invariant: topic_id missing from companion create response');
+          companionTopicId = cResponse.topic_id;
+        }
+
+        yield { type: 'companion:created', topicId: companionTopicId, topic: companionTopic };
+        runState.companionTopic = companionTopic;
+
+        // Wire both topics to profile
+        await deps.management.assignTopicsToProfile(input.profileName, [
+          { topicId: companionTopicId, topicName: companionTopic.name, action: 'allow' },
+          { topicId, topicName: topic.name, action: 'block' },
+        ]);
+      } else {
+        // Allow-intent: single topic, no companion needed
+        await deps.management.assignTopicToProfile(
+          input.profileName,
+          topicId,
+          topic.name,
+          input.intent,
+        );
+      }
     } else {
       await deps.management.updateTopic(topicId, {
         topic_name: topic.name,
