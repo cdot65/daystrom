@@ -426,6 +426,138 @@ describe('SdkManagementService', () => {
     });
   });
 
+  describe('assignTopicsToProfile', () => {
+    it('throws when profile not found', async () => {
+      mockProfileList.mockResolvedValue({ ai_profiles: [] });
+
+      await expect(
+        service.assignTopicsToProfile('missing-profile', [
+          { topicId: 'topic-1', topicName: 'Weapons', action: 'block' },
+        ]),
+      ).rejects.toThrow('Profile "missing-profile" not found');
+    });
+
+    it('wires a single block topic', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          { profile_id: 'p-1', profile_name: 'test-profile', active: true, policy: {} },
+        ],
+      });
+      mockProfileUpdate.mockResolvedValue({});
+
+      await service.assignTopicsToProfile('test-profile', [
+        { topicId: 'topic-1', topicName: 'Weapons', action: 'block' },
+      ]);
+
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      expect(tg['topic-list']).toHaveLength(1);
+      expect(tg['topic-list'][0].action).toBe('block');
+      expect(tg['topic-list'][0].topic).toEqual([{ topic_id: 'topic-1', topic_name: 'Weapons' }]);
+    });
+
+    it('wires both allow and block topics as separate entries', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          { profile_id: 'p-1', profile_name: 'test-profile', active: true, policy: {} },
+        ],
+      });
+      mockProfileUpdate.mockResolvedValue({});
+
+      await service.assignTopicsToProfile('test-profile', [
+        { topicId: 'allow-1', topicName: 'General Content', action: 'allow' },
+        { topicId: 'block-1', topicName: 'Weapons', action: 'block' },
+      ]);
+
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      expect(tg['topic-list']).toHaveLength(2);
+
+      const allowEntry = tg['topic-list'].find((tl) => tl.action === 'allow');
+      const blockEntry = tg['topic-list'].find((tl) => tl.action === 'block');
+      expect(allowEntry?.topic).toEqual([{ topic_id: 'allow-1', topic_name: 'General Content' }]);
+      expect(blockEntry?.topic).toEqual([{ topic_id: 'block-1', topic_name: 'Weapons' }]);
+    });
+
+    it('groups multiple topics under the same action', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          { profile_id: 'p-1', profile_name: 'test-profile', active: true, policy: {} },
+        ],
+      });
+      mockProfileUpdate.mockResolvedValue({});
+
+      await service.assignTopicsToProfile('test-profile', [
+        { topicId: 'block-1', topicName: 'Weapons', action: 'block' },
+        { topicId: 'block-2', topicName: 'Drugs', action: 'block' },
+      ]);
+
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      expect(tg['topic-list']).toHaveLength(1);
+      expect(tg['topic-list'][0].action).toBe('block');
+      expect(tg['topic-list'][0].topic).toHaveLength(2);
+    });
+
+    it('replaces stale topics from previous runs', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          {
+            profile_id: 'p-1',
+            profile_name: 'test-profile',
+            active: true,
+            policy: {
+              'ai-security-profiles': [
+                {
+                  'model-type': 'default',
+                  'model-configuration': {
+                    'model-protection': [
+                      {
+                        name: 'topic-guardrails',
+                        action: 'block',
+                        options: [],
+                        'topic-list': [
+                          {
+                            action: 'block',
+                            topic: [{ topic_id: 'stale-1', topic_name: 'Old' }],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      });
+      mockProfileUpdate.mockResolvedValue({});
+
+      await service.assignTopicsToProfile('test-profile', [
+        { topicId: 'allow-1', topicName: 'General', action: 'allow' },
+        { topicId: 'block-1', topicName: 'Weapons', action: 'block' },
+      ]);
+
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      expect(tg['topic-list']).toHaveLength(2);
+      const blockEntry = tg['topic-list'].find((tl) => tl.action === 'block');
+      expect(blockEntry?.topic).toEqual([{ topic_id: 'block-1', topic_name: 'Weapons' }]);
+    });
+
+    it('always sets guardrail-level action to block', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          { profile_id: 'p-1', profile_name: 'test-profile', active: true, policy: {} },
+        ],
+      });
+      mockProfileUpdate.mockResolvedValue({});
+
+      await service.assignTopicsToProfile('test-profile', [
+        { topicId: 'allow-1', topicName: 'General', action: 'allow' },
+      ]);
+
+      const tg = getTopicGuardrails(mockProfileUpdate.mock.calls[0][1]);
+      expect((tg as Record<string, unknown>).action).toBe('block');
+    });
+  });
+
   describe('getProfileTopics', () => {
     it('throws when profile not found', async () => {
       mockProfileList.mockResolvedValue({ ai_profiles: [] });
