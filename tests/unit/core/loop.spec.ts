@@ -397,7 +397,7 @@ describe('runLoop', () => {
     expect(companionEvents).toHaveLength(0);
   });
 
-  it('calls assignTopicsToProfile with both topics for block intent (default)', async () => {
+  it('block-intent sets guardrailAction=allow and wires both topics', async () => {
     const management = createMockManagementService();
     const assignTopicsSpy = vi.spyOn(management, 'assignTopicsToProfile');
     const deps = createDeps({ management });
@@ -412,34 +412,29 @@ describe('runLoop', () => {
         expect.objectContaining({ action: 'allow', topicName: 'Allow: General Content' }),
         expect.objectContaining({ action: 'block', topicName: 'Weapons Discussion' }),
       ],
-      'block',
+      'allow',
     );
   });
 
-  it('--set-profile-allow skips companion and sets guardrailAction to allow', async () => {
+  it('allow-intent sets guardrailAction=block with single topic', async () => {
     const management = createMockManagementService();
     const assignTopicsSpy = vi.spyOn(management, 'assignTopicsToProfile');
-    const deps = createDeps({ management });
-    const events: LoopEvent[] = [];
+    const deps = createDeps({
+      management,
+      scanner: createMockAllowScanService([/cats/i]),
+    });
 
-    for await (const event of runLoop(
-      { ...defaultInput, setProfileAllow: true, maxIterations: 1 },
+    for await (const _event of runLoop(
+      { ...defaultInput, intent: 'allow', maxIterations: 1 },
       deps,
     )) {
-      events.push(event);
+      // consume
     }
 
-    // No companion events
-    const companionEvents = events.filter(
-      (e) => e.type === 'companion:generated' || e.type === 'companion:created',
-    );
-    expect(companionEvents).toHaveLength(0);
-
-    // Single block topic with guardrailAction 'allow'
     expect(assignTopicsSpy).toHaveBeenCalledWith(
       'test-profile',
-      [expect.objectContaining({ action: 'block', topicName: 'Weapons Discussion' })],
-      'allow',
+      [expect.objectContaining({ action: 'allow' })],
+      'block',
     );
   });
 
