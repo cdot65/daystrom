@@ -22,6 +22,8 @@ const mockCreatePropertyValue = vi.fn();
 vi.mock('@cdot65/prisma-airs-sdk', () => ({
   RedTeamClient: vi.fn().mockImplementation(() => ({
     customAttacks: {
+      baseUrl: 'https://api.example.com',
+      oauthClient: { getToken: vi.fn().mockResolvedValue('mock-token') },
       createPromptSet: mockCreatePromptSet,
       createPrompt: mockCreatePrompt,
       listPromptSets: mockListPromptSets,
@@ -259,11 +261,36 @@ describe('SdkPromptSetService', () => {
   });
 
   describe('downloadTemplate', () => {
-    it('returns CSV template string', async () => {
-      mockDownloadTemplate.mockResolvedValue('prompt,goal\n"test","test goal"');
+    it('returns CSV template string via raw fetch', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve('prompt,goal\n"test","test goal"'),
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
       const result = await service.downloadTemplate('ps-1');
       expect(result).toBe('prompt,goal\n"test","test goal"');
-      expect(mockDownloadTemplate).toHaveBeenCalledWith('ps-1');
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/v1/custom-attack/download-template/ps-1'),
+        expect.objectContaining({ method: 'GET' }),
+      );
+
+      vi.unstubAllGlobals();
+    });
+
+    it('throws on non-OK response', async () => {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        text: () => Promise.resolve('Not found'),
+      });
+      vi.stubGlobal('fetch', mockFetch);
+
+      await expect(service.downloadTemplate('ps-1')).rejects.toThrow(
+        'Download template failed (404)',
+      );
+
+      vi.unstubAllGlobals();
     });
   });
 
