@@ -397,7 +397,7 @@ describe('runLoop', () => {
     expect(companionEvents).toHaveLength(0);
   });
 
-  it('calls assignTopicsToProfile with both topics for block intent', async () => {
+  it('calls assignTopicsToProfile with both topics for block intent (default)', async () => {
     const management = createMockManagementService();
     const assignTopicsSpy = vi.spyOn(management, 'assignTopicsToProfile');
     const deps = createDeps({ management });
@@ -406,10 +406,41 @@ describe('runLoop', () => {
       // consume
     }
 
-    expect(assignTopicsSpy).toHaveBeenCalledWith('test-profile', [
-      expect.objectContaining({ action: 'allow', topicName: 'Allow: General Content' }),
-      expect.objectContaining({ action: 'block', topicName: 'Weapons Discussion' }),
-    ]);
+    expect(assignTopicsSpy).toHaveBeenCalledWith(
+      'test-profile',
+      [
+        expect.objectContaining({ action: 'allow', topicName: 'Allow: General Content' }),
+        expect.objectContaining({ action: 'block', topicName: 'Weapons Discussion' }),
+      ],
+      'block',
+    );
+  });
+
+  it('--set-profile-allow skips companion and sets guardrailAction to allow', async () => {
+    const management = createMockManagementService();
+    const assignTopicsSpy = vi.spyOn(management, 'assignTopicsToProfile');
+    const deps = createDeps({ management });
+    const events: LoopEvent[] = [];
+
+    for await (const event of runLoop(
+      { ...defaultInput, setProfileAllow: true, maxIterations: 1 },
+      deps,
+    )) {
+      events.push(event);
+    }
+
+    // No companion events
+    const companionEvents = events.filter(
+      (e) => e.type === 'companion:generated' || e.type === 'companion:created',
+    );
+    expect(companionEvents).toHaveLength(0);
+
+    // Single block topic with guardrailAction 'allow'
+    expect(assignTopicsSpy).toHaveBeenCalledWith(
+      'test-profile',
+      [expect.objectContaining({ action: 'block', topicName: 'Weapons Discussion' })],
+      'allow',
+    );
   });
 
   it('persists companionTopic in RunState', async () => {
