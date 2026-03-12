@@ -237,7 +237,11 @@ export function registerGenerateCommand(program: Command): void {
               await store.save(event.runState);
               renderLoopComplete(event.runState);
               if (opts.saveTests) {
-                const best = event.runState.iterations[event.runState.bestIteration - 1];
+                const bestIdx =
+                  event.runState.bestIteration > 0
+                    ? event.runState.bestIteration - 1
+                    : event.runState.iterations.length - 1;
+                const best = event.runState.iterations[bestIdx];
                 if (best) {
                   const resultMap = new Map(best.testResults.map((r) => [r.testCase.prompt, r]));
                   const csvRows = [
