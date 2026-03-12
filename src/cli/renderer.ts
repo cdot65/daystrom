@@ -41,6 +41,13 @@ export function renderTopic(topic: CustomTopic): void {
   }
 }
 
+/** Render companion allow topic info (two-phase generation). */
+export function renderCompanionTopic(topic: CustomTopic): void {
+  console.log(chalk.bold('  Companion Allow Topic:'));
+  console.log(`    Name: ${chalk.white(topic.name)}`);
+  console.log(`    Desc: ${chalk.white(topic.description)}`);
+}
+
 /** Render a scan progress bar with percentage. */
 export function renderTestProgress(completed: number, total: number): void {
   const pct = Math.round((completed / total) * 100);
