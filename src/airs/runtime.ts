@@ -111,20 +111,21 @@ export class SdkRuntimeService implements RuntimeService {
     while (pending.size > 0) {
       // Query all pending IDs in batches of 5 per sweep
       const pendingIds = [...pending];
+      let sweepCompleted = true;
+
       for (let b = 0; b < pendingIds.length; b += 5) {
         const batch = pendingIds.slice(b, b + 5);
 
         let results: unknown[];
         try {
           results = await this.scanner.queryByScanIds(batch);
-          // Decay retry level on success (don't reset to 0)
-          if (retryLevel > 0) retryLevel = Math.max(0, retryLevel - 1);
         } catch (err) {
           if (isRateLimitError(err) && retryLevel < maxRetries) {
             retryLevel++;
             const delayMs = baseDelay * 2 ** (retryLevel - 1);
             retryOpts?.onRetry?.(retryLevel, delayMs);
             await new Promise((resolve) => setTimeout(resolve, delayMs));
+            sweepCompleted = false;
             break; // restart sweep from the beginning
           }
           throw err;
@@ -137,6 +138,11 @@ export class SdkRuntimeService implements RuntimeService {
           const batchDelay = retryLevel > 0 ? baseDelay : Math.min(baseDelay, 1000);
           await new Promise((resolve) => setTimeout(resolve, batchDelay));
         }
+      }
+
+      // Only decay retry level after a full sweep with no rate limit errors
+      if (sweepCompleted && retryLevel > 0) {
+        retryLevel = Math.max(0, retryLevel - 1);
       }
 
       if (pending.size > 0) {

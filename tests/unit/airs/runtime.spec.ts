@@ -315,25 +315,25 @@ describe('SdkRuntimeService', () => {
       expect(onRetry).toHaveBeenCalledWith(1, expect.any(Number));
     });
 
-    it('decays retry counter on success instead of resetting to 0', async () => {
+    it('decays retry level after a full successful sweep, not per-batch', async () => {
       const rateLimitError = new Error('Rate limit exceeded');
       const onRetry = vi.fn();
 
-      // Rate limit twice → retry escalates to 2
-      // Then succeed → decays to 1 (not 0)
-      // Then rate limit again → retry at level 2 (1+1), not back to 1
+      // Single scan ID — each sweep = 1 batch
+      // Rate limit twice → level escalates to 2
+      // Then full sweep succeeds (PENDING) → decay to 1
+      // Then full sweep succeeds (COMPLETE) → decay to 0, done
       mockScannerInstance.queryByScanIds
         .mockRejectedValueOnce(rateLimitError) // retry 1
         .mockRejectedValueOnce(rateLimitError) // retry 2
-        .mockResolvedValueOnce([{ scan_id: 's1', status: 'PENDING' }]) // success, decay to 1
-        .mockRejectedValueOnce(rateLimitError) // retry 2 (decayed 1 + 1)
+        .mockResolvedValueOnce([{ scan_id: 's1', status: 'PENDING' }]) // sweep ok, decay 2→1
         .mockResolvedValueOnce([
           {
             scan_id: 's1',
             status: 'COMPLETED',
             result: { scan_id: 's1', report_id: 'r1', action: 'allow', category: 'benign' },
           },
-        ]);
+        ]); // sweep ok, decay 1→0
 
       const results = await service.pollResults(['s1'], 10, {
         maxRetries: 5,
@@ -341,11 +341,52 @@ describe('SdkRuntimeService', () => {
         onRetry,
       });
       expect(results).toHaveLength(1);
-      // Verify retry levels escalated: 1, 2, then after decay: 2
-      expect(onRetry).toHaveBeenCalledTimes(3);
-      expect(onRetry.mock.calls[0][0]).toBe(1); // first retry
-      expect(onRetry.mock.calls[1][0]).toBe(2); // second retry
-      expect(onRetry.mock.calls[2][0]).toBe(2); // after decay from 2→1, then +1=2
+      expect(onRetry).toHaveBeenCalledTimes(2);
+      expect(onRetry.mock.calls[0][0]).toBe(1);
+      expect(onRetry.mock.calls[1][0]).toBe(2);
+    });
+
+    it('does not decay retry level when early batches succeed but later ones fail', async () => {
+      const rateLimitError = new Error('Rate limit exceeded');
+      const onRetry = vi.fn();
+
+      // 10 scan IDs = 2 batches per sweep
+      const ids = ['s0', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9'];
+
+      // Sweep 1: batch 1 succeeds (all pending), batch 2 rate-limits → level 1
+      mockScannerInstance.queryByScanIds
+        .mockResolvedValueOnce(ids.slice(0, 5).map((id) => ({ scan_id: id, status: 'PENDING' })))
+        .mockRejectedValueOnce(rateLimitError) // level → 1
+        // Sweep 2: batch 1 succeeds (all pending), batch 2 rate-limits → level 2
+        .mockResolvedValueOnce(ids.slice(0, 5).map((id) => ({ scan_id: id, status: 'PENDING' })))
+        .mockRejectedValueOnce(rateLimitError) // level → 2
+        // Sweep 3: both batches succeed → all complete
+        .mockResolvedValueOnce(
+          ids.slice(0, 5).map((id) => ({
+            scan_id: id,
+            status: 'COMPLETED',
+            result: { scan_id: id, report_id: `r-${id}`, action: 'allow', category: 'benign' },
+          })),
+        )
+        .mockResolvedValueOnce(
+          ids.slice(5).map((id) => ({
+            scan_id: id,
+            status: 'COMPLETED',
+            result: { scan_id: id, report_id: `r-${id}`, action: 'allow', category: 'benign' },
+          })),
+        );
+
+      const results = await service.pollResults(ids, 10, {
+        maxRetries: 5,
+        baseDelayMs: 10,
+        onRetry,
+      });
+
+      expect(results).toHaveLength(10);
+      // Key assertion: retry must escalate to 2, not stay at 1
+      expect(onRetry).toHaveBeenCalledTimes(2);
+      expect(onRetry.mock.calls[0][0]).toBe(1);
+      expect(onRetry.mock.calls[1][0]).toBe(2); // must be 2, not 1
     });
 
     it('queries all pending IDs per sweep in batches of 5', async () => {
