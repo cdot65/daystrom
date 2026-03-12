@@ -1,3 +1,4 @@
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { Command } from 'commander';
 import { SdkManagementService } from '../../airs/management.js';
@@ -56,6 +57,7 @@ export function registerGenerateCommand(program: Command): void {
     .option('--debug-scans', 'Dump raw AIRS scan responses to JSONL for debugging', false)
     .option('--create-prompt-set', 'Create custom prompt set from test cases after loop', false)
     .option('--prompt-set-name <name>', 'Override auto-generated prompt set name')
+    .option('--save-tests <path>', 'Save best iteration test cases to CSV')
     .action(async (opts) => {
       try {
         renderHeader();
@@ -234,6 +236,33 @@ export function registerGenerateCommand(program: Command): void {
             case 'loop:complete':
               await store.save(event.runState);
               renderLoopComplete(event.runState);
+              if (opts.saveTests) {
+                const best = event.runState.iterations[event.runState.bestIteration - 1];
+                if (best) {
+                  const resultMap = new Map(best.testResults.map((r) => [r.testCase.prompt, r]));
+                  const csvRows = [
+                    'prompt,expected_triggered,category,source,actual_triggered,correct',
+                  ];
+                  for (const tc of best.testCases) {
+                    const tr = resultMap.get(tc.prompt);
+                    const csvEscape = (s: string) => `"${s.replace(/"/g, '""')}"`;
+                    csvRows.push(
+                      [
+                        csvEscape(tc.prompt),
+                        tc.expectedTriggered,
+                        csvEscape(tc.category),
+                        tc.source ?? 'generated',
+                        tr?.actualTriggered ?? '',
+                        tr?.correct ?? '',
+                      ].join(','),
+                    );
+                  }
+                  fs.writeFileSync(opts.saveTests, csvRows.join('\n'), 'utf-8');
+                  console.log(
+                    `  ✓ Test cases saved to ${opts.saveTests} (${best.testCases.length} rows)`,
+                  );
+                }
+              }
               break;
           }
         }
