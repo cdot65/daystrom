@@ -411,8 +411,8 @@ describe('runLoop', () => {
     );
   });
 
-  it('uses category field for allow-intent triggered detection', async () => {
-    // Mock scanner simulating AIRS allow-intent: matching prompts → category: 'benign'
+  it('uses topic_violation (triggered) for allow-intent detection', async () => {
+    // Mock scanner: matching prompts → triggered: true (topic_violation)
     const allowScanner = createMockAllowScanService([/weapon/i, /bomb/i]);
     const llm = createMockLlm();
     const deps = createDeps({ llm, scanner: allowScanner });
@@ -428,15 +428,15 @@ describe('runLoop', () => {
     const evalEvent = events.find((e) => e.type === 'evaluate:complete');
     expect(evalEvent).toBeDefined();
     if (evalEvent?.type === 'evaluate:complete') {
-      // "weapon" and "bomb" prompts → category: 'benign' → actualTriggered = true
-      // "cats" and "weather" → category: 'malicious' → actualTriggered = false
+      // "weapon" and "bomb" prompts → triggered: true → actualTriggered = true
+      // "cats" and "weather" → triggered: false → actualTriggered = false
       expect(evalEvent.metrics.truePositives).toBeGreaterThan(0);
       expect(evalEvent.metrics.trueNegatives).toBeGreaterThan(0);
     }
   });
 
-  it('falls back to triggered when category absent for allow-intent', async () => {
-    // Scanner with no category field — should fall back to triggered
+  it('allow-intent with no triggered yields false negatives', async () => {
+    // Scanner with triggered always false — all positives become FN
     const noCategoryScanner: import('../../../src/airs/types.js').ScanService = {
       scan: async () => ({
         scanId: 's1',
@@ -465,7 +465,7 @@ describe('runLoop', () => {
     const evalEvent = events.find((e) => e.type === 'evaluate:complete');
     expect(evalEvent).toBeDefined();
     if (evalEvent?.type === 'evaluate:complete') {
-      // All triggered=false, so all actualTriggered=false → positive tests are FN
+      // All triggered=false → positive tests are FN
       expect(evalEvent.metrics.falseNegatives).toBeGreaterThan(0);
     }
   });
@@ -1966,18 +1966,18 @@ describe('runLoop', () => {
       expect(probeEvents).toHaveLength(0);
     });
 
-    it('uses category === benign for allow-intent probe', async () => {
+    it('uses triggered (topic_violation) for allow-intent probe', async () => {
       let probeScanCount = 0;
       const scanner: ScanService = {
         scan: async (_profile: string, _prompt: string) => {
           probeScanCount++;
-          // First probe: category malicious (not matched). Second: category benign (matched).
+          // First probe: not matched. Second: matched via topic_violation.
           const matched = probeScanCount >= 2;
           return {
             scanId: `scan-${probeScanCount}`,
             reportId: `report-${probeScanCount}`,
             action: 'allow' as const,
-            triggered: false, // AIRS never sets triggered for allow-intent
+            triggered: matched,
             category: matched ? 'benign' : 'malicious',
           };
         },

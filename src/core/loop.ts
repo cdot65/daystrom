@@ -301,12 +301,7 @@ export async function* runLoop(
           `daystrom-${runState.id.slice(0, 7)}-probe`,
         );
 
-        let matched: boolean;
-        if (input.intent === 'allow' && probeResult.category) {
-          matched = probeResult.category === 'benign';
-        } else {
-          matched = probeResult.triggered;
-        }
+        const matched = probeResult.triggered;
 
         if (matched) {
           yield { type: 'probe:ready' as const, attempts: attempt };
@@ -420,16 +415,8 @@ export async function* runLoop(
     for (let j = 0; j < allTests.length; j++) {
       const testCase = allTests[j];
       const scanResult = scanResults[j];
-      // Derive whether the topic guardrail matched this prompt.
-      // For allow intent: AIRS never sets triggered=true; use category field instead
-      // ("benign" = matched the allow topic, "malicious" = did not match).
-      // For block intent: use the triggered flag directly.
-      let actualTriggered: boolean;
-      if (input.intent === 'allow' && scanResult.category) {
-        actualTriggered = scanResult.category === 'benign';
-      } else {
-        actualTriggered = scanResult.triggered;
-      }
+      // prompt_detected.topic_violation is the sole signal for both intents.
+      const actualTriggered = scanResult.triggered;
       testResults.push({
         testCase,
         actualTriggered,

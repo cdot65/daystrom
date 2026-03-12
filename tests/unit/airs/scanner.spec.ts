@@ -26,13 +26,13 @@ describe('AirsScanService', () => {
   });
 
   describe('scan', () => {
-    it('returns blocked result when topic guardrail triggers', async () => {
+    it('returns blocked result when topic_violation is true', async () => {
       mockSyncScan.mockResolvedValue({
         scan_id: 'scan-123',
         report_id: 'report-456',
         action: 'block',
         prompt_detected: {
-          topic_guardrails_details: true,
+          topic_violation: true,
         },
       });
 
@@ -41,6 +41,18 @@ describe('AirsScanService', () => {
       expect(result.reportId).toBe('report-456');
       expect(result.action).toBe('block');
       expect(result.triggered).toBe(true);
+    });
+
+    it('does not trigger on topic_guardrails_details alone', async () => {
+      mockSyncScan.mockResolvedValue({
+        scan_id: 's1',
+        report_id: 'r1',
+        action: 'block',
+        prompt_detected: { topic_guardrails_details: true },
+      });
+
+      const result = await service.scan('my-profile', 'test');
+      expect(result.triggered).toBe(false);
     });
 
     it('returns allowed result when not triggered', async () => {
@@ -144,7 +156,7 @@ describe('AirsScanService', () => {
           scan_id: 's1',
           report_id: 'r1',
           action: 'block',
-          prompt_detected: { topic_guardrails_details: true },
+          prompt_detected: { topic_violation: true },
         })
         .mockResolvedValueOnce({
           scan_id: 's2',

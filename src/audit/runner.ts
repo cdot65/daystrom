@@ -64,13 +64,8 @@ export async function* runAudit(
   // 4. Build test results
   const testResults: TestResult[] = allTests.map((testCase, i) => {
     const scan = scanResults[i];
-    const targetTopic = topics.find((t) => t.topicName === testCase.targetTopic);
-    let actualTriggered: boolean;
-    if (targetTopic?.action === 'allow' && scan.category) {
-      actualTriggered = scan.category === 'benign';
-    } else {
-      actualTriggered = scan.triggered;
-    }
+    // prompt_detected.topic_violation is the sole signal for both intents.
+    const actualTriggered = scan.triggered;
     return {
       testCase,
       actualTriggered,
