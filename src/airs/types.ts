@@ -667,6 +667,11 @@ export interface ManagementService {
     topicName: string,
     action: 'allow' | 'block',
   ): Promise<void>;
+  /** Assign multiple topics to a security profile's topic-guardrails. */
+  assignTopicsToProfile(
+    profileName: string,
+    topics: Array<{ topicId: string; topicName: string; action: 'allow' | 'block' }>,
+  ): Promise<void>;
   /** List all topics configured in a profile with full details. */
   getProfileTopics(profileName: string): Promise<ProfileTopic[]>;
 }

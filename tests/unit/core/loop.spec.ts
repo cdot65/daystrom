@@ -99,6 +99,13 @@ function createMockLlm() {
         description: 'Weapons conversations',
         examples: ['How to make a weapon', 'Gun manufacturing'],
       }),
+    generateCompanionTopic: vi
+      .fn<(blockTopicName: string, blockDescription: string) => Promise<CustomTopic>>()
+      .mockResolvedValue({
+        name: 'Allow: General Content',
+        description: 'General benign everyday content',
+        examples: ['Tell me about cats', 'What is the weather'],
+      }),
   };
 }
 
@@ -342,8 +349,82 @@ describe('runLoop', () => {
       // consume
     }
 
-    expect(createSpy).not.toHaveBeenCalled();
+    // Block topic reused via update, not create
+    // createTopic IS called once — for the companion allow topic
+    expect(createSpy).toHaveBeenCalledTimes(1);
+    expect(createSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ topic_name: 'Allow: General Content' }),
+    );
     expect(updateSpy).toHaveBeenCalledWith('existing-123', expect.anything());
+  });
+
+  it('yields companion:generated and companion:created for block intent', async () => {
+    const deps = createDeps();
+    const events: LoopEvent[] = [];
+
+    for await (const event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
+      events.push(event);
+    }
+
+    const companionGen = events.find((e) => e.type === 'companion:generated');
+    expect(companionGen).toBeDefined();
+    if (companionGen?.type === 'companion:generated') {
+      expect(companionGen.topic.name).toBe('Allow: General Content');
+    }
+
+    const companionCreated = events.find((e) => e.type === 'companion:created');
+    expect(companionCreated).toBeDefined();
+    if (companionCreated?.type === 'companion:created') {
+      expect(companionCreated.topicId).toBeTruthy();
+      expect(companionCreated.topic.name).toBe('Allow: General Content');
+    }
+  });
+
+  it('does not generate companion for allow-intent runs', async () => {
+    const deps = createDeps({ scanner: createMockAllowScanService([/cats/i]) });
+    const events: LoopEvent[] = [];
+
+    for await (const event of runLoop(
+      { ...defaultInput, intent: 'allow', maxIterations: 1 },
+      deps,
+    )) {
+      events.push(event);
+    }
+
+    const companionEvents = events.filter(
+      (e) => e.type === 'companion:generated' || e.type === 'companion:created',
+    );
+    expect(companionEvents).toHaveLength(0);
+  });
+
+  it('calls assignTopicsToProfile with both topics for block intent', async () => {
+    const management = createMockManagementService();
+    const assignTopicsSpy = vi.spyOn(management, 'assignTopicsToProfile');
+    const deps = createDeps({ management });
+
+    for await (const _event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
+      // consume
+    }
+
+    expect(assignTopicsSpy).toHaveBeenCalledWith('test-profile', [
+      expect.objectContaining({ action: 'allow', topicName: 'Allow: General Content' }),
+      expect.objectContaining({ action: 'block', topicName: 'Weapons Discussion' }),
+    ]);
+  });
+
+  it('persists companionTopic in RunState', async () => {
+    const deps = createDeps();
+    const events: LoopEvent[] = [];
+
+    for await (const event of runLoop({ ...defaultInput, maxIterations: 1 }, deps)) {
+      events.push(event);
+    }
+
+    const complete = events.find((e) => e.type === 'loop:complete');
+    if (complete?.type === 'loop:complete') {
+      expect(complete.runState.companionTopic).toBeDefined();
+      expect(complete.runState.companionTopic?.name).toBe('Allow: General Content');
+    }
   });
 
   it('passes intent to analyzeResults', async () => {

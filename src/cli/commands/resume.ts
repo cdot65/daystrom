@@ -11,6 +11,7 @@ import { LangChainLlmService } from '../../llm/service.js';
 import { JsonFileStore } from '../../persistence/store.js';
 import {
   renderAnalysis,
+  renderCompanionTopic,
   renderError,
   renderHeader,
   renderIterationStart,
@@ -111,6 +112,12 @@ export function registerResumeCommand(program: Command): void {
               break;
             case 'generate:complete':
               renderTopic(event.topic);
+              break;
+            case 'companion:generated':
+              renderCompanionTopic(event.topic);
+              break;
+            case 'companion:created':
+              console.log(`  \u2713 Companion allow topic created (${event.topicId})`);
               break;
             case 'tests:composed':
               renderTestsComposed(

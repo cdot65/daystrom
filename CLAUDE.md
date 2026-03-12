@@ -68,7 +68,7 @@ src/
 │   ├── provider.ts        # createLlmProvider() — factory for 6 LangChain providers
 │   ├── service.ts         # LangChainLlmService — generateTopic, generateTests, improveTopic, analyzeResults
 │   ├── schemas.ts         # Zod output schemas for structured LLM responses
-│   └── prompts/           # ChatPromptTemplate definitions (5 files)
+│   └── prompts/           # ChatPromptTemplate definitions (6 files)
 ├── airs/
 │   ├── scanner.ts         # AirsScanService + DebugScanService — syncScan + scanBatch
 │   ├── runtime.ts         # SdkRuntimeService — sync scan, async bulk scan, poll results, CSV export
@@ -120,10 +120,11 @@ tests/
 
 ### Core Loop (`src/core/loop.ts`)
 - `runLoop()` async generator yields typed `LoopEvent` discriminated unions
-- Events yielded by `runLoop()`: `iteration:start`, `generate:complete`, `apply:complete`, `probe:waiting` (iter 1 only, topic not yet active), `probe:ready` (iter 1 only, topic confirmed active), `tests:composed` (iter 2+, always-on composition), `tests:accumulated` (if accumulation enabled, iter 2+), `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete`, `topic:duplicate` (when improveTopic/simplifyTopic returns identical topic), `topic:reverted` (tier 1 recovery), `topic:simplified` (tier 2 recovery), `loop:plateau` (opt-in plateau detection), `memory:extracted` (if memory enabled), `promptset:created` (if `--create-prompt-set`), `loop:complete`
+- Events yielded by `runLoop()`: `iteration:start`, `generate:complete`, `companion:generated` (block-intent iter 1), `companion:created` (block-intent iter 1), `apply:complete`, `probe:waiting` (iter 1 only, topic not yet active), `probe:ready` (iter 1 only, topic confirmed active), `tests:composed` (iter 2+, always-on composition), `tests:accumulated` (if accumulation enabled, iter 2+), `test:progress`, `evaluate:complete`, `analyze:complete`, `iteration:complete`, `topic:duplicate` (when improveTopic/simplifyTopic returns identical topic), `topic:reverted` (tier 1 recovery), `topic:simplified` (tier 2 recovery), `loop:plateau` (opt-in plateau detection), `memory:extracted` (if memory enabled), `promptset:created` (if `--create-prompt-set`), `loop:complete`
 - Events defined in `LoopEvent` union but **not yielded** by `runLoop()`: `loop:paused` (reserved for future use), `memory:loaded` (emitted by CLI before loop starts)
 - `apply:complete` is yielded but intentionally unhandled in CLI commands (no user-facing output needed)
 - **Warm-up probe** (iter 1 only): after propagation delay, scans `topic.examples[0]` via `scanner.scan()` in a retry loop (default 6 attempts, 5s interval) to verify topic+profile revision are active before full test suite. Skipped if topic has no examples. Configurable via `LoopDependencies.probeIntervalMs` and `maxProbeAttempts`
+- **Two-phase generation** (block-intent only): AIRS requires a non-empty allow topic list when default action is "block". On iter 1, after generating the block topic, the loop generates a broad companion allow topic via `LlmService.generateCompanionTopic()`, creates it via management API, and wires both to the profile via `assignTopicsToProfile()`. The companion is one-shot (no refinement). Iter 2+ only updates the block topic content — profile references stay valid. `RunState.companionTopic` persists the companion for reporting. Allow-intent runs skip this entirely.
 - Topic name **locked after iteration 1** — only description+examples change thereafter
 - `analyzeResults()` and `improveTopic()` receive intent param — prioritizes FN for block, FP for allow
 - **Test composition** (always-on, iter 2+): carried FP/FN failures + regression tier (TP/TN re-scanned) + fresh LLM tests. `TestCase.source` tags each test's origin. `EfficacyMetrics.regressionCount` tracks regression-tier failures.
@@ -145,6 +146,7 @@ tests/
 - Profile updates create **new revisions with new UUIDs** — always reference profiles by name, never ID
 - Topics must be added to profile's `model-protection` → `topic-guardrails` → `topic-list`
 - AIRS rejects empty `topic-list` entries — only include entries with topics (no empty opposite-action entry)
+- **Block-intent requires allow topic**: AIRS profiles with `default action: block` need a non-empty allow topic list. `assignTopicsToProfile()` wires both the block topic and a companion allow topic; `assignTopicToProfile()` delegates to it for single-topic compat.
 - Guardrail-level `action` must always be `'block'` to enforce violations
 - Topics can't be deleted while referenced by any profile revision
 - **Platform ceilings**: Block-intent topics in high-sensitivity domains (explosives, weapons) trigger built-in AIRS safety that overrides custom definitions (0% TNR). Allow-intent topics use broad semantic matching — exclusion clauses increase FP; shorter descriptions outperform longer ones. Typical allow-intent ceiling: 40–70% coverage.
@@ -185,7 +187,7 @@ tests/
 - 6 providers: `claude-api` (default), `claude-vertex`, `claude-bedrock`, `gemini-api`, `gemini-vertex`, `gemini-bedrock`
 - Default model: `claude-opus-4-6` (Vertex: `claude-opus-4-6`, Bedrock: `anthropic.claude-opus-4-6-v1`), Gemini providers: `gemini-2.5-pro`
 - `claude-vertex` default region: `global` (not `us-central1`)
-- All 5 calls (generateTopic, generateTests, analyzeResults, improveTopic, simplifyTopic) use `withStructuredOutput(ZodSchema)` — 3 retries on parse failure
+- All 6 calls (generateTopic, generateCompanionTopic, generateTests, analyzeResults, improveTopic, simplifyTopic) use `withStructuredOutput(ZodSchema)` — 3 retries on parse failure
 - Memory injected via `{memorySection}` template variable
 - `clampTopic()` enforces AIRS constraints post-LLM (not Zod) — drops examples, trims description
 - `improveTopic()` accepts optional `bestContext` param `{ bestCoverage, bestIteration, bestTopic? }` — injects regression warnings into the prompt when coverage drops below the best iteration, and always shows best-iteration context

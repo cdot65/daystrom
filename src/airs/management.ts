@@ -37,14 +37,25 @@ export class SdkManagementService implements ManagementService {
 
   /**
    * Sets a single custom topic on a profile's topic-guardrails config.
-   * Replaces any existing topics so only the current topic is evaluated.
-   * Previous runs may have left stale topics — this clears them.
+   * Delegates to {@link assignTopicsToProfile} for backward compatibility.
    */
   async assignTopicToProfile(
     profileName: string,
     topicId: string,
     topicName: string,
     action: 'allow' | 'block',
+  ): Promise<void> {
+    return this.assignTopicsToProfile(profileName, [{ topicId, topicName, action }]);
+  }
+
+  /**
+   * Sets one or more custom topics on a profile's topic-guardrails config.
+   * Replaces any existing topics — previous runs' stale topics are cleared.
+   * Groups topics by action; skips empty action groups (AIRS rejects them).
+   */
+  async assignTopicsToProfile(
+    profileName: string,
+    topics: Array<{ topicId: string; topicName: string; action: 'allow' | 'block' }>,
   ): Promise<void> {
     // Find profile by name
     const { ai_profiles } = await this.client.profiles.list();
@@ -78,14 +89,23 @@ export class SdkManagementService implements ManagementService {
     // The allow/block distinction is controlled by which topic-list entry the topic is in.
     topicGuardrails.action = 'block';
 
-    // Replace the entire topic-list with only the current topic under the given action.
-    // AIRS rejects empty topic-list entries, so only include the entry with the topic.
-    topicGuardrails['topic-list'] = [
-      {
-        action,
-        topic: [{ topic_id: topicId, topic_name: topicName }],
-      },
-    ];
+    // Group topics by action, build topic-list entries (skip empty groups).
+    const byAction = new Map<string, Array<{ topic_id: string; topic_name: string }>>();
+    for (const t of topics) {
+      const group = byAction.get(t.action) ?? [];
+      group.push({ topic_id: t.topicId, topic_name: t.topicName });
+      byAction.set(t.action, group);
+    }
+
+    const topicList: Array<{
+      action: string;
+      topic: Array<{ topic_id: string; topic_name: string }>;
+    }> = [];
+    for (const [action, group] of byAction) {
+      topicList.push({ action, topic: group });
+    }
+
+    topicGuardrails['topic-list'] = topicList;
 
     // Write back
     modelConfig['model-protection'] = modelProtection;

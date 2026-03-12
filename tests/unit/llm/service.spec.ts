@@ -436,6 +436,41 @@ describe('LangChainLlmService', () => {
     });
   });
 
+  describe('generateCompanionTopic', () => {
+    it('returns clamped companion topic', async () => {
+      const companion = {
+        name: 'Allow: General Content',
+        description: 'General benign everyday content',
+        examples: ['Tell me about cats', 'What is the weather'],
+      };
+      const model = createMockModel(companion);
+      const service = new LangChainLlmService(model as BaseChatModel);
+      const result = await service.generateCompanionTopic('Weapons', 'Block weapon discussions');
+      expect(result.name).toBe('Allow: General Content');
+      expect(result.description).toBe('General benign everyday content');
+      expect(result.examples).toHaveLength(2);
+    });
+
+    it('clamps long description', async () => {
+      const model = createMockModel({
+        name: 'Allow: General',
+        description: 'X'.repeat(300),
+        examples: ['ex1'],
+      });
+      const service = new LangChainLlmService(model as BaseChatModel);
+      const result = await service.generateCompanionTopic('Weapons', 'Block weapons');
+      expect(result.description.length).toBeLessThanOrEqual(MAX_DESCRIPTION_LENGTH);
+    });
+
+    it('throws after 3 failures', async () => {
+      const model = createFailingModel(new Error('companion fail'));
+      const service = new LangChainLlmService(model as BaseChatModel);
+      await expect(service.generateCompanionTopic('Weapons', 'Block weapons')).rejects.toThrow(
+        'companion fail',
+      );
+    });
+  });
+
   describe('loadMemory', () => {
     it('returns 0 without injector', async () => {
       const model = createMockModel(validTopic);

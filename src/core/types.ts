@@ -111,6 +111,8 @@ export interface RunState {
   consecutiveRegressions: number;
   hasRevertedToBest: boolean;
   hasTriedSimplification: boolean;
+  /** Companion allow topic created for block-intent two-phase generation. */
+  companionTopic?: CustomTopic;
   status: 'running' | 'paused' | 'completed' | 'failed';
 }
 
@@ -142,5 +144,7 @@ export type LoopEvent =
   | { type: 'loop:plateau'; band: [number, number]; bestCoverage: number }
   | { type: 'topic:duplicate'; topic: CustomTopic; duplicateOfIteration: number }
   | { type: 'promptset:created'; promptSetId: string; promptSetName: string; promptCount: number }
+  | { type: 'companion:generated'; topic: CustomTopic }
+  | { type: 'companion:created'; topicId: string; topic: CustomTopic }
   | { type: 'probe:waiting'; attempt: number; maxAttempts: number }
   | { type: 'probe:ready'; attempts: number };

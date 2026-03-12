@@ -19,6 +19,7 @@ import type {
 } from '../core/types.js';
 import type { MemoryInjector } from '../memory/injector.js';
 import { analyzeResultsPrompt } from './prompts/analyze-results.js';
+import { generateCompanionPrompt } from './prompts/generate-companion.js';
 import { generateTestsPrompt } from './prompts/generate-tests.js';
 import { buildSeedExamplesSection, generateTopicPrompt } from './prompts/generate-topic.js';
 import { improveTopicPrompt } from './prompts/improve-topic.js';
@@ -96,6 +97,38 @@ export class LangChainLlmService implements LlmService {
           intent,
           seedExamplesSection: buildSeedExamplesSection(seeds),
           memorySection: this.memorySection,
+        });
+        const result = clampTopic(raw as unknown as CustomTopicOutput);
+
+        const errors = validateTopic(result);
+        if (errors.length === 0) return result;
+
+        if (attempt === MAX_RETRIES - 1) {
+          throw new Error(
+            `LLM output violates constraints after ${MAX_RETRIES} attempts: ${errors.map((e) => e.message).join(', ')}`,
+          );
+        }
+      } catch (err) {
+        if (attempt === MAX_RETRIES - 1) throw err;
+      }
+    }
+
+    /* v8 ignore next */
+    throw new Error('Unreachable');
+  }
+
+  async generateCompanionTopic(
+    blockTopicName: string,
+    blockDescription: string,
+  ): Promise<CustomTopic> {
+    const structured = this.model.withStructuredOutput(CustomTopicSchema);
+    const chain = generateCompanionPrompt.pipe(structured);
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const raw = await chain.invoke({
+          blockTopicName,
+          blockTopicDescription: blockDescription,
         });
         const result = clampTopic(raw as unknown as CustomTopicOutput);
 
