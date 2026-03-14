@@ -73,19 +73,15 @@ nav:
       - Configuration: getting-started/configuration.md
       - Quick Start: getting-started/quick-start.md
   - Capabilities:
-      - Guardrail Generation:
-          - Overview: features/guardrail-generation.md
-          - Core Loop: architecture/core-loop.md
-          - Memory System: features/memory-system.md
-          - Metrics & Evaluation: features/metrics.md
-          - Topic Constraints: features/topic-constraints.md
-          - Resumable Runs: features/resumable-runs.md
       - Runtime Security: features/runtime-security.md
+      - Guardrail Generation: features/guardrail-generation.md
       - AI Red Teaming: features/red-team.md
       - Model Security: features/model-security.md
       - Profile Audits: features/profile-audits.md
   - Architecture:
       - Overview: architecture/overview.md
+      - Core Loop: architecture/core-loop.md
+      - Memory System: features/memory-system.md
       - Design Decisions: architecture/design-decisions.md
   - LLM Providers:
       - Overview: providers/overview.md
@@ -98,7 +94,10 @@ nav:
       - Configuration Options: reference/configuration.md
       - Environment Variables: reference/environment-variables.md
       - AIRS Constraints: reference/airs-constraints.md
-  - Examples:
+      - Metrics & Evaluation: features/metrics.md
+      - Topic Constraints: features/topic-constraints.md
+      - Resumable Runs: features/resumable-runs.md
+  - Guides:
       - Guardrail to Red Team: examples/guardrail-to-redteam.md
       - Managing Targets: examples/managing-targets.md
       - Managing Prompt Sets: examples/managing-prompt-sets.md

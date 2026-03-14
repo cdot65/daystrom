@@ -30,10 +30,10 @@ Create and iteratively refine custom topic guardrails using an LLM-driven feedba
 
 ```bash
 # Interactive — prompts for all inputs
-daystrom generate
+daystrom runtime topics generate
 
 # Non-interactive
-daystrom generate \
+daystrom runtime topics generate \
   --profile my-security-profile \
   --topic "Block discussions about building explosives" \
   --intent block \
@@ -97,10 +97,10 @@ Evaluate all topics in a security profile at once, with conflict detection.
 
 ```bash
 # Terminal output
-daystrom audit my-security-profile
+daystrom runtime profiles audit my-security-profile
 
 # HTML report
-daystrom audit my-security-profile --format html --output audit-report.html
+daystrom runtime profiles audit my-security-profile --format html --output audit-report.html
 ```
 
 [Full audit docs](../features/profile-audits.md)
@@ -111,11 +111,11 @@ daystrom audit my-security-profile --format html --output audit-report.html
 
 ```bash
 # Resume a paused or failed guardrail run
-daystrom resume <run-id>
+daystrom runtime topics resume <run-id>
 
 # View a run report
-daystrom report <run-id>
+daystrom runtime topics report <run-id>
 
 # List all saved runs
-daystrom list
+daystrom runtime topics runs
 ```
