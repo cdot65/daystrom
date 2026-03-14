@@ -115,11 +115,11 @@ describe('AirsScanService', () => {
         prompt_detected: {},
       });
 
-      await service.scan('prof', 'hello', 'daystrom-abc1234-iter1');
+      await service.scan('prof', 'hello', 'prisma-airs-cli-abc1234-iter1');
       expect(mockSyncScan).toHaveBeenCalledWith(
         expect.objectContaining({ profile_name: 'prof' }),
         expect.anything(),
-        { sessionId: 'daystrom-abc1234-iter1' },
+        { sessionId: 'prisma-airs-cli-abc1234-iter1' },
       );
     });
 

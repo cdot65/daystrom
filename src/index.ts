@@ -1,5 +1,5 @@
 /**
- * Daystrom — Public library API
+ * Prisma AIRS CLI — Public library API
  *
  * Automated generation, testing, and iterative refinement of
  * Palo Alto Prisma AIRS custom topic guardrails.

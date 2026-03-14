@@ -122,7 +122,7 @@ export function buildAuditReportHtml(result: AuditResult): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Daystrom Audit — ${esc(result.profileName)}</title>
+  <title>Prisma AIRS CLI Audit — ${esc(result.profileName)}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 1200px; margin: 0 auto; padding: 2rem; background: #f8f9fa; color: #212529; }
@@ -151,7 +151,7 @@ export function buildAuditReportHtml(result: AuditResult): string {
 </head>
 <body>
   <div class="header">
-    <h1>Daystrom Profile Audit</h1>
+    <h1>Prisma AIRS CLI Profile Audit</h1>
     <p class="meta">Profile: ${esc(result.profileName)} | ${esc(result.timestamp)}</p>
   </div>
 

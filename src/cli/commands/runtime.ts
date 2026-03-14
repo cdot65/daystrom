@@ -108,7 +108,7 @@ export function registerRuntimeCommand(program: Command): void {
           process.exit(1);
         }
 
-        const sessionId = opts.sessionId ?? `daystrom-bulk-${Date.now().toString(36)}`;
+        const sessionId = opts.sessionId ?? `prisma-airs-cli-bulk-${Date.now().toString(36)}`;
 
         const service = new SdkRuntimeService(config.airsApiKey);
         console.log(chalk.bold.cyan('\n  Prisma AIRS Bulk Scan'));

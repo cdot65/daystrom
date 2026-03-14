@@ -96,10 +96,10 @@ export function registerRedteamCommand(program: Command): void {
           console.log('\n');
           renderScanStatus(completed);
           console.log(`  Job ID: ${completed.uuid}`);
-          console.log('  Run `daystrom redteam report <jobId>` to view results.\n');
+          console.log('  Run `airs redteam report <jobId>` to view results.\n');
         } else {
           console.log(`  Job ID: ${job.uuid}`);
-          console.log('  Run `daystrom redteam status <jobId>` to check progress.\n');
+          console.log('  Run `airs redteam status <jobId>` to check progress.\n');
         }
       } catch (err) {
         renderError(err instanceof Error ? err.message : String(err));

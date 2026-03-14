@@ -21,7 +21,7 @@ const pkg = JSON.parse(readFileSync(join(__dirname, '../../package.json'), 'utf-
 const program = new Command();
 
 program
-  .name('daystrom')
+  .name('airs')
   .description(
     'CLI and library for Palo Alto Prisma AIRS — guardrail refinement, AI red teaming, model security scanning, profile audits',
   )
@@ -36,7 +36,7 @@ registerModelSecurityCommand(program);
 // Backward-compatible top-level aliases (deprecated — use runtime subcommands)
 // ---------------------------------------------------------------------------
 const deprecationNotice = (oldCmd: string, newCmd: string) =>
-  chalk.yellow(`[deprecated] "daystrom ${oldCmd}" → use "daystrom ${newCmd}"`);
+  chalk.yellow(`[deprecated] "airs ${oldCmd}" → use "airs ${newCmd}"`);
 
 function registerDeprecated(
   registerFn: (parent: Command, name?: string) => void,

@@ -47,11 +47,11 @@ export const ConfigSchema = z.object({
   maxAccumulatedTests: z.coerce.number().int().min(1).optional(),
 
   // Persistence
-  dataDir: z.string().default('~/.daystrom/runs'),
+  dataDir: z.string().default('~/.prisma-airs/runs'),
 
   // Memory
   memoryEnabled: z.coerce.boolean().default(true),
-  memoryDir: z.string().default('~/.daystrom/memory'),
+  memoryDir: z.string().default('~/.prisma-airs/memory'),
   maxMemoryChars: z.coerce.number().int().min(500).max(10000).default(3000),
 });
 
