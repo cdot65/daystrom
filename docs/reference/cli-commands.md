@@ -287,7 +287,6 @@ Security profile CRUD.
 
 ```bash
 daystrom runtime profiles list
-daystrom runtime profiles get <profileId>
 daystrom runtime profiles create --config <path>
 daystrom runtime profiles update <profileId> --config <path>
 daystrom runtime profiles delete <profileId>
@@ -297,7 +296,6 @@ daystrom runtime profiles delete <profileId> --force --updated-by <email>
 | Subcommand | Flags |
 |------------|-------|
 | `list` | — |
-| `get <profileId>` | — |
 | `create` | `--config <path>` (required) |
 | `update <profileId>` | `--config <path>` (required) |
 | `delete <profileId>` | `--force`, `--updated-by <email>` |
@@ -308,7 +306,6 @@ Custom topic CRUD.
 
 ```bash
 daystrom runtime topics list
-daystrom runtime topics get <topicId>
 daystrom runtime topics create --config <path>
 daystrom runtime topics update <topicId> --config <path>
 daystrom runtime topics delete <topicId>
@@ -318,7 +315,6 @@ daystrom runtime topics delete <topicId> --force --updated-by <email>
 | Subcommand | Flags |
 |------------|-------|
 | `list` | — |
-| `get <topicId>` | — |
 | `create` | `--config <path>` (required) |
 | `update <topicId>` | `--config <path>` (required) |
 | `delete <topicId>` | `--force`, `--updated-by <email>` |

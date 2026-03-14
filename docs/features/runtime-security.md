@@ -161,7 +161,6 @@ Daystrom exposes full CRUD over AIRS runtime configuration resources via `daystr
 
 ```bash
 daystrom runtime profiles list
-daystrom runtime profiles get <profileId>
 daystrom runtime profiles create --config profile.json
 daystrom runtime profiles update <profileId> --config profile.json
 daystrom runtime profiles delete <profileId>
@@ -172,7 +171,6 @@ daystrom runtime profiles delete <profileId> --force --updated-by user@example.c
 
 ```bash
 daystrom runtime topics list
-daystrom runtime topics get <topicId>
 daystrom runtime topics create --config topic.json
 daystrom runtime topics update <topicId> --config topic.json
 daystrom runtime topics delete <topicId>
