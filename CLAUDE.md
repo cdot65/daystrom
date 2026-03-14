@@ -48,7 +48,7 @@ src/
 │   │   ├── resume.ts      # Resume paused/failed run from disk
 │   │   ├── report.ts      # View run results by ID
 │   │   ├── list.ts        # List all saved runs
-│   │   ├── runtime.ts     # Runtime scanning (scan, bulk-scan, resume-poll)
+│   │   ├── runtime.ts     # Runtime scanning (scan, bulk-scan, resume-poll) + config management (profiles, topics, api-keys, customer-apps, deployment-profiles, dlp-profiles, scan-logs)
 │   │   ├── audit.ts       # Profile-level multi-topic evaluation
 │   │   ├── redteam.ts     # Red team operations (scan, targets CRUD, prompt-sets CRUD, prompts CRUD, properties)
 │   │   └── modelsecurity.ts # Model security operations (groups, rules, rule-instances, scans, labels, pypi-auth)
@@ -72,7 +72,7 @@ src/
 ├── airs/
 │   ├── scanner.ts         # AirsScanService + DebugScanService — syncScan + scanBatch
 │   ├── runtime.ts         # SdkRuntimeService — sync scan, async bulk scan, poll results, CSV export
-│   ├── management.ts      # SdkManagementService — topic CRUD + profile linking
+│   ├── management.ts      # SdkManagementService — topic CRUD, profile CRUD, API keys, customer apps, deployment/DLP profiles, scan logs
 │   ├── promptsets.ts      # SdkPromptSetService — custom prompt set CRUD via RedTeamClient
 │   ├── redteam.ts         # SdkRedTeamService — red team scan CRUD, polling, reports
 │   ├── modelsecurity.ts   # SdkModelSecurityService — security groups, rules, scans, labels
@@ -142,7 +142,7 @@ tests/
 - **Detection**: Both block and allow intents use `triggered` (= `topic_violation`) as the sole guardrail detection signal. No category-based or action-based detection.
 - **`DebugScanService`**: Wrapper that appends raw scan responses to a JSONL file when `--debug-scans` is passed
 - **Prompt sets**: `SdkPromptSetService` wraps `RedTeamClient.customAttacks` for custom prompt set CRUD; `--create-prompt-set` auto-creates a prompt set from the best iteration's test cases
-- **Management**: `ManagementClient` for topic CRUD + profile linking via OAuth2
+- **Management**: `ManagementClient` via OAuth2 — topic CRUD, security profile CRUD, API key management, customer app management, deployment/DLP profile listing, scan log querying, plus profile linking for guardrail generation
 - Profile updates create **new revisions with new UUIDs** — always reference profiles by name, never ID
 - Topics must be added to profile's `model-protection` → `topic-guardrails` → `topic-list`
 - AIRS rejects empty `topic-list` entries — only include entries with topics (no empty opposite-action entry)
@@ -155,6 +155,7 @@ tests/
 ### Runtime Scanning (`src/airs/runtime.ts`)
 - `SdkRuntimeService` wraps SDK `Scanner` for sync and async scanning
 - `scanPrompt()` — sync scan via `syncScan()`, normalizes to `RuntimeScanResult`
+- **Detection scope**: `scanPrompt()` aggregates 6 detection types via OR (`topic_violation`, `injection`, `toxic_content`, `dlp`, `url_cats`, `malicious_code`). This is intentionally broader than the guardrail loop's `topic_violation`-only signal — runtime scanning is a general-purpose firewall check, not topic-specific evaluation.
 - `submitBulkScan()` — batches prompts into groups of 5 `AsyncScanObject` items, calls `asyncScan()` per batch; optional `sessionId` for AIRS Sessions UI grouping
 - `pollResults()` — sweeps all pending scan IDs in batches of 5 per cycle; retries on rate limit with exponential backoff (10s base); retry level decays by 1 after a full successful sweep (not per-batch); inter-batch and inter-sweep delays scale with rate limit pressure
 - `formatResultsCsv()` — static method producing CSV from results
@@ -163,6 +164,14 @@ tests/
 - Input file parsing: `.csv` files extract the `prompt` column by header; `.txt`/extensionless use line-per-prompt
 - Bulk scan IDs are saved to `~/.daystrom/bulk-scans/` before polling — survives rate limit crashes
 - CLI: `daystrom runtime resume-poll <stateFile> [--output <file>]` — resume polling from saved scan IDs
+- CLI config management subcommand groups (all via `ManagementClient` OAuth2):
+  - `daystrom runtime profiles {list,get,create,update,delete}` — security profile CRUD (supports `--force --updated-by`)
+  - `daystrom runtime topics {list,get,create,update,delete}` — custom topic CRUD (supports `--force --updated-by`)
+  - `daystrom runtime api-keys {list,create,regenerate,delete}` — API key management (`regenerate` takes `--interval`/`--unit`)
+  - `daystrom runtime customer-apps {list,get,update,delete}` — customer app CRUD
+  - `daystrom runtime deployment-profiles {list}` — deployment profile listing (`--unactivated` filter)
+  - `daystrom runtime dlp-profiles {list}` — DLP profile listing
+  - `daystrom runtime scan-logs {query}` — scan log querying (`--interval`/`--unit hours`/`--filter`)
 
 ### Red Team (`src/airs/redteam.ts`, `src/airs/promptsets.ts`)
 - `SdkRedTeamService` wraps `RedTeamClient` for scan CRUD, polling, reports, **target CRUD**
