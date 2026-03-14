@@ -9,10 +9,17 @@ import { loadConfig } from '../../config/loader.js';
 import { loadBulkScanState, saveBulkScanState } from '../bulk-scan-state.js';
 import { parseInputFile } from '../parse-input.js';
 import {
+  renderApiKeyDetail,
+  renderApiKeyList,
+  renderCustomerAppDetail,
+  renderCustomerAppList,
+  renderDeploymentProfileList,
+  renderDlpProfileList,
   renderError,
   renderProfileDetail,
   renderProfileList,
   renderRuntimeConfigHeader,
+  renderScanLogList,
   renderTopicDetail,
   renderTopicList,
 } from '../renderer.js';
@@ -382,6 +389,229 @@ export function registerRuntimeCommand(program: Command): void {
           await service.deleteTopic(topicId);
           console.log(`  Topic ${topicId} deleted.\n`);
         }
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  // -----------------------------------------------------------------------
+  // runtime api-keys — API key management subcommands
+  // -----------------------------------------------------------------------
+  const apiKeys = runtime.command('api-keys').description('Manage AIRS API keys');
+
+  apiKeys
+    .command('list')
+    .description('List API keys')
+    .option('--limit <n>', 'Max results', '100')
+    .action(async (opts) => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        const result = await service.listApiKeys({
+          limit: Number.parseInt(opts.limit, 10),
+        });
+        renderApiKeyList(result.apiKeys);
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  apiKeys
+    .command('create')
+    .description('Create a new API key')
+    .requiredOption('--config <path>', 'JSON file with API key configuration')
+    .action(async (opts) => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        const config = JSON.parse(fs.readFileSync(opts.config, 'utf-8'));
+        const key = await service.createApiKey(config);
+        console.log(`  API key created: ${key.id}\n`);
+        renderApiKeyDetail(key);
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  apiKeys
+    .command('regenerate <apiKeyId>')
+    .description('Regenerate an API key')
+    .requiredOption('--config <path>', 'JSON file with regeneration config')
+    .action(async (apiKeyId: string, opts) => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        const config = JSON.parse(fs.readFileSync(opts.config, 'utf-8'));
+        const key = await service.regenerateApiKey(apiKeyId, config);
+        console.log(`  API key regenerated: ${key.id}\n`);
+        renderApiKeyDetail(key);
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  apiKeys
+    .command('delete <apiKeyName>')
+    .description('Delete an API key')
+    .requiredOption('--updated-by <email>', 'Email of user performing deletion')
+    .action(async (apiKeyName: string, opts) => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        const result = await service.deleteApiKey(apiKeyName, opts.updatedBy);
+        console.log(`  ${result.message}\n`);
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  // -----------------------------------------------------------------------
+  // runtime customer-apps — customer app management subcommands
+  // -----------------------------------------------------------------------
+  const customerApps = runtime.command('customer-apps').description('Manage AIRS customer apps');
+
+  customerApps
+    .command('list')
+    .description('List customer apps')
+    .option('--limit <n>', 'Max results', '100')
+    .action(async (opts) => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        const result = await service.listCustomerApps({
+          limit: Number.parseInt(opts.limit, 10),
+        });
+        renderCustomerAppList(result.apps);
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  customerApps
+    .command('get <appName>')
+    .description('Get customer app details')
+    .action(async (appName: string) => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        const app = await service.getCustomerApp(appName);
+        renderCustomerAppDetail(app);
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  customerApps
+    .command('update <appId>')
+    .description('Update a customer app')
+    .requiredOption('--config <path>', 'JSON file with app updates')
+    .action(async (appId: string, opts) => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        const config = JSON.parse(fs.readFileSync(opts.config, 'utf-8'));
+        const app = await service.updateCustomerApp(appId, config);
+        console.log(`  Customer app updated: ${app.name}\n`);
+        renderCustomerAppDetail(app);
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  customerApps
+    .command('delete <appName>')
+    .description('Delete a customer app')
+    .requiredOption('--updated-by <email>', 'Email of user performing deletion')
+    .action(async (appName: string, opts) => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        const app = await service.deleteCustomerApp(appName, opts.updatedBy);
+        console.log(`  Customer app "${app.name}" deleted.\n`);
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  // -----------------------------------------------------------------------
+  // runtime deployment-profiles — read-only listing
+  // -----------------------------------------------------------------------
+  const deploymentProfiles = runtime
+    .command('deployment-profiles')
+    .description('List AIRS deployment profiles');
+
+  deploymentProfiles
+    .command('list')
+    .description('List deployment profiles')
+    .option('--unactivated', 'Include unactivated profiles')
+    .action(async (opts) => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        const profiles = await service.listDeploymentProfiles({
+          unactivated: opts.unactivated,
+        });
+        renderDeploymentProfileList(profiles);
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  // -----------------------------------------------------------------------
+  // runtime dlp-profiles — read-only listing
+  // -----------------------------------------------------------------------
+  const dlpProfiles = runtime.command('dlp-profiles').description('List AIRS DLP profiles');
+
+  dlpProfiles
+    .command('list')
+    .description('List DLP profiles')
+    .action(async () => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        const profiles = await service.listDlpProfiles();
+        renderDlpProfileList(profiles);
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  // -----------------------------------------------------------------------
+  // runtime scan-logs — scan log query
+  // -----------------------------------------------------------------------
+  const scanLogs = runtime.command('scan-logs').description('Query AIRS scan logs');
+
+  scanLogs
+    .command('query')
+    .description('Query scan logs')
+    .requiredOption('--interval <n>', 'Time interval')
+    .requiredOption('--unit <unit>', 'Time unit (hour, day, week, month)')
+    .option('--filter <filter>', 'Filter: all, benign, threat', 'all')
+    .option('--page <n>', 'Page number', '1')
+    .option('--page-size <n>', 'Page size', '50')
+    .action(async (opts) => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        const result = await service.queryScanLogs({
+          timeInterval: Number.parseInt(opts.interval, 10),
+          timeUnit: opts.unit,
+          pageNumber: Number.parseInt(opts.page, 10),
+          pageSize: Number.parseInt(opts.pageSize, 10),
+          filter: opts.filter,
+        });
+        renderScanLogList(result.results, result.pageToken);
       } catch (err) {
         renderError(err instanceof Error ? err.message : String(err));
         process.exit(1);

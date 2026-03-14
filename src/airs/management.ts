@@ -6,9 +6,17 @@ import {
 } from '@cdot65/prisma-airs-sdk';
 import type { ProfileTopic } from '../audit/types.js';
 import type {
+  ApiKeyInfo,
+  ApiKeyListResult,
+  CustomerAppInfo,
+  CustomerAppListResult,
   DeleteResponse,
+  DeploymentProfileInfo,
+  DlpProfileInfo,
   ManagementService,
   PaginationOptions,
+  ScanLogQueryOptions,
+  ScanLogQueryResult,
   SecurityProfileInfo,
   SecurityProfileListResult,
 } from './types.js';
@@ -251,5 +259,127 @@ export class SdkManagementService implements ManagementService {
   async forceDeleteProfile(profileId: string, updatedBy: string): Promise<DeleteResponse> {
     const response = await this.client.profiles.forceDelete(profileId, updatedBy);
     return { message: (response as unknown as Record<string, string>).message };
+  }
+
+  // -------------------------------------------------------------------------
+  // API Keys
+  // -------------------------------------------------------------------------
+
+  private normalizeApiKey(k: Record<string, unknown>): ApiKeyInfo {
+    return {
+      id: (k.id ?? k.api_key_id ?? '') as string,
+      name: (k.name ?? k.api_key_name ?? '') as string,
+      createdAt: k.created_at as string | undefined,
+      expiresAt: k.expires_at as string | undefined,
+    };
+  }
+
+  async listApiKeys(opts?: PaginationOptions): Promise<ApiKeyListResult> {
+    const response = await this.client.apiKeys.list(opts);
+    const raw = response as unknown as Record<string, unknown>;
+    const keys = (raw.api_keys ?? []) as Record<string, unknown>[];
+    return {
+      apiKeys: keys.map((k) => this.normalizeApiKey(k)),
+      nextOffset: raw.next_offset as number | undefined,
+    };
+  }
+
+  async createApiKey(request: Record<string, unknown>): Promise<ApiKeyInfo> {
+    const response = await this.client.apiKeys.create(request as never);
+    return this.normalizeApiKey(response as unknown as Record<string, unknown>);
+  }
+
+  async regenerateApiKey(apiKeyId: string, request: Record<string, unknown>): Promise<ApiKeyInfo> {
+    const response = await this.client.apiKeys.regenerate(apiKeyId, request as never);
+    return this.normalizeApiKey(response as unknown as Record<string, unknown>);
+  }
+
+  async deleteApiKey(apiKeyName: string, updatedBy: string): Promise<DeleteResponse> {
+    const response = await this.client.apiKeys.delete(apiKeyName, updatedBy);
+    return { message: (response as unknown as Record<string, string>).message };
+  }
+
+  // -------------------------------------------------------------------------
+  // Customer Apps
+  // -------------------------------------------------------------------------
+
+  private normalizeCustomerApp(a: Record<string, unknown>): CustomerAppInfo {
+    return {
+      id: (a.customer_app_id ?? a.id) as string | undefined,
+      name: (a.app_name ?? a.name ?? '') as string,
+      description: a.description as string | undefined,
+      raw: a,
+    };
+  }
+
+  async listCustomerApps(opts?: PaginationOptions): Promise<CustomerAppListResult> {
+    const response = await this.client.customerApps.list(opts);
+    const raw = response as unknown as Record<string, unknown>;
+    const apps = (raw.customer_apps ?? []) as Record<string, unknown>[];
+    return {
+      apps: apps.map((a) => this.normalizeCustomerApp(a)),
+      nextOffset: raw.next_offset as number | undefined,
+    };
+  }
+
+  async getCustomerApp(appName: string): Promise<CustomerAppInfo> {
+    const response = await this.client.customerApps.get(appName);
+    return this.normalizeCustomerApp(response as unknown as Record<string, unknown>);
+  }
+
+  async updateCustomerApp(
+    appId: string,
+    request: Record<string, unknown>,
+  ): Promise<CustomerAppInfo> {
+    const response = await this.client.customerApps.update(appId, request as never);
+    return this.normalizeCustomerApp(response as unknown as Record<string, unknown>);
+  }
+
+  async deleteCustomerApp(appName: string, updatedBy: string): Promise<CustomerAppInfo> {
+    const response = await this.client.customerApps.delete(appName, updatedBy);
+    return this.normalizeCustomerApp(response as unknown as Record<string, unknown>);
+  }
+
+  // -------------------------------------------------------------------------
+  // Deployment Profiles (read-only)
+  // -------------------------------------------------------------------------
+
+  async listDeploymentProfiles(opts?: { unactivated?: boolean }): Promise<DeploymentProfileInfo[]> {
+    const response = await this.client.deploymentProfiles.list(opts);
+    const raw = response as unknown as Record<string, unknown>;
+    const profiles = (raw.deployment_profiles ?? []) as Record<string, unknown>[];
+    return profiles.map((p) => ({ raw: p }));
+  }
+
+  // -------------------------------------------------------------------------
+  // DLP Profiles (read-only)
+  // -------------------------------------------------------------------------
+
+  async listDlpProfiles(): Promise<DlpProfileInfo[]> {
+    const response = await this.client.dlpProfiles.list();
+    const raw = response as unknown as Record<string, unknown>;
+    const profiles = (raw.dlp_profiles ?? []) as Record<string, unknown>[];
+    return profiles.map((p) => ({ raw: p }));
+  }
+
+  // -------------------------------------------------------------------------
+  // Scan Logs
+  // -------------------------------------------------------------------------
+
+  async queryScanLogs(opts: ScanLogQueryOptions): Promise<ScanLogQueryResult> {
+    const response = await this.client.scanLogs.query({
+      time_interval: opts.timeInterval,
+      time_unit: opts.timeUnit,
+      pageNumber: opts.pageNumber,
+      pageSize: opts.pageSize,
+      filter: opts.filter,
+      page_token: opts.pageToken,
+    });
+    const raw = response as unknown as Record<string, unknown>;
+    return {
+      results: (raw.results ?? []) as Record<string, unknown>[],
+      pageToken: raw.page_token as string | undefined,
+      raw,
+    };
   }
 }
