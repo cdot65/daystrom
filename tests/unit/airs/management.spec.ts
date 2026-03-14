@@ -35,6 +35,17 @@ const mockProfileUpdate = vi.fn();
 const mockProfileCreate = vi.fn();
 const mockProfileDelete = vi.fn();
 const mockProfileForceDelete = vi.fn();
+const mockApiKeysList = vi.fn();
+const mockApiKeysCreate = vi.fn();
+const mockApiKeysRegenerate = vi.fn();
+const mockApiKeysDelete = vi.fn();
+const mockCustomerAppsList = vi.fn();
+const mockCustomerAppsGet = vi.fn();
+const mockCustomerAppsUpdate = vi.fn();
+const mockCustomerAppsDelete = vi.fn();
+const mockDeploymentProfilesList = vi.fn();
+const mockDlpProfilesList = vi.fn();
+const mockScanLogsQuery = vi.fn();
 
 vi.mock('@cdot65/prisma-airs-sdk', () => ({
   ManagementClient: vi.fn().mockImplementation(() => ({
@@ -51,6 +62,27 @@ vi.mock('@cdot65/prisma-airs-sdk', () => ({
       create: mockProfileCreate,
       delete: mockProfileDelete,
       forceDelete: mockProfileForceDelete,
+    },
+    apiKeys: {
+      list: mockApiKeysList,
+      create: mockApiKeysCreate,
+      regenerate: mockApiKeysRegenerate,
+      delete: mockApiKeysDelete,
+    },
+    customerApps: {
+      list: mockCustomerAppsList,
+      get: mockCustomerAppsGet,
+      update: mockCustomerAppsUpdate,
+      delete: mockCustomerAppsDelete,
+    },
+    deploymentProfiles: {
+      list: mockDeploymentProfilesList,
+    },
+    dlpProfiles: {
+      list: mockDlpProfilesList,
+    },
+    scanLogs: {
+      query: mockScanLogsQuery,
     },
   })),
 }));
@@ -880,6 +912,181 @@ describe('SdkManagementService', () => {
       const result = await service.forceDeleteProfile('p-1', 'admin@example.com');
       expect(result.message).toBe('force deleted');
       expect(mockProfileForceDelete).toHaveBeenCalledWith('p-1', 'admin@example.com');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // API Keys
+  // -------------------------------------------------------------------------
+
+  describe('listApiKeys', () => {
+    it('lists and normalizes API keys', async () => {
+      mockApiKeysList.mockResolvedValue({
+        api_keys: [
+          { id: 'k1', name: 'key-one', created_at: '2026-01-01' },
+          { id: 'k2', name: 'key-two' },
+        ],
+        next_offset: 2,
+      });
+
+      const result = await service.listApiKeys({ limit: 10 });
+      expect(result.apiKeys).toHaveLength(2);
+      expect(result.apiKeys[0].id).toBe('k1');
+      expect(result.apiKeys[0].name).toBe('key-one');
+      expect(result.nextOffset).toBe(2);
+    });
+  });
+
+  describe('createApiKey', () => {
+    it('creates an API key', async () => {
+      mockApiKeysCreate.mockResolvedValue({ id: 'k-new', name: 'new-key' });
+
+      const result = await service.createApiKey({ name: 'new-key' });
+      expect(result.id).toBe('k-new');
+      expect(mockApiKeysCreate).toHaveBeenCalledWith({ name: 'new-key' });
+    });
+  });
+
+  describe('regenerateApiKey', () => {
+    it('regenerates an API key', async () => {
+      mockApiKeysRegenerate.mockResolvedValue({ id: 'k1', name: 'key-one' });
+
+      const result = await service.regenerateApiKey('k1', { rotate: true });
+      expect(result.id).toBe('k1');
+      expect(mockApiKeysRegenerate).toHaveBeenCalledWith('k1', { rotate: true });
+    });
+  });
+
+  describe('deleteApiKey', () => {
+    it('deletes an API key', async () => {
+      mockApiKeysDelete.mockResolvedValue({ message: 'deleted' });
+
+      const result = await service.deleteApiKey('key-one', 'admin@test.com');
+      expect(result.message).toBe('deleted');
+      expect(mockApiKeysDelete).toHaveBeenCalledWith('key-one', 'admin@test.com');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Customer Apps
+  // -------------------------------------------------------------------------
+
+  describe('listCustomerApps', () => {
+    it('lists and normalizes customer apps', async () => {
+      mockCustomerAppsList.mockResolvedValue({
+        customer_apps: [
+          { customer_app_id: 'a1', app_name: 'App One' },
+          { customer_app_id: 'a2', app_name: 'App Two' },
+        ],
+      });
+
+      const result = await service.listCustomerApps();
+      expect(result.apps).toHaveLength(2);
+      expect(result.apps[0].name).toBe('App One');
+    });
+  });
+
+  describe('getCustomerApp', () => {
+    it('gets a customer app by name', async () => {
+      mockCustomerAppsGet.mockResolvedValue({ app_name: 'App One', customer_app_id: 'a1' });
+
+      const result = await service.getCustomerApp('App One');
+      expect(result.name).toBe('App One');
+      expect(mockCustomerAppsGet).toHaveBeenCalledWith('App One');
+    });
+  });
+
+  describe('updateCustomerApp', () => {
+    it('updates a customer app', async () => {
+      mockCustomerAppsUpdate.mockResolvedValue({
+        customer_app_id: 'a1',
+        app_name: 'Updated App',
+      });
+
+      const result = await service.updateCustomerApp('a1', { app_name: 'Updated App' });
+      expect(result.name).toBe('Updated App');
+    });
+  });
+
+  describe('deleteCustomerApp', () => {
+    it('deletes a customer app', async () => {
+      mockCustomerAppsDelete.mockResolvedValue({
+        app_name: 'App One',
+        customer_app_id: 'a1',
+      });
+
+      const result = await service.deleteCustomerApp('App One', 'admin@test.com');
+      expect(result.name).toBe('App One');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Deployment Profiles
+  // -------------------------------------------------------------------------
+
+  describe('listDeploymentProfiles', () => {
+    it('lists deployment profiles', async () => {
+      mockDeploymentProfilesList.mockResolvedValue({
+        deployment_profiles: [{ profile_name: 'default', profile_id: 'dp-1' }],
+      });
+
+      const result = await service.listDeploymentProfiles();
+      expect(result).toHaveLength(1);
+      expect(result[0].raw.profile_name).toBe('default');
+    });
+
+    it('passes unactivated option', async () => {
+      mockDeploymentProfilesList.mockResolvedValue({ deployment_profiles: [] });
+
+      await service.listDeploymentProfiles({ unactivated: true });
+      expect(mockDeploymentProfilesList).toHaveBeenCalledWith({ unactivated: true });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // DLP Profiles
+  // -------------------------------------------------------------------------
+
+  describe('listDlpProfiles', () => {
+    it('lists DLP profiles', async () => {
+      mockDlpProfilesList.mockResolvedValue({
+        dlp_profiles: [{ profile_name: 'dlp-default', profile_id: 'dlp-1' }],
+      });
+
+      const result = await service.listDlpProfiles();
+      expect(result).toHaveLength(1);
+      expect(result[0].raw.profile_name).toBe('dlp-default');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Scan Logs
+  // -------------------------------------------------------------------------
+
+  describe('queryScanLogs', () => {
+    it('queries scan logs with correct params', async () => {
+      mockScanLogsQuery.mockResolvedValue({
+        results: [{ action: 'block', category: 'weapons' }],
+        page_token: 'next-page',
+      });
+
+      const result = await service.queryScanLogs({
+        timeInterval: 24,
+        timeUnit: 'hour',
+        pageNumber: 1,
+        pageSize: 50,
+        filter: 'threat',
+      });
+      expect(result.results).toHaveLength(1);
+      expect(result.pageToken).toBe('next-page');
+      expect(mockScanLogsQuery).toHaveBeenCalledWith({
+        time_interval: 24,
+        time_unit: 'hour',
+        pageNumber: 1,
+        pageSize: 50,
+        filter: 'threat',
+        page_token: undefined,
+      });
     });
   });
 });

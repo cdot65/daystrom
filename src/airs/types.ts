@@ -680,6 +680,81 @@ export interface PaginationOptions {
 }
 
 // ---------------------------------------------------------------------------
+// API key types
+// ---------------------------------------------------------------------------
+
+/** Normalized API key. */
+export interface ApiKeyInfo {
+  id: string;
+  name: string;
+  createdAt?: string;
+  expiresAt?: string;
+}
+
+/** Paginated API key list. */
+export interface ApiKeyListResult {
+  apiKeys: ApiKeyInfo[];
+  nextOffset?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Customer app types
+// ---------------------------------------------------------------------------
+
+/** Normalized customer app. */
+export interface CustomerAppInfo {
+  id?: string;
+  name: string;
+  description?: string;
+  raw: Record<string, unknown>;
+}
+
+/** Paginated customer app list. */
+export interface CustomerAppListResult {
+  apps: CustomerAppInfo[];
+  nextOffset?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Deployment profile types
+// ---------------------------------------------------------------------------
+
+/** Normalized deployment profile. */
+export interface DeploymentProfileInfo {
+  raw: Record<string, unknown>;
+}
+
+// ---------------------------------------------------------------------------
+// DLP profile types
+// ---------------------------------------------------------------------------
+
+/** Normalized DLP profile. */
+export interface DlpProfileInfo {
+  raw: Record<string, unknown>;
+}
+
+// ---------------------------------------------------------------------------
+// Scan log types
+// ---------------------------------------------------------------------------
+
+/** Options for querying scan logs. */
+export interface ScanLogQueryOptions {
+  timeInterval: number;
+  timeUnit: string;
+  pageNumber: number;
+  pageSize: number;
+  filter: string;
+  pageToken?: string;
+}
+
+/** Scan log query result. */
+export interface ScanLogQueryResult {
+  results: Record<string, unknown>[];
+  pageToken?: string;
+  raw: Record<string, unknown>;
+}
+
+// ---------------------------------------------------------------------------
 // Management service interface
 // ---------------------------------------------------------------------------
 
@@ -721,4 +796,25 @@ export interface ManagementService {
   deleteProfile(profileId: string): Promise<DeleteResponse>;
   /** Force-delete a security profile (removes from referencing policies). */
   forceDeleteProfile(profileId: string, updatedBy: string): Promise<DeleteResponse>;
+
+  // API keys
+  listApiKeys(opts?: PaginationOptions): Promise<ApiKeyListResult>;
+  createApiKey(request: Record<string, unknown>): Promise<ApiKeyInfo>;
+  regenerateApiKey(apiKeyId: string, request: Record<string, unknown>): Promise<ApiKeyInfo>;
+  deleteApiKey(apiKeyName: string, updatedBy: string): Promise<DeleteResponse>;
+
+  // Customer apps
+  listCustomerApps(opts?: PaginationOptions): Promise<CustomerAppListResult>;
+  getCustomerApp(appName: string): Promise<CustomerAppInfo>;
+  updateCustomerApp(appId: string, request: Record<string, unknown>): Promise<CustomerAppInfo>;
+  deleteCustomerApp(appName: string, updatedBy: string): Promise<CustomerAppInfo>;
+
+  // Deployment profiles
+  listDeploymentProfiles(opts?: { unactivated?: boolean }): Promise<DeploymentProfileInfo[]>;
+
+  // DLP profiles
+  listDlpProfiles(): Promise<DlpProfileInfo[]>;
+
+  // Scan logs
+  queryScanLogs(opts: ScanLogQueryOptions): Promise<ScanLogQueryResult>;
 }

@@ -823,6 +823,126 @@ export function renderTopicDetail(topic: {
   console.log();
 }
 
+/** Render API key list. */
+export function renderApiKeyList(
+  keys: Array<{ id: string; name: string; createdAt?: string; expiresAt?: string }>,
+): void {
+  if (keys.length === 0) {
+    console.log(chalk.dim('  No API keys found.\n'));
+    return;
+  }
+  console.log(chalk.bold('\n  API Keys:\n'));
+  for (const k of keys) {
+    console.log(`  ${chalk.dim(k.id)}`);
+    const expires = k.expiresAt ? chalk.dim(` expires: ${k.expiresAt}`) : '';
+    console.log(`    ${k.name}${expires}`);
+  }
+  console.log();
+}
+
+/** Render API key detail. */
+export function renderApiKeyDetail(key: {
+  id: string;
+  name: string;
+  createdAt?: string;
+  expiresAt?: string;
+}): void {
+  console.log(chalk.bold('\n  API Key Detail:\n'));
+  console.log(`    ID:      ${chalk.dim(key.id)}`);
+  console.log(`    Name:    ${key.name}`);
+  if (key.createdAt) console.log(`    Created: ${chalk.dim(key.createdAt)}`);
+  if (key.expiresAt) console.log(`    Expires: ${chalk.dim(key.expiresAt)}`);
+  console.log();
+}
+
+/** Render customer app list. */
+export function renderCustomerAppList(
+  apps: Array<{ id?: string; name: string; description?: string }>,
+): void {
+  if (apps.length === 0) {
+    console.log(chalk.dim('  No customer apps found.\n'));
+    return;
+  }
+  console.log(chalk.bold('\n  Customer Apps:\n'));
+  for (const a of apps) {
+    if (a.id) console.log(`  ${chalk.dim(a.id)}`);
+    const desc = a.description ? chalk.dim(` — ${a.description.slice(0, 80)}`) : '';
+    console.log(`    ${a.name}${desc}`);
+  }
+  console.log();
+}
+
+/** Render customer app detail. */
+export function renderCustomerAppDetail(app: {
+  id?: string;
+  name: string;
+  description?: string;
+  raw: Record<string, unknown>;
+}): void {
+  console.log(chalk.bold('\n  Customer App Detail:\n'));
+  if (app.id) console.log(`    ID:   ${chalk.dim(app.id)}`);
+  console.log(`    Name: ${app.name}`);
+  if (app.description) console.log(`    Desc: ${app.description}`);
+  console.log(`    Data: ${chalk.dim(JSON.stringify(app.raw, null, 2).slice(0, 500))}`);
+  console.log();
+}
+
+/** Render deployment profile list. */
+export function renderDeploymentProfileList(
+  profiles: Array<{ raw: Record<string, unknown> }>,
+): void {
+  if (profiles.length === 0) {
+    console.log(chalk.dim('  No deployment profiles found.\n'));
+    return;
+  }
+  console.log(chalk.bold('\n  Deployment Profiles:\n'));
+  for (const p of profiles) {
+    const name = (p.raw.profile_name ?? p.raw.name ?? 'unknown') as string;
+    const id = (p.raw.profile_id ?? '') as string;
+    if (id) console.log(`  ${chalk.dim(id)}`);
+    console.log(`    ${name}`);
+  }
+  console.log();
+}
+
+/** Render DLP profile list. */
+export function renderDlpProfileList(profiles: Array<{ raw: Record<string, unknown> }>): void {
+  if (profiles.length === 0) {
+    console.log(chalk.dim('  No DLP profiles found.\n'));
+    return;
+  }
+  console.log(chalk.bold('\n  DLP Profiles:\n'));
+  for (const p of profiles) {
+    const name = (p.raw.profile_name ?? p.raw.name ?? 'unknown') as string;
+    const id = (p.raw.profile_id ?? '') as string;
+    if (id) console.log(`  ${chalk.dim(id)}`);
+    console.log(`    ${name}`);
+  }
+  console.log();
+}
+
+/** Render scan log results. */
+export function renderScanLogList(results: Record<string, unknown>[], pageToken?: string): void {
+  if (results.length === 0) {
+    console.log(chalk.dim('  No scan logs found.\n'));
+    return;
+  }
+  console.log(chalk.bold(`\n  Scan Logs (${results.length} results):\n`));
+  for (const r of results) {
+    const action = r.action as string | undefined;
+    const category = r.category as string | undefined;
+    const ts = r.timestamp as string | undefined;
+    const actionColor = action === 'block' ? chalk.red : chalk.green;
+    console.log(
+      `  ${ts ? chalk.dim(ts) : ''}  ${action ? actionColor(action) : ''}  ${category ?? ''}`,
+    );
+  }
+  if (pageToken) {
+    console.log(chalk.dim(`\n  Page token: ${pageToken}`));
+  }
+  console.log();
+}
+
 // ---------------------------------------------------------------------------
 // Model Security rendering
 // ---------------------------------------------------------------------------
