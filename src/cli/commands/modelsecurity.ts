@@ -21,7 +21,7 @@ import {
   renderRuleList,
   renderViolationDetail,
   renderViolationList,
-} from '../renderer.js';
+} from '../renderer/index.js';
 
 /** Create an SdkModelSecurityService from config. */
 async function createService() {

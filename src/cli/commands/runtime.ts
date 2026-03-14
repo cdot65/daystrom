@@ -22,7 +22,7 @@ import {
   renderScanLogList,
   renderTopicDetail,
   renderTopicList,
-} from '../renderer.js';
+} from '../renderer/index.js';
 
 function renderScanResult(result: RuntimeScanResult): void {
   const actionColor = result.action === 'block' ? chalk.red : chalk.green;
