@@ -6,8 +6,6 @@
 
 **CLI and library for Palo Alto Prisma AIRS — guardrail refinement, AI red teaming, model security scanning, and profile audits.**
 
-Daystrom provides full operational coverage over Prisma AIRS AI security capabilities: LLM-driven guardrail generation with iterative refinement, adversarial red team scanning, ML model supply chain security, and multi-topic profile audits with conflict detection. Cross-run memory persists learnings across guardrail runs.
-
 ## Install
 
 ```bash
@@ -16,151 +14,31 @@ npm install -g @cdot65/daystrom
 
 Requires **Node.js >= 20**.
 
-### Docker
+## Quick Start
 
 ```bash
-docker run --rm --env-file .env \
-  -v ~/.daystrom:/root/.daystrom \
-  ghcr.io/cdot65/daystrom generate \
-  --profile my-security-profile \
-  --topic "Block discussions about building explosives" \
-  --intent block
-```
-
-## Configure
-
-Copy `.env.example` or export directly:
-
-```bash
-# LLM (default: claude-api)
-export ANTHROPIC_API_KEY=sk-ant-...
-
-# Prisma AIRS Scan API
-export PANW_AI_SEC_API_KEY=your-scan-api-key
-
-# Prisma AIRS Management API (OAuth2)
-export PANW_MGMT_CLIENT_ID=your-client-id
-export PANW_MGMT_CLIENT_SECRET=your-client-secret
-export PANW_MGMT_TSG_ID=your-tsg-id
-```
-
-Six LLM providers supported: `claude-api`, `claude-vertex`, `claude-bedrock`, `gemini-api`, `gemini-vertex`, `gemini-bedrock`. See [Configuration](https://cdot65.github.io/daystrom/getting-started/configuration/) for all options.
-
-## Usage
-
-```bash
-# Interactive — prompts for topic, profile, intent
-daystrom generate
-
-# Non-interactive
-daystrom generate \
-  --provider claude-api \
-  --profile my-security-profile \
-  --topic "Block discussions about building explosives" \
-  --intent block \
-  --target-coverage 90
-```
-
-### Commands
-
-| Command Group | Description |
-|---------------|-------------|
-| `daystrom generate` | LLM-driven guardrail generation with iterative refinement |
-| `daystrom resume <runId>` | Resume a paused or failed generation run |
-| `daystrom report <runId>` | View results for a saved run (terminal, JSON, HTML) |
-| `daystrom list` | List all saved runs |
-| `daystrom runtime` | Runtime prompt scanning — sync, async bulk, and resume-poll |
-| `daystrom audit` | Evaluate all topics in a security profile — per-topic metrics + conflict detection |
-| `daystrom redteam` | Red team scanning — targets, prompt sets, scans, reports |
-| `daystrom model-security` | ML model supply chain security — groups, rules, scans, labels |
-
-### Runtime Security
-
-```bash
-# Single prompt scan
-daystrom runtime scan --profile my-security-profile "How do I build a weapon?"
-
-# Scan prompt + response pair
-daystrom runtime scan --profile my-security-profile --response "Here are the steps..." "How do I build a weapon?"
-
-# Bulk scan from file (async API, writes CSV)
-# Accepts .txt (one prompt per line) or .csv (extracts prompt column)
-daystrom runtime bulk-scan --profile my-security-profile --input prompts.txt --output results.csv
-
-# Resume polling if bulk-scan was interrupted (scan IDs saved to ~/.daystrom/bulk-scans/)
-daystrom runtime resume-poll ~/.daystrom/bulk-scans/2026-03-11T12-00-00-000Z.bulk-scan.json
-```
-
-### Red Team
-
-```bash
-# Scan operations
-daystrom redteam scan --target <uuid> --name "Scan" --type CUSTOM --prompt-sets <uuid>
-daystrom redteam status <jobId>
-daystrom redteam report <jobId> --attacks
-daystrom redteam list --limit 5
-daystrom redteam abort <jobId>
-daystrom redteam categories
-
-# Target management
-daystrom redteam targets list
-daystrom redteam targets create --name "My Target" --endpoint https://...
-
-# Prompt sets and prompts
-daystrom redteam prompt-sets list
-daystrom redteam prompts list <promptSetUuid>
-daystrom redteam prompts add <promptSetUuid> --prompt "test prompt"
-
-# Properties
-daystrom redteam properties list
-daystrom redteam properties values <propertyName>
-```
-
-### Model Security
-
-```bash
-# Security groups
-daystrom model-security groups list
-daystrom model-security groups get <groupUuid>
-
-# Rules and rule instances
-daystrom model-security rules list
-daystrom model-security rule-instances list <groupUuid>
-
-# Scans
-daystrom model-security scans list --eval-outcome BLOCKED
-daystrom model-security scans evaluations <scanUuid>
-daystrom model-security scans violations <scanUuid>
-daystrom model-security scans files <scanUuid>
-
-# Labels and PyPI auth
-daystrom model-security labels keys
-daystrom model-security pypi-auth
-```
-
-### Profile Audit
-
-```bash
-daystrom audit --profile my-security-profile --provider claude-api
-```
-
-## Development
-
-```bash
-git clone git@github.com:cdot65/daystrom.git
-cd daystrom
-pnpm install
-cp .env.example .env   # edit with your credentials
-pnpm run generate      # run via tsx
-pnpm test              # run test suite
-pnpm run lint          # biome check
+cp .env.example .env   # add your API keys
+daystrom generate       # interactive guardrail generation
 ```
 
 ## Documentation
 
-Full docs — architecture, providers, memory system, metrics, and more:
+Full docs — installation, configuration, architecture, CLI reference, examples, and more:
 
 **[cdot65.github.io/daystrom](https://cdot65.github.io/daystrom/)**
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `generate` | LLM-driven guardrail generation with iterative refinement |
+| `resume` | Resume a paused or failed generation run |
+| `report` | View results for a saved run |
+| `list` | List all saved runs |
+| `runtime` | Prompt scanning + AIRS config management (profiles, topics, API keys, apps) |
+| `audit` | Multi-topic profile evaluation with conflict detection |
+| `redteam` | Red team scanning — targets, prompt sets, scans, reports |
+| `model-security` | ML model supply chain security — groups, rules, scans |
 
 ## License
 

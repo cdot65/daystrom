@@ -602,7 +602,7 @@ export function registerRuntimeCommand(program: Command): void {
     .command('query')
     .description('Query scan logs')
     .requiredOption('--interval <n>', 'Time interval')
-    .requiredOption('--unit <unit>', 'Time unit (hour, day, week, month)')
+    .requiredOption('--unit <unit>', 'Time unit (hours)')
     .option('--filter <filter>', 'Filter: all, benign, threat', 'all')
     .option('--page <n>', 'Page number', '1')
     .option('--page-size <n>', 'Page size', '50')

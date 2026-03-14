@@ -161,7 +161,7 @@ daystrom list
 
 ## runtime
 
-Runtime prompt scanning against AIRS security profiles.
+Runtime prompt scanning and AIRS configuration management.
 
 ### runtime scan
 
@@ -267,6 +267,130 @@ daystrom runtime bulk-scan --profile my-profile --input prompts.txt --output res
   Allowed: 3
   Output:  AI-Firewall-High-Security-Profile-bulk-scan.csv
 ```
+
+### runtime resume-poll
+
+Resume polling for a previously submitted bulk scan.
+
+```bash
+daystrom runtime resume-poll <stateFile> [--output <file>]
+```
+
+| Flag | Required | Description |
+|------|:--------:|-------------|
+| `<stateFile>` | Yes | Path to saved `.bulk-scan.json` state file |
+| `--output <file>` | No | Output CSV path |
+
+### runtime profiles
+
+Security profile CRUD.
+
+```bash
+daystrom runtime profiles list
+daystrom runtime profiles get <profileId>
+daystrom runtime profiles create --config <path>
+daystrom runtime profiles update <profileId> --config <path>
+daystrom runtime profiles delete <profileId>
+daystrom runtime profiles delete <profileId> --force --updated-by <email>
+```
+
+| Subcommand | Flags |
+|------------|-------|
+| `list` | — |
+| `get <profileId>` | — |
+| `create` | `--config <path>` (required) |
+| `update <profileId>` | `--config <path>` (required) |
+| `delete <profileId>` | `--force`, `--updated-by <email>` |
+
+### runtime topics
+
+Custom topic CRUD.
+
+```bash
+daystrom runtime topics list
+daystrom runtime topics get <topicId>
+daystrom runtime topics create --config <path>
+daystrom runtime topics update <topicId> --config <path>
+daystrom runtime topics delete <topicId>
+daystrom runtime topics delete <topicId> --force --updated-by <email>
+```
+
+| Subcommand | Flags |
+|------------|-------|
+| `list` | — |
+| `get <topicId>` | — |
+| `create` | `--config <path>` (required) |
+| `update <topicId>` | `--config <path>` (required) |
+| `delete <topicId>` | `--force`, `--updated-by <email>` |
+
+### runtime api-keys
+
+API key management.
+
+```bash
+daystrom runtime api-keys list
+daystrom runtime api-keys create --config <path>
+daystrom runtime api-keys regenerate <apiKeyId> --interval <n> --unit <unit>
+daystrom runtime api-keys delete <apiKeyName> --updated-by <email>
+```
+
+| Subcommand | Flags |
+|------------|-------|
+| `list` | — |
+| `create` | `--config <path>` (required) |
+| `regenerate <apiKeyId>` | `--interval <n>` (required), `--unit <unit>` (required, e.g. `days`, `months`) |
+| `delete <apiKeyName>` | `--updated-by <email>` (required) |
+
+### runtime customer-apps
+
+Customer application management.
+
+```bash
+daystrom runtime customer-apps list
+daystrom runtime customer-apps get <appName>
+daystrom runtime customer-apps update <appId> --config <path>
+daystrom runtime customer-apps delete <appName> --updated-by <email>
+```
+
+| Subcommand | Flags |
+|------------|-------|
+| `list` | — |
+| `get <appName>` | — |
+| `update <appId>` | `--config <path>` (required) |
+| `delete <appName>` | `--updated-by <email>` (required) |
+
+### runtime deployment-profiles
+
+Deployment profile listing (read-only).
+
+```bash
+daystrom runtime deployment-profiles list
+daystrom runtime deployment-profiles list --unactivated
+```
+
+| Subcommand | Flags |
+|------------|-------|
+| `list` | `--unactivated` |
+
+### runtime dlp-profiles
+
+DLP profile listing (read-only).
+
+```bash
+daystrom runtime dlp-profiles list
+```
+
+### runtime scan-logs
+
+Scan log querying.
+
+```bash
+daystrom runtime scan-logs query --interval <n> --unit <unit> [options]
+```
+
+| Subcommand | Flags |
+|------------|-------|
+| `query` | `--interval <n>` (required), `--unit <unit>` (required, e.g. `hours`), `--filter <filter>` (all, benign, threat; default: all), `--page <n>` (default: 1), `--page-size <n>` (default: 50) |
 
 ---
 

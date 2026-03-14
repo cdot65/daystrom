@@ -4,7 +4,7 @@ title: Runtime Security
 
 # Runtime Security
 
-Scan prompts against Prisma AIRS security profiles in real time. Daystrom supports both single-prompt sync scans and multi-prompt async bulk scans.
+Scan prompts against Prisma AIRS security profiles in real time, and manage AIRS runtime configuration — profiles, topics, API keys, customer apps, deployment profiles, DLP profiles, and scan logs.
 
 ## Single Prompt Scan
 
@@ -151,10 +151,78 @@ prompt,action,category,triggered,scan_id,report_id
 "Tell me about the weather today","allow","benign","false","b2c3...","f6g7..."
 ```
 
-## Environment Variables
+---
 
-Runtime scanning requires:
+## Configuration Management
+
+Daystrom exposes full CRUD over AIRS runtime configuration resources via `daystrom runtime` subcommand groups. All config management commands require Management API credentials (`PANW_MGMT_CLIENT_ID`, `PANW_MGMT_CLIENT_SECRET`, `PANW_MGMT_TSG_ID`).
+
+### Security Profiles
+
+```bash
+daystrom runtime profiles list
+daystrom runtime profiles get <profileId>
+daystrom runtime profiles create --config profile.json
+daystrom runtime profiles update <profileId> --config profile.json
+daystrom runtime profiles delete <profileId>
+daystrom runtime profiles delete <profileId> --force --updated-by user@example.com
+```
+
+### Custom Topics
+
+```bash
+daystrom runtime topics list
+daystrom runtime topics get <topicId>
+daystrom runtime topics create --config topic.json
+daystrom runtime topics update <topicId> --config topic.json
+daystrom runtime topics delete <topicId>
+daystrom runtime topics delete <topicId> --force --updated-by user@example.com
+```
+
+### API Keys
+
+```bash
+daystrom runtime api-keys list
+daystrom runtime api-keys create --config apikey.json
+daystrom runtime api-keys regenerate <apiKeyId> --interval 90 --unit days
+daystrom runtime api-keys delete <apiKeyName> --updated-by user@example.com
+```
+
+### Customer Apps
+
+```bash
+daystrom runtime customer-apps list
+daystrom runtime customer-apps get <appName>
+daystrom runtime customer-apps update <appId> --config app.json
+daystrom runtime customer-apps delete <appName> --updated-by user@example.com
+```
+
+### Deployment Profiles
+
+```bash
+daystrom runtime deployment-profiles list
+daystrom runtime deployment-profiles list --unactivated
+```
+
+### DLP Profiles
+
+```bash
+daystrom runtime dlp-profiles list
+```
+
+### Scan Logs
+
+```bash
+daystrom runtime scan-logs query --interval 24 --unit hours
+daystrom runtime scan-logs query --interval 168 --unit hours --filter threat
+daystrom runtime scan-logs query --interval 720 --unit hours --page-size 100
+```
+
+## Environment Variables
 
 | Variable | Description |
 |----------|-------------|
 | `PANW_AI_SEC_API_KEY` | Prisma AIRS API key for scan operations |
+| `PANW_MGMT_CLIENT_ID` | Management API OAuth2 client ID (config management) |
+| `PANW_MGMT_CLIENT_SECRET` | Management API OAuth2 client secret (config management) |
+| `PANW_MGMT_TSG_ID` | Management API tenant service group ID (config management) |

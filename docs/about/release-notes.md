@@ -1,5 +1,32 @@
 # Release Notes
 
+## v1.14.1
+
+### Fixes
+
+- **Deployment profile renderer**: use `dp_name` field from SDK response (was showing "unknown")
+- **DLP profile renderer**: use `uuid` as the ID field
+- **Scan logs**: extract results from `scan_result_for_dashboard.scan_result_entries`; render `received_ts`, `app_name`, `profile_name`, `scan_id`
+
+## v1.14.0
+
+### Features
+
+- **Runtime configuration management**: Full CRUD for AIRS runtime resources via `daystrom runtime` subcommand groups:
+  - `profiles` — security profile list/get/create/update/delete (with force delete)
+  - `topics` — custom topic list/get/create/update/delete (with force delete)
+  - `api-keys` — API key list/create/regenerate/delete
+  - `customer-apps` — customer app list/get/update/delete
+  - `deployment-profiles` — deployment profile listing (with `--unactivated` filter)
+  - `dlp-profiles` — DLP profile listing
+  - `scan-logs` — scan log querying by time interval with pagination and filtering
+- **Two-phase generation**: block-intent runs auto-generate a domain-specific allow companion topic
+- **`--set-profile-allow` flag**: control guardrail default action on profile
+
+### Tests
+
+- 537 tests across 29 spec files
+
 ## v1.7.2
 
 ### Features
