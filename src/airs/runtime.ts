@@ -43,6 +43,9 @@ export class SdkRuntimeService implements RuntimeService {
     const res = await this.scanner.syncScan({ profile_name: profileName }, content, undefined);
 
     const detected = (res.prompt_detected as Record<string, boolean> | undefined) ?? {};
+    // Runtime scanning aggregates all 6 detection types — intentionally broader than
+    // the guardrail loop's topic_violation-only signal. Runtime is a general-purpose
+    // firewall check, not topic-specific evaluation.
     const triggered = !!(
       detected.topic_violation ||
       detected.injection ||
