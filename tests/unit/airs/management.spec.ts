@@ -132,6 +132,24 @@ describe('SdkManagementService', () => {
     });
   });
 
+  describe('forceDeleteTopic', () => {
+    it('force-deletes a topic via SDK', async () => {
+      mockForceDelete.mockResolvedValue({ message: 'force deleted' });
+
+      const result = await service.forceDeleteTopic('topic-abc', 'admin@example.com');
+      expect(result.message).toBe('force deleted');
+      expect(mockForceDelete).toHaveBeenCalledWith('topic-abc', 'admin@example.com');
+    });
+
+    it('works without updatedBy param', async () => {
+      mockForceDelete.mockResolvedValue({ message: 'force deleted' });
+
+      const result = await service.forceDeleteTopic('topic-abc');
+      expect(result.message).toBe('force deleted');
+      expect(mockForceDelete).toHaveBeenCalledWith('topic-abc', undefined);
+    });
+  });
+
   describe('listTopics', () => {
     it('lists topics and unwraps custom_topics array', async () => {
       mockList.mockResolvedValue({

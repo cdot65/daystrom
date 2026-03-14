@@ -691,6 +691,8 @@ export interface ManagementService {
   updateTopic(topicId: string, request: CreateCustomTopicRequest): Promise<SdkCustomTopic>;
   /** Delete a custom topic by ID. */
   deleteTopic(topicId: string): Promise<void>;
+  /** Force-delete a custom topic (removes from all referencing profiles). */
+  forceDeleteTopic(topicId: string, updatedBy?: string): Promise<DeleteResponse>;
   /** List all custom topics. */
   listTopics(): Promise<SdkCustomTopic[]>;
   /** Assign a topic to a security profile's topic-guardrails. */

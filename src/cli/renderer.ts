@@ -772,6 +772,57 @@ export function renderProfileDetail(profile: {
   console.log();
 }
 
+/** Render custom topic list. */
+export function renderTopicList(
+  topics: Array<{
+    topic_id?: string;
+    topic_name: string;
+    description?: string;
+    revision?: number;
+  }>,
+): void {
+  if (topics.length === 0) {
+    console.log(chalk.dim('  No topics found.\n'));
+    return;
+  }
+  console.log(chalk.bold('\n  Custom Topics:\n'));
+  for (const t of topics) {
+    console.log(`  ${chalk.dim(t.topic_id)}`);
+    const rev = t.revision != null ? chalk.dim(` rev:${t.revision}`) : '';
+    const desc = t.description ? chalk.dim(` — ${t.description.slice(0, 80)}`) : '';
+    console.log(`    ${t.topic_name}${rev}${desc}`);
+  }
+  console.log();
+}
+
+/** Render custom topic detail. */
+export function renderTopicDetail(topic: {
+  topic_id?: string;
+  topic_name: string;
+  description?: string;
+  examples?: string[];
+  revision?: number;
+  created_by?: string;
+  updated_by?: string;
+  last_modified_ts?: string;
+}): void {
+  console.log(chalk.bold('\n  Topic Detail:\n'));
+  console.log(`    ID:          ${chalk.dim(topic.topic_id)}`);
+  console.log(`    Name:        ${topic.topic_name}`);
+  if (topic.revision != null) console.log(`    Revision:    ${topic.revision}`);
+  if (topic.description) console.log(`    Description: ${topic.description}`);
+  if (topic.examples?.length) {
+    console.log('    Examples:');
+    for (const ex of topic.examples) {
+      console.log(`      ${chalk.dim('•')} ${ex}`);
+    }
+  }
+  if (topic.created_by) console.log(`    Created:     ${chalk.dim(topic.created_by)}`);
+  if (topic.updated_by) console.log(`    Updated:     ${chalk.dim(topic.updated_by)}`);
+  if (topic.last_modified_ts) console.log(`    Modified:    ${chalk.dim(topic.last_modified_ts)}`);
+  console.log();
+}
+
 // ---------------------------------------------------------------------------
 // Model Security rendering
 // ---------------------------------------------------------------------------
