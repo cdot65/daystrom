@@ -3,11 +3,11 @@ import { loadConfig } from '../../config/loader.js';
 import { JsonFileStore } from '../../persistence/store.js';
 import { renderError, renderHeader, renderRunList } from '../renderer/index.js';
 
-/** Register the `list` command — lists all saved runs. */
-export function registerListCommand(program: Command): void {
-  program
-    .command('list')
-    .description('List all saved runs')
+/** Register the `list` (or `runs`) command — lists all saved runs. */
+export function registerListCommand(parent: Command, commandName = 'list'): void {
+  parent
+    .command(commandName)
+    .description('List all saved generation runs')
     .action(async () => {
       try {
         renderHeader();

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import 'dotenv/config';
+import chalk from 'chalk';
 import { Command } from 'commander';
 import { registerAuditCommand } from './commands/audit.js';
 import { registerGenerateCommand } from './commands/generate.js';
@@ -26,13 +27,35 @@ program
   )
   .version(pkg.version);
 
-registerGenerateCommand(program);
-registerResumeCommand(program);
-registerReportCommand(program);
-registerListCommand(program);
+// Primary command groups
 registerRuntimeCommand(program);
 registerRedteamCommand(program);
 registerModelSecurityCommand(program);
-registerAuditCommand(program);
+
+// ---------------------------------------------------------------------------
+// Backward-compatible top-level aliases (deprecated — use runtime subcommands)
+// ---------------------------------------------------------------------------
+const deprecationNotice = (oldCmd: string, newCmd: string) =>
+  chalk.yellow(`[deprecated] "daystrom ${oldCmd}" → use "daystrom ${newCmd}"`);
+
+function registerDeprecated(
+  registerFn: (parent: Command, name?: string) => void,
+  oldCmd: string,
+  newCmd: string,
+) {
+  registerFn(program);
+  const cmd = program.commands.find((c) => c.name() === oldCmd);
+  if (cmd) {
+    cmd.hook('preAction', () => {
+      console.error(deprecationNotice(oldCmd, newCmd));
+    });
+  }
+}
+
+registerDeprecated(registerGenerateCommand, 'generate', 'runtime topics generate');
+registerDeprecated(registerResumeCommand, 'resume', 'runtime topics resume');
+registerDeprecated(registerReportCommand, 'report', 'runtime topics report');
+registerDeprecated(registerListCommand, 'list', 'runtime topics runs');
+registerDeprecated(registerAuditCommand, 'audit', 'runtime profiles audit');
 
 program.parse();

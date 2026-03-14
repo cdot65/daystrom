@@ -13,7 +13,7 @@ Daystrom is a CLI and library providing full operational coverage over **Palo Al
 pnpm install               # Install deps
 pnpm run build             # tsc compile to dist/
 pnpm run dev               # Run CLI via tsx (any subcommand)
-pnpm run generate          # Interactive guardrail generation loop
+pnpm run generate          # Interactive guardrail generation loop (deprecated alias)
 
 # Test
 pnpm test                  # All tests (vitest run)
@@ -41,15 +41,15 @@ TypeScript ESM, Node 20+, pnpm. LangChain.js w/ structured output (Zod). `@cdot6
 
 ```
 src/
-├── cli/                   # CLI entry, 8 command groups, interactive prompts, renderer
-│   ├── index.ts           # Commander program — registers generate/resume/report/list/runtime/audit/redteam/model-security
+├── cli/                   # CLI entry, 3 top-level groups + deprecated aliases, prompts, renderer
+│   ├── index.ts           # Commander program — registers runtime/redteam/model-security + deprecated top-level aliases
 │   ├── commands/
-│   │   ├── generate.ts    # Main loop orchestration, wires all services
-│   │   ├── resume.ts      # Resume paused/failed run from disk
-│   │   ├── report.ts      # View run results by ID
-│   │   ├── list.ts        # List all saved runs
-│   │   ├── runtime.ts     # Runtime scanning (scan, bulk-scan, resume-poll) + config management (profiles, topics, api-keys, customer-apps, deployment-profiles, dlp-profiles, scan-logs)
-│   │   ├── audit.ts       # Profile-level multi-topic evaluation
+│   │   ├── generate.ts    # Main loop orchestration, wires all services (registered under runtime topics)
+│   │   ├── resume.ts      # Resume paused/failed run from disk (registered under runtime topics)
+│   │   ├── report.ts      # View run results by ID (registered under runtime topics)
+│   │   ├── list.ts        # List all saved runs (registered as "runs" under runtime topics)
+│   │   ├── runtime.ts     # Runtime scanning + config management + guardrail generation (topics) + audit (profiles)
+│   │   ├── audit.ts       # Profile-level multi-topic evaluation (registered under runtime profiles)
 │   │   ├── redteam.ts     # Red team operations (scan, targets CRUD, prompt-sets CRUD, prompts CRUD, properties)
 │   │   └── modelsecurity.ts # Model security operations (groups, rules, rule-instances, scans, labels, pypi-auth)
 │   ├── bulk-scan-state.ts # Save/load bulk scan IDs for resume after poll failure
@@ -172,13 +172,14 @@ tests/
 - Bulk scan IDs are saved to `~/.daystrom/bulk-scans/` before polling — survives rate limit crashes
 - CLI: `daystrom runtime resume-poll <stateFile> [--output <file>]` — resume polling from saved scan IDs
 - CLI config management subcommand groups (all via `ManagementClient` OAuth2):
-  - `daystrom runtime profiles {list,get,create,update,delete}` — security profile CRUD (supports `--force --updated-by`)
-  - `daystrom runtime topics {list,get,create,update,delete}` — custom topic CRUD (supports `--force --updated-by`)
+  - `daystrom runtime profiles {list,create,update,delete,audit}` — security profile CRUD + profile audit (supports `--force --updated-by`)
+  - `daystrom runtime topics {list,create,update,delete,generate,resume,report,runs}` — custom topic CRUD + guardrail generation (supports `--force --updated-by`)
   - `daystrom runtime api-keys {list,create,regenerate,delete}` — API key management (`regenerate` takes `--interval`/`--unit`)
   - `daystrom runtime customer-apps {list,get,update,delete}` — customer app CRUD
   - `daystrom runtime deployment-profiles {list}` — deployment profile listing (`--unactivated` filter)
   - `daystrom runtime dlp-profiles {list}` — DLP profile listing
   - `daystrom runtime scan-logs {query}` — scan log querying (`--interval`/`--unit hours`/`--filter`)
+- Deprecated top-level aliases (`generate`, `resume`, `report`, `list`, `audit`) still work with deprecation warnings
 
 ### Red Team (`src/airs/redteam.ts`, `src/airs/promptsets.ts`)
 - `SdkRedTeamService` wraps `RedTeamClient` for scan CRUD, polling, reports, **target CRUD**

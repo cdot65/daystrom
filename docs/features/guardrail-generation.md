@@ -17,19 +17,28 @@ Daystrom's guardrail generation capability uses an LLM-driven feedback loop to c
 
 ## CLI Usage
 
+Guardrail generation lives under `daystrom runtime topics`:
+
 ```bash
 # Interactive mode — prompts for all inputs
-daystrom generate
+daystrom runtime topics generate
 
 # Non-interactive with all options
-daystrom generate \
-  --topic-name "weapons-discussion" \
-  --description "Block discussions about weapons manufacturing" \
+daystrom runtime topics generate \
+  --topic "Block discussions about weapons manufacturing" \
   --intent block \
   --profile my-security-profile \
-  --target-coverage 0.9 \
+  --target-coverage 90 \
   --max-iterations 5
+
+# Resume, report, list runs
+daystrom runtime topics resume <runId>
+daystrom runtime topics report <runId>
+daystrom runtime topics runs
 ```
+
+!!! note "Backward compatibility"
+    Top-level aliases (`daystrom generate`, `daystrom resume`, etc.) still work but print a deprecation warning. Use the `runtime topics` paths going forward.
 
 ## Key Concepts
 

@@ -25,8 +25,8 @@ import {
 } from '../renderer/index.js';
 
 /** Register the `resume` command — resumes a paused or failed run. */
-export function registerResumeCommand(program: Command): void {
-  program
+export function registerResumeCommand(parent: Command): void {
+  parent
     .command('resume <runId>')
     .description('Resume a paused or failed run')
     .option('--max-iterations <n>', 'Additional iterations to run', '10')

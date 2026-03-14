@@ -17,8 +17,8 @@ import {
 } from '../renderer/index.js';
 
 /** Register the `audit` command — evaluate all topics in a profile. */
-export function registerAuditCommand(program: Command): void {
-  program
+export function registerAuditCommand(parent: Command): void {
+  parent
     .command('audit <profileName>')
     .description('Evaluate all topics in a security profile')
     .option('--max-tests-per-topic <n>', 'Max tests per topic', '20')

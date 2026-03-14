@@ -2,166 +2,13 @@
 
 Binary: `daystrom` (or `pnpm run dev` during development).
 
-Eight command groups covering all Prisma AIRS capabilities.
-
----
-
-## generate
-
-Start a new guardrail generation run.
-
-```bash
-daystrom generate [options]
-```
-
-### Options
-
-| Flag | Default | What it does |
-|------|---------|-------------|
-| `--provider <name>` | `claude-api` | LLM provider (`claude-api`, `claude-vertex`, `claude-bedrock`, `gemini-api`, `gemini-vertex`, `gemini-bedrock`) |
-| `--model <name>` | per-provider | Override default model |
-| `--profile <name>` | _(prompted)_ | AIRS security profile name |
-| `--topic <desc>` | _(prompted)_ | Natural language description of content to detect |
-| `--intent <block\|allow>` | `block` | Whether matching prompts are blocked or allowed |
-| `--max-iterations <n>` | `20` | Maximum refinement iterations |
-| `--target-coverage <n>` | `90` | Coverage percentage to stop at |
-| `--max-regressions <n>` | `3` | Stop after N consecutive coverage regressions (0 = disable) |
-| `--accumulate-tests` | off | Carry forward test prompts across iterations |
-| `--max-accumulated-tests <n>` | unlimited | Cap on accumulated test count |
-| `--no-memory` | memory on | Disable cross-run learning |
-| `--debug-scans` | off | Dump raw AIRS scan responses to JSONL for debugging |
-| `--create-prompt-set` | off | Create custom prompt set in AI Red Team from test cases |
-| `--prompt-set-name <name>` | auto | Override auto-generated prompt set name |
-
-!!! tip "Skip all prompts"
-    When both `--topic` and `--profile` are provided, interactive mode is skipped entirely.
-
-### Interactive Mode
-
-When flags are omitted, Daystrom walks you through:
-
-1. Topic description
-2. Intent (block or allow)
-3. Security profile name
-4. Seed examples (optional)
-5. Max iterations
-6. Target coverage %
-7. Accumulate tests across iterations (yes/no)
-8. Max accumulated tests (if accumulation enabled)
-
-### Examples
-
-```bash
-# Interactive — prompts for everything
-daystrom generate
-
-# Non-interactive — all inputs via flags
-daystrom generate \
-  --provider claude-api \
-  --profile my-security-profile \
-  --topic "Block discussions about building explosives" \
-  --intent block \
-  --target-coverage 90
-
-# With test accumulation
-daystrom generate \
-  --topic "Allow recipe discussions" \
-  --intent allow \
-  --profile cooking-policy \
-  --accumulate-tests \
-  --max-accumulated-tests 60
-```
-
----
-
-## resume
-
-Pick up a paused or failed run from where it left off.
-
-```bash
-daystrom resume <runId> [options]
-```
-
-| Flag | Default | What it does |
-|------|---------|-------------|
-| `--max-iterations <n>` | `20` | Additional iterations from current position |
-| `--debug-scans` | off | Dump raw AIRS scan responses to JSONL for debugging |
-| `--create-prompt-set` | off | Create custom prompt set in AI Red Team from test cases |
-| `--prompt-set-name <name>` | auto | Override auto-generated prompt set name |
-
-```bash
-daystrom resume abc123xyz --max-iterations 10
-```
-
-!!! note
-    The run must exist in the data directory (`~/.daystrom/runs/`). Use `daystrom list` to find run IDs. Settings like `accumulateTests` are inherited from the original run.
-
----
-
-## report
-
-View results for a saved run.
-
-```bash
-daystrom report <runId> [options]
-```
-
-| Flag | Default | What it does |
-|------|---------|-------------|
-| `--iteration <n>` | _(best)_ | Show a specific iteration instead of the best |
-| `--format <fmt>` | `terminal` | Output format: `terminal`, `json`, `html` |
-| `--tests` | _(off)_ | Include per-test-case details |
-| `--diff <runId>` | _(none)_ | Compare with another run side-by-side |
-| `--output <path>` | `<runId>-report.html` | Output file path (html format only) |
-
-```bash
-# Best iteration (terminal)
-daystrom report abc123xyz
-
-# Specific iteration
-daystrom report abc123xyz --iteration 3
-
-# JSON export (to stdout)
-daystrom report abc123xyz --format json --tests
-
-# HTML report with test details
-daystrom report abc123xyz --format html --tests --output my-report.html
-
-# Compare two runs
-daystrom report abc123xyz --diff def456uvw
-```
-
----
-
-## list
-
-Show all saved runs.
-
-```bash
-daystrom list
-```
-
-#### Example Output
-
-```
-  Saved Runs:
-
-  7A6KX0oSvt-TWEJTvzXUM
-    Status: completed  Coverage: 60.0%  Iterations: 10
-    Topic: Tax and regulatory advice covers specific tax filing instructions...
-    Created: 2026-03-04T21:13:14.504Z
-
-  wfvv9PRTLpO096S-QbcSm
-    Status: completed  Coverage: 70.0%  Iterations: 20
-    Topic: Tax guidance and recommendations
-    Created: 2026-03-06T19:34:35.563Z
-```
+Three top-level command groups: `runtime`, `redteam`, `model-security`.
 
 ---
 
 ## runtime
 
-Runtime prompt scanning and AIRS configuration management.
+Runtime prompt scanning, AIRS configuration management, guardrail generation, and profile audits.
 
 ### runtime scan
 
@@ -283,7 +130,7 @@ daystrom runtime resume-poll <stateFile> [--output <file>]
 
 ### runtime profiles
 
-Security profile CRUD.
+Security profile CRUD and profile-level audit.
 
 ```bash
 daystrom runtime profiles list
@@ -291,6 +138,7 @@ daystrom runtime profiles create --config <path>
 daystrom runtime profiles update <profileId> --config <path>
 daystrom runtime profiles delete <profileId>
 daystrom runtime profiles delete <profileId> --force --updated-by <email>
+daystrom runtime profiles audit <profileName> [options]
 ```
 
 | Subcommand | Flags |
@@ -299,17 +147,40 @@ daystrom runtime profiles delete <profileId> --force --updated-by <email>
 | `create` | `--config <path>` (required) |
 | `update <profileId>` | `--config <path>` (required) |
 | `delete <profileId>` | `--force`, `--updated-by <email>` |
+| `audit <profileName>` | `--max-tests-per-topic <n>` (default 20), `--format <fmt>` (terminal/json/html), `--output <path>`, `--provider <name>`, `--model <name>` |
+
+#### runtime profiles audit
+
+Evaluate all topics in an AIRS security profile. Generates tests per topic, scans them, computes per-topic and composite metrics, and detects cross-topic conflicts.
+
+```bash
+# Audit all topics in a profile
+daystrom runtime profiles audit my-security-profile
+
+# JSON export
+daystrom runtime profiles audit my-security-profile --format json
+
+# HTML report
+daystrom runtime profiles audit my-security-profile --format html --output audit-report.html
+```
 
 ### runtime topics
 
-Custom topic CRUD.
+Custom topic CRUD and guardrail generation.
 
 ```bash
+# CRUD
 daystrom runtime topics list
 daystrom runtime topics create --config <path>
 daystrom runtime topics update <topicId> --config <path>
 daystrom runtime topics delete <topicId>
 daystrom runtime topics delete <topicId> --force --updated-by <email>
+
+# Guardrail generation
+daystrom runtime topics generate [options]
+daystrom runtime topics resume <runId> [options]
+daystrom runtime topics report <runId> [options]
+daystrom runtime topics runs
 ```
 
 | Subcommand | Flags |
@@ -318,6 +189,91 @@ daystrom runtime topics delete <topicId> --force --updated-by <email>
 | `create` | `--config <path>` (required) |
 | `update <topicId>` | `--config <path>` (required) |
 | `delete <topicId>` | `--force`, `--updated-by <email>` |
+
+#### runtime topics generate
+
+Start a new guardrail generation run.
+
+| Flag | Default | What it does |
+|------|---------|-------------|
+| `--provider <name>` | `claude-api` | LLM provider (`claude-api`, `claude-vertex`, `claude-bedrock`, `gemini-api`, `gemini-vertex`, `gemini-bedrock`) |
+| `--model <name>` | per-provider | Override default model |
+| `--profile <name>` | _(prompted)_ | AIRS security profile name |
+| `--topic <desc>` | _(prompted)_ | Natural language description of content to detect |
+| `--intent <block\|allow>` | `block` | Whether matching prompts are blocked or allowed |
+| `--max-iterations <n>` | `20` | Maximum refinement iterations |
+| `--target-coverage <n>` | `90` | Coverage percentage to stop at |
+| `--max-regressions <n>` | `3` | Stop after N consecutive coverage regressions (0 = disable) |
+| `--accumulate-tests` | off | Carry forward test prompts across iterations |
+| `--max-accumulated-tests <n>` | unlimited | Cap on accumulated test count |
+| `--no-memory` | memory on | Disable cross-run learning |
+| `--debug-scans` | off | Dump raw AIRS scan responses to JSONL for debugging |
+| `--create-prompt-set` | off | Create custom prompt set in AI Red Team from test cases |
+| `--prompt-set-name <name>` | auto | Override auto-generated prompt set name |
+
+!!! tip "Skip all prompts"
+    When both `--topic` and `--profile` are provided, interactive mode is skipped entirely.
+
+```bash
+# Interactive — prompts for everything
+daystrom runtime topics generate
+
+# Non-interactive — all inputs via flags
+daystrom runtime topics generate \
+  --provider claude-api \
+  --profile my-security-profile \
+  --topic "Block discussions about building explosives" \
+  --intent block \
+  --target-coverage 90
+
+# With test accumulation
+daystrom runtime topics generate \
+  --topic "Allow recipe discussions" \
+  --intent allow \
+  --profile cooking-policy \
+  --accumulate-tests \
+  --max-accumulated-tests 60
+```
+
+#### runtime topics resume
+
+Pick up a paused or failed run from where it left off.
+
+| Flag | Default | What it does |
+|------|---------|-------------|
+| `--max-iterations <n>` | `20` | Additional iterations from current position |
+| `--debug-scans` | off | Dump raw AIRS scan responses to JSONL for debugging |
+| `--create-prompt-set` | off | Create custom prompt set in AI Red Team from test cases |
+| `--prompt-set-name <name>` | auto | Override auto-generated prompt set name |
+
+```bash
+daystrom runtime topics resume abc123xyz --max-iterations 10
+```
+
+#### runtime topics report
+
+View results for a saved run.
+
+| Flag | Default | What it does |
+|------|---------|-------------|
+| `--iteration <n>` | _(best)_ | Show a specific iteration instead of the best |
+| `--format <fmt>` | `terminal` | Output format: `terminal`, `json`, `html` |
+| `--tests` | _(off)_ | Include per-test-case details |
+| `--diff <runId>` | _(none)_ | Compare with another run side-by-side |
+| `--output <path>` | `<runId>-report.html` | Output file path (html format only) |
+
+```bash
+daystrom runtime topics report abc123xyz --format html --tests
+daystrom runtime topics report abc123xyz --diff def456uvw
+```
+
+#### runtime topics runs
+
+List all saved generation runs.
+
+```bash
+daystrom runtime topics runs
+```
 
 ### runtime api-keys
 
@@ -390,39 +346,17 @@ daystrom runtime scan-logs query --interval <n> --unit <unit> [options]
 
 ---
 
-## audit
+## Deprecated Top-Level Aliases
 
-Evaluate all topics in an AIRS security profile. Generates tests per topic, scans them, computes per-topic and composite metrics, and detects cross-topic conflicts.
+The following top-level commands still work but print a deprecation warning. Use the `runtime` subcommand paths instead:
 
-```bash
-daystrom audit <profileName> [options]
-```
-
-### Options
-
-| Flag | Default | What it does |
-|------|---------|-------------|
-| `--max-tests-per-topic <n>` | `20` | Max test cases generated per topic |
-| `--format <fmt>` | `terminal` | Output format: `terminal`, `json`, `html` |
-| `--output <path>` | `<profile>-audit.html` | Output file path (html format only) |
-| `--provider <name>` | `claude-api` | LLM provider |
-| `--model <name>` | per-provider | Override default model |
-
-### Examples
-
-```bash
-# Audit all topics in a profile
-daystrom audit my-security-profile
-
-# JSON export
-daystrom audit my-security-profile --format json
-
-# HTML report
-daystrom audit my-security-profile --format html --output audit-report.html
-
-# Limit test generation
-daystrom audit my-security-profile --max-tests-per-topic 20
-```
+| Deprecated | New path |
+|-----------|----------|
+| `daystrom generate` | `daystrom runtime topics generate` |
+| `daystrom resume` | `daystrom runtime topics resume` |
+| `daystrom report` | `daystrom runtime topics report` |
+| `daystrom list` | `daystrom runtime topics runs` |
+| `daystrom audit` | `daystrom runtime profiles audit` |
 
 ---
 

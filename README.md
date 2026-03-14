@@ -20,19 +20,20 @@ Requires **Node.js >= 20**.
 
 ```bash
 cp .env.example .env   # add your API keys
-daystrom generate       # interactive guardrail generation
+daystrom runtime topics generate   # interactive guardrail generation
 ```
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `generate` | LLM-driven guardrail generation with iterative refinement |
-| `resume` | Resume a paused or failed generation run |
-| `report` | View results for a saved run (terminal, JSON, HTML) |
-| `list` | List all saved runs |
-| `runtime` | Prompt scanning + config management (profiles, topics, API keys, apps, scan logs) |
-| `audit` | Multi-topic profile evaluation with conflict detection |
+| `runtime scan` | Single prompt scanning against AIRS profiles |
+| `runtime bulk-scan` | Batch prompt scanning with CSV output |
+| `runtime topics` | Custom topic CRUD + guardrail generation (`generate`, `resume`, `report`, `runs`) |
+| `runtime profiles` | Security profile CRUD + multi-topic `audit` |
+| `runtime api-keys` | API key management |
+| `runtime customer-apps` | Customer app CRUD |
+| `runtime scan-logs` | Scan log querying |
 | `redteam` | Adversarial scanning — targets, prompt sets, scans, reports |
 | `model-security` | ML model supply chain security — groups, rules, scans, labels |
 

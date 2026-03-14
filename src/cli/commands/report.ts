@@ -15,8 +15,8 @@ import {
 } from '../renderer/index.js';
 
 /** Register the `report` command — view detailed results for a run. */
-export function registerReportCommand(program: Command): void {
-  program
+export function registerReportCommand(parent: Command): void {
+  parent
     .command('report <runId>')
     .description('View detailed report for a run')
     .option('--iteration <n>', 'Show specific iteration')
