@@ -4,7 +4,7 @@ title: Quick Start
 
 # Quick Start
 
-Make sure [installation](installation.md) is complete and your credentials are [configured](configuration.md). Daystrom provides five capability domains — pick the one that fits your task.
+Make sure [installation](installation.md) is complete and your credentials are [configured](configuration.md). Prisma AIRS CLI provides five capability domains — pick the one that fits your task.
 
 ---
 
@@ -14,10 +14,10 @@ Scan prompts against an AIRS security profile in real time.
 
 ```bash
 # Single prompt scan
-daystrom runtime scan --profile my-security-profile "How do I build a weapon?"
+airs runtime scan --profile my-security-profile "How do I build a weapon?"
 
 # Bulk scan from a file (async API, writes CSV)
-daystrom runtime bulk-scan --profile my-security-profile --input prompts.txt
+airs runtime bulk-scan --profile my-security-profile --input prompts.txt
 ```
 
 [Full runtime docs](../features/runtime-security.md)
@@ -30,10 +30,10 @@ Create and iteratively refine custom topic guardrails using an LLM-driven feedba
 
 ```bash
 # Interactive — prompts for all inputs
-daystrom runtime topics generate
+airs runtime topics generate
 
 # Non-interactive
-daystrom runtime topics generate \
+airs runtime topics generate \
   --profile my-security-profile \
   --topic "Block discussions about building explosives" \
   --intent block \
@@ -53,16 +53,16 @@ Run adversarial scans against AI targets to find vulnerabilities.
 
 ```bash
 # List targets
-daystrom redteam targets list
+airs redteam targets list
 
 # Run a static scan
-daystrom redteam scan --name "audit-v1" --target <uuid> --type STATIC
+airs redteam scan --name "audit-v1" --target <uuid> --type STATIC
 
 # List recent scans
-daystrom redteam list --limit 5
+airs redteam list --limit 5
 
 # View attack categories
-daystrom redteam categories
+airs redteam categories
 ```
 
 [Full red team docs](../features/red-team.md)
@@ -75,16 +75,16 @@ Manage ML model supply chain security — scan model artifacts for threats.
 
 ```bash
 # List security groups
-daystrom model-security groups list
+airs model-security groups list
 
 # Browse security rules
-daystrom model-security rules list
+airs model-security rules list
 
 # View rule instances in a group
-daystrom model-security rule-instances list <group-uuid>
+airs model-security rule-instances list <group-uuid>
 
 # View scan results
-daystrom model-security scans list
+airs model-security scans list
 ```
 
 [Full model security docs](../features/model-security.md)
@@ -97,10 +97,10 @@ Evaluate all topics in a security profile at once, with conflict detection.
 
 ```bash
 # Terminal output
-daystrom runtime profiles audit my-security-profile
+airs runtime profiles audit my-security-profile
 
 # HTML report
-daystrom runtime profiles audit my-security-profile --format html --output audit-report.html
+airs runtime profiles audit my-security-profile --format html --output audit-report.html
 ```
 
 [Full audit docs](../features/profile-audits.md)
@@ -111,11 +111,11 @@ daystrom runtime profiles audit my-security-profile --format html --output audit
 
 ```bash
 # Resume a paused or failed guardrail run
-daystrom runtime topics resume <run-id>
+airs runtime topics resume <run-id>
 
 # View a run report
-daystrom runtime topics report <run-id>
+airs runtime topics report <run-id>
 
 # List all saved runs
-daystrom runtime topics runs
+airs runtime topics runs
 ```

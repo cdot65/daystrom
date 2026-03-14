@@ -12,7 +12,7 @@
 set -euo pipefail
 
 REGISTRY="ghcr.io"
-IMAGE="cdot65/daystrom"
+IMAGE="cdot65/prisma-airs-cli"
 
 # Get version from arg or package.json
 VERSION="${1:-$(node -p "require('./package.json').version")}"

@@ -10,8 +10,8 @@
 ## Clone and Install
 
 ```bash
-git clone git@github.com:cdot65/daystrom.git
-cd daystrom
+git clone git@github.com:cdot65/prisma-airs-cli.git
+cd prisma-airs-cli
 pnpm install
 ```
 
@@ -54,13 +54,13 @@ Edit `.env` with your credentials:
 
 ## Data Directories
 
-Runtime data lives under `~/.daystrom/`:
+Runtime data lives under `~/.prisma-airs/`:
 
 | Path | What's in it |
 |------|-------------|
-| `~/.daystrom/runs/` | Persisted run states (JSON) |
-| `~/.daystrom/memory/` | Cross-run learning store |
-| `~/.daystrom/config.json` | Optional config file |
+| `~/.prisma-airs/runs/` | Persisted run states (JSON) |
+| `~/.prisma-airs/memory/` | Cross-run learning store |
+| `~/.prisma-airs/config.json` | Optional config file |
 
 !!! info "Config priority"
     CLI flags > environment variables > config file > Zod schema defaults

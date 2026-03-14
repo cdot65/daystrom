@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Summary
 
-Daystrom is a CLI and library providing full operational coverage over **Palo Alto Prisma AIRS** AI security capabilities: LLM-driven guardrail generation with iterative refinement, adversarial red team scanning, ML model supply chain security, and multi-topic profile audits with conflict detection. The guardrail loop uses an LLM to produce topic definitions, deploys to Prisma AIRS, scans test prompts, evaluates efficacy (TPR, TNR, coverage, F1), and improves until a coverage target is met. Cross-run memory persists learnings for future runs.
+Prisma AIRS CLI (`airs`) is a CLI and library providing full operational coverage over **Palo Alto Prisma AIRS** AI security capabilities: runtime prompt scanning and configuration management, LLM-driven guardrail generation with iterative refinement, adversarial red team scanning, ML model supply chain security, and multi-topic profile audits with conflict detection. The guardrail loop uses an LLM to produce topic definitions, deploys to Prisma AIRS, scans test prompts, evaluates efficacy (TPR, TNR, coverage, F1), and improves until a coverage target is met. Cross-run memory persists learnings for future runs.
 
 ## Commands
 
@@ -166,20 +166,20 @@ tests/
 - `submitBulkScan()` — batches prompts into groups of 5 `AsyncScanObject` items, calls `asyncScan()` per batch; optional `sessionId` for AIRS Sessions UI grouping
 - `pollResults()` — sweeps all pending scan IDs in batches of 5 per cycle; retries on rate limit with exponential backoff (10s base); retry level decays by 1 after a full successful sweep (not per-batch); inter-batch and inter-sweep delays scale with rate limit pressure
 - `formatResultsCsv()` — static method producing CSV from results
-- CLI: `daystrom runtime scan --profile <name> [--response <text>] <prompt>`
-- CLI: `daystrom runtime bulk-scan --profile <name> --input <file> [--output <file>] [--session-id <id>]`
+- CLI: `airs runtime scan --profile <name> [--response <text>] <prompt>`
+- CLI: `airs runtime bulk-scan --profile <name> --input <file> [--output <file>] [--session-id <id>]`
 - Input file parsing: `.csv` files extract the `prompt` column by header; `.txt`/extensionless use line-per-prompt
-- Bulk scan IDs are saved to `~/.daystrom/bulk-scans/` before polling — survives rate limit crashes
-- CLI: `daystrom runtime resume-poll <stateFile> [--output <file>]` — resume polling from saved scan IDs
+- Bulk scan IDs are saved to `~/.prisma-airs/bulk-scans/` before polling — survives rate limit crashes
+- CLI: `airs runtime resume-poll <stateFile> [--output <file>]` — resume polling from saved scan IDs
 - CLI config management subcommand groups (all via `ManagementClient` OAuth2):
-  - `daystrom runtime profiles {list,create,update,delete,audit}` — security profile CRUD + profile audit (supports `--force --updated-by`)
-  - `daystrom runtime topics {list,create,update,delete,generate,resume,report,runs}` — custom topic CRUD + guardrail generation (supports `--force --updated-by`)
-  - `daystrom runtime api-keys {list,create,regenerate,delete}` — API key management (`regenerate` takes `--interval`/`--unit`)
-  - `daystrom runtime customer-apps {list,get,update,delete}` — customer app CRUD
-  - `daystrom runtime deployment-profiles {list}` — deployment profile listing (`--unactivated` filter)
-  - `daystrom runtime dlp-profiles {list}` — DLP profile listing
-  - `daystrom runtime scan-logs {query}` — scan log querying (`--interval`/`--unit hours`/`--filter`)
-- Deprecated top-level aliases (`generate`, `resume`, `report`, `list`, `audit`) still work with deprecation warnings
+  - `airs runtime profiles {list,create,update,delete,audit}` — security profile CRUD + profile audit (supports `--force --updated-by`)
+  - `airs runtime topics {list,create,update,delete,generate,resume,report,runs}` — custom topic CRUD + guardrail generation (supports `--force --updated-by`)
+  - `airs runtime api-keys {list,create,regenerate,delete}` — API key management (`regenerate` takes `--interval`/`--unit`)
+  - `airs runtime customer-apps {list,get,update,delete}` — customer app CRUD
+  - `airs runtime deployment-profiles {list}` — deployment profile listing (`--unactivated` filter)
+  - `airs runtime dlp-profiles {list}` — DLP profile listing
+  - `airs runtime scan-logs {query}` — scan log querying (`--interval`/`--unit hours`/`--filter`)
+- Deprecated top-level aliases (`airs generate`, `airs resume`, `airs report`, `airs list`, `airs audit`) still work with deprecation warnings
 
 ### Red Team (`src/airs/redteam.ts`, `src/airs/promptsets.ts`)
 - `SdkRedTeamService` wraps `RedTeamClient` for scan CRUD, polling, reports, **target CRUD**
@@ -195,8 +195,8 @@ tests/
 
 ### Model Security (`src/airs/modelsecurity.ts`)
 - `SdkModelSecurityService` wraps `ModelSecurityClient` for security groups, rules, scans, labels, PyPI auth
-- snake_case (SDK) → camelCase (daystrom) normalization via `normalizeGroup()`, `normalizeRule()`, etc.
-- CLI: `daystrom model-security {groups,rules,rule-instances,scans,labels,pypi-auth}`
+- snake_case (SDK) → camelCase normalization via `normalizeGroup()`, `normalizeRule()`, etc.
+- CLI: `airs model-security {groups,rules,rule-instances,scans,labels,pypi-auth}`
 - Groups: CRUD per source type (LOCAL, S3, GCS, AZURE, HUGGING_FACE)
 - Rule instances: state = BLOCKING | ALLOWING | DISABLED
 - Scans: create/list/get with evaluations, violations, files sub-queries
@@ -212,17 +212,17 @@ tests/
 - Improve-topic system prompt includes CRITICAL PLATFORM CONSTRAINT section warning against exclusion clauses and favoring shorter descriptions
 
 ### Memory System (`src/memory/`)
-- File-based at `~/.daystrom/memory/{category}.json`
+- File-based at `~/.prisma-airs/memory/{category}.json`
 - Category = normalized keyword extraction (stop-word removal, alphabetical sort)
 - Cross-topic transfer when keyword overlap ≥ 50%
 - Budget-aware injection (3000 char default): sorts by corroboration count desc, verbose→compact→omit
 
 ### Config (`src/config/`)
-- Priority: CLI flags > env vars > `~/.daystrom/config.json` > Zod defaults
+- Priority: CLI flags > env vars > `~/.prisma-airs/config.json` > Zod defaults
 - All fields in `ConfigSchema` with coercion + defaults; `~` expanded via `expandHome()`
 
 ### Persistence (`src/persistence/`)
-- `JsonFileStore` saves/loads `RunState` as JSON at `~/.daystrom/runs/{runId}.json`
+- `JsonFileStore` saves/loads `RunState` as JSON at `~/.prisma-airs/runs/{runId}.json`
 
 ### Reports (`src/report/`)
 - `buildReportJson(run, opts)` maps `RunState` → `ReportOutput` (pure function, no I/O)
@@ -252,7 +252,7 @@ tests/
 
 ## Environment Variables
 
-See `.env.example` for the full list. Config priority: CLI flags > env vars > `~/.daystrom/config.json` > Zod defaults.
+See `.env.example` for the full list. Config priority: CLI flags > env vars > `~/.prisma-airs/config.json` > Zod defaults.
 
 ### Required (one set per provider)
 
@@ -282,7 +282,7 @@ See `.env.example` for the full list. Config priority: CLI flags > env vars > `~
 | `PROPAGATION_DELAY_MS` | `10000` | Wait after topic create/update (ms) |
 | `ACCUMULATE_TESTS` | `false` | Carry test pool across iterations |
 | `MAX_ACCUMULATED_TESTS` | — | Cap on accumulated tests |
-| `DATA_DIR` | `~/.daystrom/runs` | Run state persistence directory |
+| `DATA_DIR` | `~/.prisma-airs/runs` | Run state persistence directory |
 | `MEMORY_ENABLED` | `true` | Cross-run learning memory |
-| `MEMORY_DIR` | `~/.daystrom/memory` | Memory store directory |
+| `MEMORY_DIR` | `~/.prisma-airs/memory` | Memory store directory |
 | `MAX_MEMORY_CHARS` | `3000` | Memory injection budget (500-10000) |

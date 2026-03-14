@@ -22,6 +22,6 @@ RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=build /app/dist/ dist/
 
-VOLUME /root/.daystrom
+VOLUME /root/.prisma-airs
 
 ENTRYPOINT ["node", "dist/cli/index.js"]

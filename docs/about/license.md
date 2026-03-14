@@ -1,6 +1,6 @@
 # License
 
-Daystrom is released under the **MIT License**.
+Prisma AIRS CLI is released under the **MIT License**.
 
 ```text
 MIT License

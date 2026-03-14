@@ -4,23 +4,23 @@ title: Configuration
 
 # Configuration
 
-Daystrom is designed to work with minimal setup. All settings have sensible defaults — only credentials are strictly required.
+Prisma AIRS CLI is designed to work with minimal setup. All settings have sensible defaults — only credentials are strictly required.
 
 ## Config Cascade
 
 Settings are resolved in priority order (highest wins):
 
 ```
-CLI flags  >  Environment variables  >  ~/.daystrom/config.json  >  Zod defaults
+CLI flags  >  Environment variables  >  ~/.prisma-airs/config.json  >  Zod defaults
 ```
 
 This means a `--provider` flag always beats an env var, which always beats the config file.
 
 ## Config File
 
-For settings you use across every run, create `~/.daystrom/config.json`:
+For settings you use across every run, create `~/.prisma-airs/config.json`:
 
-```json title="~/.daystrom/config.json"
+```json title="~/.prisma-airs/config.json"
 {
   "llmProvider": "claude-api",
   "scanConcurrency": 5,
@@ -48,7 +48,7 @@ For detailed provider setup, see [LLM Providers](../providers/overview.md).
 
 ## Tuning Parameters
 
-These settings control how Daystrom interacts with AIRS and the memory system.
+These settings control how Prisma AIRS CLI interacts with AIRS and the memory system.
 
 | Env Var | Config Key | Default | What it does |
 |---------|-----------|---------|-------------|
@@ -58,8 +58,8 @@ These settings control how Daystrom interacts with AIRS and the memory system.
 | `MEMORY_ENABLED` | `memoryEnabled` | `true` | Toggle cross-run learning on/off |
 | `ACCUMULATE_TESTS` | `accumulateTests` | `false` | Carry forward tests across iterations |
 | `MAX_ACCUMULATED_TESTS` | `maxAccumulatedTests` | unlimited | Cap on accumulated test count |
-| `DATA_DIR` | `dataDir` | `~/.daystrom/runs` | Where run states are saved |
-| `MEMORY_DIR` | `memoryDir` | `~/.daystrom/memory` | Where learnings are stored |
+| `DATA_DIR` | `dataDir` | `~/.prisma-airs/runs` | Where run states are saved |
+| `MEMORY_DIR` | `memoryDir` | `~/.prisma-airs/memory` | Where learnings are stored |
 
 !!! tip "Concurrency vs. rate limits"
     Keep `scanConcurrency` at 5 or lower to avoid AIRS rate limiting. Increase only if your tenant has elevated quotas.
@@ -71,6 +71,6 @@ These settings control how Daystrom interacts with AIRS and the memory system.
 
 | Path | Purpose |
 |------|---------|
-| `~/.daystrom/config.json` | Persistent configuration |
-| `~/.daystrom/runs/` | Saved run states (JSON per run) |
-| `~/.daystrom/memory/` | Cross-run learnings (JSON per category) |
+| `~/.prisma-airs/config.json` | Persistent configuration |
+| `~/.prisma-airs/runs/` | Saved run states (JSON per run) |
+| `~/.prisma-airs/memory/` | Cross-run learnings (JSON per category) |

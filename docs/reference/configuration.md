@@ -1,6 +1,6 @@
 # Configuration Options
 
-Every setting in Daystrom — with its CLI flag, env var, and default value.
+Every setting in Prisma AIRS CLI — with its CLI flag, env var, and default value.
 
 ---
 
@@ -10,7 +10,7 @@ Settings resolve through a four-level cascade (highest priority wins):
 
 1. **CLI flags** (`--provider`, `--model`, etc.)
 2. **Environment variables** (`LLM_PROVIDER`, `LLM_MODEL`, etc.)
-3. **Config file** (`~/.daystrom/config.json`)
+3. **Config file** (`~/.prisma-airs/config.json`)
 4. **Zod schema defaults**
 
 !!! info
@@ -20,7 +20,7 @@ Settings resolve through a four-level cascade (highest priority wins):
 
 ## Config File
 
-Optional JSON file at `~/.daystrom/config.json`. Keys use camelCase matching the Zod schema.
+Optional JSON file at `~/.prisma-airs/config.json`. Keys use camelCase matching the Zod schema.
 
 ```json
 {
@@ -31,8 +31,8 @@ Optional JSON file at `~/.daystrom/config.json`. Keys use camelCase matching the
   "maxMemoryChars": 5000,
   "memoryEnabled": true,
   "accumulateTests": false,
-  "dataDir": "~/.daystrom/runs",
-  "memoryDir": "~/.daystrom/memory"
+  "dataDir": "~/.prisma-airs/runs",
+  "memoryDir": "~/.prisma-airs/memory"
 }
 ```
 
@@ -50,8 +50,8 @@ Optional JSON file at `~/.daystrom/config.json`. Keys use camelCase matching the
 | `memoryEnabled` | `--no-memory` | `MEMORY_ENABLED` | `true` | Toggle cross-run learning |
 | `accumulateTests` | `--accumulate-tests` | `ACCUMULATE_TESTS` | `false` | Carry forward tests across iterations |
 | `maxAccumulatedTests` | `--max-accumulated-tests` | `MAX_ACCUMULATED_TESTS` | unlimited | Cap on accumulated test count |
-| `dataDir` | -- | `DATA_DIR` | `~/.daystrom/runs` | Run state directory |
-| `memoryDir` | -- | `MEMORY_DIR` | `~/.daystrom/memory` | Learning store directory |
+| `dataDir` | -- | `DATA_DIR` | `~/.prisma-airs/runs` | Run state directory |
+| `memoryDir` | -- | `MEMORY_DIR` | `~/.prisma-airs/memory` | Learning store directory |
 
 ### Provider Default Models
 

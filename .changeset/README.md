@@ -8,7 +8,7 @@ Create a file named `0000-short-description.md`:
 
 ```md
 ---
-"@cdot65/daystrom": patch
+"@cdot65/prisma-airs-cli": patch
 ---
 
 Description of the change (user-facing).

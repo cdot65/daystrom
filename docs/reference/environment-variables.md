@@ -1,6 +1,6 @@
 # Environment Variables
 
-All environment variables Daystrom recognizes, grouped by category. Copy `.env.example` as a starting template.
+All environment variables Prisma AIRS CLI recognizes, grouped by category. Copy `.env.example` as a starting template.
 
 ---
 
@@ -63,8 +63,8 @@ All environment variables Daystrom recognizes, grouped by category. Copy `.env.e
 
 | Variable | Default | What it does |
 |----------|---------|-------------|
-| `DATA_DIR` | `~/.daystrom/runs` | Run state persistence directory |
-| `MEMORY_DIR` | `~/.daystrom/memory` | Learning store directory |
+| `DATA_DIR` | `~/.prisma-airs/runs` | Run state persistence directory |
+| `MEMORY_DIR` | `~/.prisma-airs/memory` | Learning store directory |
 
 !!! tip
     The `~` prefix is expanded to `$HOME` automatically.

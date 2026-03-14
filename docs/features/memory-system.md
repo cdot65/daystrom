@@ -1,6 +1,6 @@
 # Memory System
 
-Daystrom learns from every run. After a guardrail generation completes, the system extracts insights and stores them for future runs on similar topics. Over time, this means faster convergence and fewer iterations.
+Prisma AIRS CLI learns from every run. After a guardrail generation completes, the system extracts insights and stores them for future runs on similar topics. Over time, this means faster convergence and fewer iterations.
 
 ```mermaid
 graph LR
@@ -92,7 +92,7 @@ The memory store keeps the best topic definition and metrics for each category. 
 All memory files live at:
 
 ```
-~/.daystrom/memory/{category}.json
+~/.prisma-airs/memory/{category}.json
 ```
 
 Each file contains the learnings array, best-known topic definition, and best-known metrics for that category. Files are human-readable JSON.

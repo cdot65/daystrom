@@ -10,13 +10,13 @@ Evaluate all topics in a Prisma AIRS security profile at once. The audit generat
 
 ```bash
 # Terminal output (default)
-daystrom audit my-security-profile
+airs audit my-security-profile
 
 # JSON report
-daystrom audit my-security-profile --format json
+airs audit my-security-profile --format json
 
 # HTML report
-daystrom audit my-security-profile --format html --output audit-report.html
+airs audit my-security-profile --format html --output audit-report.html
 ```
 
 ### Options

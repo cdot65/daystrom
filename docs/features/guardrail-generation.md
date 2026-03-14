@@ -4,7 +4,7 @@ title: Guardrail Generation
 
 # Guardrail Generation
 
-Daystrom's guardrail generation capability uses an LLM-driven feedback loop to create, test, and iteratively refine custom topic guardrails for Prisma AIRS security profiles.
+Prisma AIRS CLI's guardrail generation capability uses an LLM-driven feedback loop to create, test, and iteratively refine custom topic guardrails for Prisma AIRS security profiles.
 
 ## How It Works
 
@@ -17,14 +17,14 @@ Daystrom's guardrail generation capability uses an LLM-driven feedback loop to c
 
 ## CLI Usage
 
-Guardrail generation lives under `daystrom runtime topics`:
+Guardrail generation lives under `airs runtime topics`:
 
 ```bash
 # Interactive mode — prompts for all inputs
-daystrom runtime topics generate
+airs runtime topics generate
 
 # Non-interactive with all options
-daystrom runtime topics generate \
+airs runtime topics generate \
   --topic "Block discussions about weapons manufacturing" \
   --intent block \
   --profile my-security-profile \
@@ -32,13 +32,13 @@ daystrom runtime topics generate \
   --max-iterations 5
 
 # Resume, report, list runs
-daystrom runtime topics resume <runId>
-daystrom runtime topics report <runId>
-daystrom runtime topics runs
+airs runtime topics resume <runId>
+airs runtime topics report <runId>
+airs runtime topics runs
 ```
 
 !!! note "Backward compatibility"
-    Top-level aliases (`daystrom generate`, `daystrom resume`, etc.) still work but print a deprecation warning. Use the `runtime topics` paths going forward.
+    Top-level aliases (`airs generate`, `airs resume`, etc.) still work but print a deprecation warning. Use the `runtime topics` paths going forward.
 
 ## Key Concepts
 

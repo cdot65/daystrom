@@ -1,6 +1,6 @@
 # Core Loop
 
-The heart of Daystrom. The core loop (`src/core/loop.ts`) is an async generator that yields typed events as it works. The CLI renders those events, but the loop itself has no knowledge of how its output is displayed — making it independently testable and reusable.
+The heart of Prisma AIRS CLI. The core loop (`src/core/loop.ts`) is an async generator that yields typed events as it works. The CLI renders those events, but the loop itself has no knowledge of how its output is displayed — making it independently testable and reusable.
 
 ## What Happens Each Iteration
 

@@ -1,10 +1,10 @@
 # Model Security
 
-Daystrom integrates with Palo Alto Prisma AIRS AI Model Security to manage ML model supply chain security. This enables scanning model artifacts for vulnerabilities, malicious code, and compliance issues before deployment.
+Prisma AIRS CLI integrates with Palo Alto Prisma AIRS AI Model Security to manage ML model supply chain security. This enables scanning model artifacts for vulnerabilities, malicious code, and compliance issues before deployment.
 
 ## Overview
 
-The `daystrom model-security` command group provides access to Model Security operations:
+The `airs model-security` command group provides access to Model Security operations:
 
 - **Groups** — manage security groups that define scanning policies per source type
 - **Rules** — browse available security rules (read-only, managed by AIRS)
@@ -38,55 +38,55 @@ When a group is created, AIRS automatically provisions rule instances for all co
 ### 1. List available groups
 
 ```bash
-daystrom model-security groups list
+airs model-security groups list
 ```
 
 ### 2. Browse security rules
 
 ```bash
-daystrom model-security rules list
-daystrom model-security rules get <uuid>
+airs model-security rules list
+airs model-security rules get <uuid>
 ```
 
 ### 3. Configure rule enforcement
 
 ```bash
 # View current rule instances in a group
-daystrom model-security rule-instances list <groupUuid>
+airs model-security rule-instances list <groupUuid>
 
 # Update a rule instance state
 echo '{"state": "BLOCKING"}' > update.json
-daystrom model-security rule-instances update <groupUuid> <instanceUuid> --config update.json
+airs model-security rule-instances update <groupUuid> <instanceUuid> --config update.json
 ```
 
 ### 4. Create custom groups
 
 ```bash
 echo '{"name": "Strict S3 Policy", "source_type": "S3"}' > group.json
-daystrom model-security groups create --config group.json
+airs model-security groups create --config group.json
 ```
 
 ### 5. Inspect scan results
 
 ```bash
 # List scans
-daystrom model-security scans list
+airs model-security scans list
 
 # View evaluations for a scan
-daystrom model-security scans evaluations <scanUuid>
+airs model-security scans evaluations <scanUuid>
 
 # View violations
-daystrom model-security scans violations <scanUuid>
+airs model-security scans violations <scanUuid>
 
 # View scanned files
-daystrom model-security scans files <scanUuid>
+airs model-security scans files <scanUuid>
 ```
 
 ### 6. Organize with labels
 
 ```bash
-daystrom model-security labels add <scanUuid> --labels '[{"key":"env","value":"prod"}]'
-daystrom model-security labels keys
+airs model-security labels add <scanUuid> --labels '[{"key":"env","value":"prod"}]'
+airs model-security labels keys
 ```
 
 ## CLI Reference

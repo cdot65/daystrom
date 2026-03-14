@@ -4,7 +4,7 @@ title: Installation
 
 # Installation
 
-Get Daystrom running in under 5 minutes. Choose between npm (recommended) or Docker.
+Get Prisma AIRS CLI running in under 5 minutes. Choose between npm (recommended) or Docker.
 
 ## Prerequisites
 
@@ -17,25 +17,25 @@ Before you begin, make sure you have:
 ## Install from npm
 
 ```bash
-npm install -g @cdot65/daystrom
+npm install -g @cdot65/prisma-airs-cli
 ```
 
 Verify the installation:
 
 ```bash
-daystrom --version
-daystrom --help
+airs --version
+airs --help
 ```
 
 !!! tip "Try without installing"
-    Run Daystrom once without a global install:
+    Run once without a global install:
     ```bash
-    npx @cdot65/daystrom generate
+    npx @cdot65/prisma-airs-cli generate
     ```
 
 ## Set Up Credentials
 
-Daystrom needs credentials for both the LLM provider and AIRS APIs. The fastest way is an `.env` file or shell exports.
+Prisma AIRS CLI needs credentials for both the LLM provider and AIRS APIs. The fastest way is an `.env` file or shell exports.
 
 === "macOS / Linux"
 
@@ -93,12 +93,12 @@ PANW_MGMT_CLIENT_SECRET=your-client-secret
 PANW_MGMT_TSG_ID=your-tsg-id
 ```
 
-Then run Daystrom:
+Then run the CLI:
 
 ```bash
 docker run --rm --env-file .env \
-  -v ~/.daystrom:/root/.daystrom \
-  ghcr.io/cdot65/daystrom generate \
+  -v ~/.prisma-airs:/root/.prisma-airs \
+  ghcr.io/cdot65/prisma-airs-cli generate \
   --profile my-security-profile \
   --topic "Block phishing attempts" \
   --intent block
@@ -109,21 +109,21 @@ The `-v` mount persists run state and learnings between containers.
 !!! tip "Shell alias"
     Add to your `.bashrc` / `.zshrc` for convenience:
     ```bash
-    alias daystrom='docker run --rm --env-file .env -v ~/.daystrom:/root/.daystrom ghcr.io/cdot65/daystrom'
+    alias airs='docker run --rm --env-file .env -v ~/.prisma-airs:/root/.prisma-airs ghcr.io/cdot65/prisma-airs-cli'
     ```
-    Then use `daystrom generate`, `daystrom list`, etc.
+    Then use `airs generate`, `airs list`, etc.
 
 ---
 
 ## Where Data Lives
 
-Daystrom stores everything under `~/.daystrom/`:
+Prisma AIRS CLI stores everything under `~/.prisma-airs/`:
 
 | Path | What's in it |
 |------|-------------|
-| `~/.daystrom/config.json` | Your persistent settings |
-| `~/.daystrom/runs/` | Saved run states (one JSON per run) |
-| `~/.daystrom/memory/` | Cross-run learnings (one JSON per topic category) |
+| `~/.prisma-airs/config.json` | Your persistent settings |
+| `~/.prisma-airs/runs/` | Saved run states (one JSON per run) |
+| `~/.prisma-airs/memory/` | Cross-run learnings (one JSON per topic category) |
 
 On Windows, `~` resolves to `%USERPROFILE%` (typically `C:\Users\<username>`).
 
@@ -134,8 +134,8 @@ On Windows, `~` resolves to `%USERPROFILE%` (typically `C:\Users\<username>`).
 For development or contributing:
 
 ```bash
-git clone git@github.com:cdot65/daystrom.git
-cd daystrom
+git clone git@github.com:cdot65/prisma-airs-cli.git
+cd prisma-airs-cli
 pnpm install
 cp .env.example .env
 ```

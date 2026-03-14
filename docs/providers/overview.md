@@ -1,6 +1,6 @@
 # LLM Providers
 
-Daystrom supports **6 provider configurations** across three platforms. All use `temperature: 0` and LangChain's structured output with automatic retry on parse failure.
+Prisma AIRS CLI supports **6 provider configurations** across three platforms. All use `temperature: 0` and LangChain's structured output with automatic retry on parse failure.
 
 ## Supported Providers
 
@@ -19,7 +19,7 @@ Use `--model` or the `LLM_MODEL` env var:
 
 ```bash
 # CLI flag
-daystrom generate --model claude-sonnet-4-20250514
+airs generate --model claude-sonnet-4-20250514
 
 # Environment variable
 export LLM_MODEL=claude-sonnet-4-20250514
@@ -37,7 +37,7 @@ export LLM_MODEL=claude-sonnet-4-20250514
 
 ## Save Your Preference
 
-Set your preferred provider in `~/.daystrom/config.json` to avoid repeating flags:
+Set your preferred provider in `~/.prisma-airs/config.json` to avoid repeating flags:
 
 ```json
 {

@@ -6,7 +6,7 @@ All output shown below is from real commands run against Prisma AIRS.
 
 ## Prerequisites
 
-- Daystrom installed and configured ([Installation](../getting-started/installation.md))
+- Prisma AIRS CLI installed and configured ([Installation](../getting-started/installation.md))
 - AIRS management credentials set
 - At least one target configured (see [Managing Targets](managing-targets.md))
 
@@ -17,7 +17,7 @@ All output shown below is from real commands run against Prisma AIRS.
 Before launching a STATIC scan, review the available attack categories:
 
 ```bash
-daystrom redteam categories
+airs redteam categories
 ```
 
 ```
@@ -67,19 +67,19 @@ daystrom redteam categories
 Run the complete AIRS attack library against a target:
 
 ```bash
-daystrom redteam scan \
+airs redteam scan \
   --target 89e2374c-7bac-4c5c-a291-9392ae919e14 \
   --name "Full Static Scan"
 ```
 
-By default, Daystrom polls until the scan completes. Use `--no-wait` to submit and return immediately.
+By default, Prisma AIRS CLI polls until the scan completes. Use `--no-wait` to submit and return immediately.
 
 ### Static Scan with Category Filter
 
 Target specific attack categories:
 
 ```bash
-daystrom redteam scan \
+airs redteam scan \
   --target <uuid> \
   --name "Prompt Injection Test" \
   --categories '{"prompt_injection": {}}'
@@ -90,7 +90,7 @@ daystrom redteam scan \
 Run your own prompts against a target:
 
 ```bash
-daystrom redteam scan \
+airs redteam scan \
   --target 89e2374c-7bac-4c5c-a291-9392ae919e14 \
   --name "Pokemon guardrail validation" \
   --type CUSTOM \
@@ -111,13 +111,13 @@ daystrom redteam scan \
     Status:  QUEUED
 
   Job ID: 304becf3-7090-413a-aa41-2cd327b7f0c5
-  Run `daystrom redteam status <jobId>` to check progress.
+  Run `airs redteam status <jobId>` to check progress.
 ```
 
 Multiple prompt sets can be passed as comma-separated UUIDs:
 
 ```bash
-daystrom redteam scan \
+airs redteam scan \
   --target <uuid> \
   --name "Multi-Set Scan" \
   --type CUSTOM \
@@ -125,7 +125,7 @@ daystrom redteam scan \
 ```
 
 !!! tip "Finding prompt set UUIDs"
-    Use `daystrom redteam prompt-sets list` to find UUIDs. Prompt sets created by `daystrom generate --create-prompt-set` emit the UUID in the `promptset:created` event.
+    Use `airs redteam prompt-sets list` to find UUIDs. Prompt sets created by `airs generate --create-prompt-set` emit the UUID in the `promptset:created` event.
 
 ---
 
@@ -134,7 +134,7 @@ daystrom redteam scan \
 Poll progress using the job ID:
 
 ```bash
-daystrom redteam status 304becf3-7090-413a-aa41-2cd327b7f0c5
+airs redteam status 304becf3-7090-413a-aa41-2cd327b7f0c5
 ```
 
 ```
@@ -158,7 +158,7 @@ Status values: `QUEUED`, `RUNNING`, `COMPLETED`, `PARTIALLY_COMPLETE`, `FAILED`,
 Browse scans with optional filters:
 
 ```bash
-daystrom redteam list --limit 5
+airs redteam list --limit 5
 ```
 
 ```
@@ -181,10 +181,10 @@ Filter by status, type, or target:
 
 ```bash
 # Completed custom scans only
-daystrom redteam list --status COMPLETED --type CUSTOM
+airs redteam list --status COMPLETED --type CUSTOM
 
 # Scans for a specific target
-daystrom redteam list --target <uuid> --limit 20
+airs redteam list --target <uuid> --limit 20
 ```
 
 ---
@@ -194,7 +194,7 @@ daystrom redteam list --target <uuid> --limit 20
 ### Summary Report
 
 ```bash
-daystrom redteam report 304becf3-7090-413a-aa41-2cd327b7f0c5
+airs redteam report 304becf3-7090-413a-aa41-2cd327b7f0c5
 ```
 
 ```
@@ -223,7 +223,7 @@ daystrom redteam report 304becf3-7090-413a-aa41-2cd327b7f0c5
 Add `--attacks` to see per-prompt results:
 
 ```bash
-daystrom redteam report 304becf3-7090-413a-aa41-2cd327b7f0c5 --attacks --limit 5
+airs redteam report 304becf3-7090-413a-aa41-2cd327b7f0c5 --attacks --limit 5
 ```
 
 ```
@@ -252,7 +252,7 @@ Each prompt shows:
 For STATIC scans, filter attacks by severity level:
 
 ```bash
-daystrom redteam report <jobId> --attacks --severity HIGH --limit 50
+airs redteam report <jobId> --attacks --severity HIGH --limit 50
 ```
 
 ---
@@ -262,7 +262,7 @@ daystrom redteam report <jobId> --attacks --severity HIGH --limit 50
 Stop a scan that is queued or in progress:
 
 ```bash
-daystrom redteam abort <jobId>
+airs redteam abort <jobId>
 ```
 
 ```
@@ -282,4 +282,4 @@ daystrom redteam abort <jobId>
 !!! info "When to use each type"
     - **STATIC** for initial security assessment — covers prompt injection, jailbreak, CBRN, and 20+ categories
     - **DYNAMIC** for sophisticated multi-turn attacks that adapt to the target's responses
-    - **CUSTOM** for targeted validation — use prompts from `daystrom generate --create-prompt-set` or hand-crafted prompt sets
+    - **CUSTOM** for targeted validation — use prompts from `airs generate --create-prompt-set` or hand-crafted prompt sets
