@@ -6,19 +6,19 @@ All output shown below is from a real run against Prisma AIRS.
 
 ## Prerequisites
 
-- Daystrom installed and configured ([Installation](../getting-started/installation.md))
+- Prisma AIRS CLI installed and configured ([Installation](../getting-started/installation.md))
 - AIRS credentials set ([Configuration](../getting-started/configuration.md))
 - A security profile in Prisma AIRS
 - A red team target configured in AI Runtime Security
 
 ## Step 1: Generate a Guardrail + Prompt Set
 
-Use `daystrom generate` with `--create-prompt-set` to build a topic guardrail **and** automatically export the best iteration's test cases as a custom prompt set in AI Red Team.
+Use `airs generate` with `--create-prompt-set` to build a topic guardrail **and** automatically export the best iteration's test cases as a custom prompt set in AI Red Team.
 
 Use `--prompt-set-name` to give the prompt set a recognizable name.
 
 ```bash
-daystrom generate \
+airs generate \
   --profile "Custom Topics Test" \
   --topic "Pokémon discussions" \
   --intent block \
@@ -28,7 +28,7 @@ daystrom generate \
   --prompt-set-name "pokemon-guardrail-tests"
 ```
 
-Daystrom iterates through refinement cycles, scanning test prompts against AIRS and improving the topic definition each round:
+Prisma AIRS CLI iterates through refinement cycles, scanning test prompts against AIRS and improving the topic definition each round:
 
 ```
 Prisma AIRS Guardrail Generator
@@ -69,7 +69,7 @@ Prisma AIRS Guardrail Generator
   Run ID: IvBtD_GHHw9qYThAmxhAv
 ```
 
-When the loop completes, Daystrom:
+When the loop completes, Prisma AIRS CLI:
 
 1. Deploys the refined topic guardrail to your AIRS profile
 2. Creates a custom prompt set named `pokemon-guardrail-tests` in AI Red Team
@@ -77,10 +77,10 @@ When the loop completes, Daystrom:
 
 ## Step 2: Find Your Prompt Set UUID
 
-Use `daystrom redteam prompt-sets list` to list all custom prompt sets and find the UUID for the one you just created:
+Use `airs redteam prompt-sets list` to list all custom prompt sets and find the UUID for the one you just created:
 
 ```bash
-daystrom redteam prompt-sets list
+airs redteam prompt-sets list
 ```
 
 ```
@@ -103,7 +103,7 @@ Copy the UUID for `pokemon-guardrail-tests` — you'll pass it to the scan comma
 List available targets to get the UUID for your AI application:
 
 ```bash
-daystrom redteam targets list
+airs redteam targets list
 ```
 
 ```
@@ -126,7 +126,7 @@ Run a CUSTOM scan using the prompt set UUID from Step 2 against your target from
 By default, the CLI polls until the scan completes. Add `--no-wait` to submit and return immediately:
 
 ```bash
-daystrom redteam scan \
+airs redteam scan \
   --target 89e2374c-7bac-4c5c-a291-9392ae919e14 \
   --name "Pokemon guardrail validation" \
   --type CUSTOM \
@@ -144,7 +144,7 @@ daystrom redteam scan \
     Status:  QUEUED
 
   Job ID: 304becf3-7090-413a-aa41-2cd327b7f0c5
-  Run `daystrom redteam status <jobId>` to check progress.
+  Run `airs redteam status <jobId>` to check progress.
 ```
 
 ## Step 5: Check Scan Status
@@ -152,7 +152,7 @@ daystrom redteam scan \
 Poll progress using the job ID from Step 4:
 
 ```bash
-daystrom redteam status 304becf3-7090-413a-aa41-2cd327b7f0c5
+airs redteam status 304becf3-7090-413a-aa41-2cd327b7f0c5
 ```
 
 ```
@@ -170,7 +170,7 @@ Re-run the command periodically until the status changes to `COMPLETED`.
 You can also list recent scans filtered by type:
 
 ```bash
-daystrom redteam list --type CUSTOM --limit 3
+airs redteam list --type CUSTOM --limit 3
 ```
 
 ```
@@ -190,7 +190,7 @@ daystrom redteam list --type CUSTOM --limit 3
 Once the scan reaches `COMPLETED`, view the summary report:
 
 ```bash
-daystrom redteam report 304becf3-7090-413a-aa41-2cd327b7f0c5
+airs redteam report 304becf3-7090-413a-aa41-2cd327b7f0c5
 ```
 
 ```
@@ -220,7 +220,7 @@ The report shows that only 1 out of 40 prompts was flagged as a threat by the ta
 Add `--attacks` to see individual prompt outcomes:
 
 ```bash
-daystrom redteam report 304becf3-7090-413a-aa41-2cd327b7f0c5 --attacks
+airs redteam report 304becf3-7090-413a-aa41-2cd327b7f0c5 --attacks
 ```
 
 ```
@@ -248,7 +248,7 @@ Each prompt shows:
 
 - **THREAT / SAFE** — whether the target's response was flagged as a threat
 - **ASR** — attack success rate across multiple attempts
-- **Goal** — the expected guardrail behavior (from Daystrom's test case generation)
+- **Goal** — the expected guardrail behavior (from Prisma AIRS CLI's test case generation)
 
 ## Step 7: Iterate
 
@@ -257,8 +257,8 @@ If the ASR is too high (meaning the target is vulnerable), you can:
 1. **Add guardrails** — deploy the topic guardrail to the target's security profile
 2. **Re-scan** — run the same prompt set again to validate the guardrail is effective
 3. **Re-run generation** with more iterations or a higher coverage target
-4. **Resume a previous run** with `daystrom resume <runId>` to continue refining
-5. **Abort a running scan** if needed: `daystrom redteam abort <jobId>`
+4. **Resume a previous run** with `airs resume <runId>` to continue refining
+5. **Abort a running scan** if needed: `airs redteam abort <jobId>`
 
 ## Complete Script
 
@@ -274,7 +274,7 @@ TARGET_UUID="89e2374c-7bac-4c5c-a291-9392ae919e14"
 PROMPT_SET_NAME="pokemon-guardrail-tests"
 
 # 1. Generate guardrail + export prompt set
-daystrom generate \
+airs generate \
   --profile "$PROFILE" \
   --topic "$TOPIC" \
   --intent block \
@@ -284,16 +284,16 @@ daystrom generate \
   --prompt-set-name "$PROMPT_SET_NAME"
 
 # 2. Find the prompt set UUID
-daystrom redteam prompt-sets list
+airs redteam prompt-sets list
 # Copy the UUID for your prompt set from the output
 
 PROMPT_SET_UUID="<uuid-from-prompt-sets-output>"
 
 # 3. Find target UUID
-daystrom redteam targets list
+airs redteam targets list
 
 # 4. Launch red team scan (async)
-daystrom redteam scan \
+airs redteam scan \
   --target "$TARGET_UUID" \
   --name "Validate: $TOPIC" \
   --type CUSTOM \
@@ -302,11 +302,11 @@ daystrom redteam scan \
 
 # 5. Check status (replace with actual job ID)
 JOB_ID="<job-id-from-step-4>"
-daystrom redteam status "$JOB_ID"
+airs redteam status "$JOB_ID"
 
 # 6. View report with per-prompt details
-daystrom redteam report "$JOB_ID" --attacks
+airs redteam report "$JOB_ID" --attacks
 ```
 
 !!! note "Replace placeholder values"
-    Replace `PROMPT_SET_UUID` and `JOB_ID` with the actual values from your run. Target UUIDs can be found with `daystrom redteam targets list`.
+    Replace `PROMPT_SET_UUID` and `JOB_ID` with the actual values from your run. Target UUIDs can be found with `airs redteam targets list`.

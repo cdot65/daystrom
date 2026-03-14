@@ -6,7 +6,7 @@ All output shown below is from real commands run against Prisma AIRS.
 
 ## Prerequisites
 
-- Daystrom installed and configured ([Installation](../getting-started/installation.md))
+- Prisma AIRS CLI installed and configured ([Installation](../getting-started/installation.md))
 - AIRS management credentials set (`PANW_MGMT_CLIENT_ID`, `PANW_MGMT_CLIENT_SECRET`, `PANW_MGMT_TSG_ID`)
 
 ## List Targets
@@ -14,7 +14,7 @@ All output shown below is from real commands run against Prisma AIRS.
 View all configured red team targets:
 
 ```bash
-daystrom redteam targets list
+airs redteam targets list
 ```
 
 ```
@@ -76,7 +76,7 @@ Targets are created from a JSON configuration file. The file must include `name`
     - `{RESPONSE}` in `response_json` — where the target's response is extracted
 
 ```bash
-daystrom redteam targets create --config target.json
+airs redteam targets create --config target.json
 ```
 
 ```
@@ -97,7 +97,7 @@ daystrom redteam targets create --config target.json
 The target starts as `inactive` until validated. Use `--validate` to test the connection on creation:
 
 ```bash
-daystrom redteam targets create --config target.json --validate
+airs redteam targets create --config target.json --validate
 ```
 
 ## Get Target Details
@@ -105,7 +105,7 @@ daystrom redteam targets create --config target.json --validate
 Inspect a target's full configuration including connection parameters:
 
 ```bash
-daystrom redteam targets get 89e2374c-7bac-4c5c-a291-9392ae919e14
+airs redteam targets get 89e2374c-7bac-4c5c-a291-9392ae919e14
 ```
 
 ```
@@ -141,7 +141,7 @@ daystrom redteam targets get 89e2374c-7bac-4c5c-a291-9392ae919e14
 Targets that have been profiled contain detailed context about the AI application — system prompts, tools, capabilities, and background:
 
 ```bash
-daystrom redteam targets profile <uuid>
+airs redteam targets profile <uuid>
 ```
 
 The profile includes:
@@ -151,20 +151,20 @@ The profile includes:
 - **Profiling status** — `COMPLETED`, `IN_PROGRESS`, or `null` (not yet profiled)
 
 !!! info "Profiling"
-    Profiling is initiated from the AIRS console. Daystrom can read the profile but profiling itself runs server-side.
+    Profiling is initiated from the AIRS console. Prisma AIRS CLI can read the profile but profiling itself runs server-side.
 
 ## Update a Target
 
 Update an existing target by providing a JSON file with the fields to change. The AIRS API requires `target_type` and full `connection_params` on every update.
 
 ```bash
-daystrom redteam targets update <uuid> --config updates.json
+airs redteam targets update <uuid> --config updates.json
 ```
 
 Add `--validate` to re-test connectivity after updating:
 
 ```bash
-daystrom redteam targets update <uuid> --config updates.json --validate
+airs redteam targets update <uuid> --config updates.json --validate
 ```
 
 ## Probe a Connection
@@ -172,7 +172,7 @@ daystrom redteam targets update <uuid> --config updates.json --validate
 Test a target connection without saving it. Useful for validating API credentials before creating a target:
 
 ```bash
-daystrom redteam targets probe --config connection.json
+airs redteam targets probe --config connection.json
 ```
 
 The probe sends a test message and returns the raw response from the target API.
@@ -182,7 +182,7 @@ The probe sends a test message and returns the raw response from the target API.
 Remove a target that is no longer needed:
 
 ```bash
-daystrom redteam targets delete 202c6988-d699-4dda-8f56-be7cc6d17136
+airs redteam targets delete 202c6988-d699-4dda-8f56-be7cc6d17136
 ```
 
 ```

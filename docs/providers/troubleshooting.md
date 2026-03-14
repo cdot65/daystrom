@@ -106,4 +106,4 @@ All providers use `withStructuredOutput(ZodSchema)` with 3 automatic retries. If
 
 !!! info "Propagation delay"
 
-    Daystrom waits `propagationDelayMs` (default: 10s) after creating/updating AIRS topics. This is not a provider issue -- AIRS needs time to propagate changes before scanning works correctly.
+    Prisma AIRS CLI waits `propagationDelayMs` (default: 10s) after creating/updating AIRS topics. This is not a provider issue -- AIRS needs time to propagate changes before scanning works correctly.

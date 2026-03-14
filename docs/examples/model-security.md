@@ -1,6 +1,6 @@
 # Model Security Operations
 
-This guide walks through managing AI Model Security using the `daystrom model-security` command group — security groups, rules, rule instances, scans, and labels.
+This guide walks through managing AI Model Security using the `airs model-security` command group — security groups, rules, rule instances, scans, and labels.
 
 All output shown below is captured from real Prisma AIRS API responses.
 
@@ -11,7 +11,7 @@ All output shown below is captured from real Prisma AIRS API responses.
 ### List groups
 
 ```bash
-daystrom model-security groups list
+airs model-security groups list
 ```
 
 ```
@@ -35,7 +35,7 @@ daystrom model-security groups list
 ### Filter groups by source type
 
 ```bash
-daystrom model-security groups list --source-types LOCAL,S3
+airs model-security groups list --source-types LOCAL,S3
 ```
 
 ```
@@ -50,7 +50,7 @@ daystrom model-security groups list --source-types LOCAL,S3
 ### Get group details
 
 ```bash
-daystrom model-security groups get bb1d038a-0506-4b07-8f16-a723b8c1a1c7
+airs model-security groups get bb1d038a-0506-4b07-8f16-a723b8c1a1c7
 ```
 
 ```
@@ -76,14 +76,14 @@ daystrom model-security groups get bb1d038a-0506-4b07-8f16-a723b8c1a1c7
 ```
 
 ```bash
-daystrom model-security groups create --config group-config.json
+airs model-security groups create --config group-config.json
 ```
 
 ### Update and delete
 
 ```bash
-daystrom model-security groups update <uuid> --name "Renamed Group"
-daystrom model-security groups delete <uuid>
+airs model-security groups update <uuid> --name "Renamed Group"
+airs model-security groups delete <uuid>
 ```
 
 ---
@@ -95,7 +95,7 @@ Rules define the security checks applied to models. They are read-only — manag
 ### List rules
 
 ```bash
-daystrom model-security rules list --limit 5
+airs model-security rules list --limit 5
 ```
 
 ```
@@ -126,7 +126,7 @@ daystrom model-security rules list --limit 5
 ### Search rules
 
 ```bash
-daystrom model-security rules list --search "License"
+airs model-security rules list --search "License"
 ```
 
 ```
@@ -145,7 +145,7 @@ daystrom model-security rules list --search "License"
 ### Get rule details
 
 ```bash
-daystrom model-security rules get 550e8400-e29b-41d4-a716-44665544000b
+airs model-security rules get 550e8400-e29b-41d4-a716-44665544000b
 ```
 
 ```
@@ -172,7 +172,7 @@ Rule instances are the per-group configuration of security rules.
 ### List rule instances
 
 ```bash
-daystrom model-security rule-instances list 020d546d-3920-4ef3-9183-00f37f33f566
+airs model-security rule-instances list 020d546d-3920-4ef3-9183-00f37f33f566
 ```
 
 ```
@@ -197,7 +197,7 @@ daystrom model-security rule-instances list 020d546d-3920-4ef3-9183-00f37f33f566
 ### Filter by state
 
 ```bash
-daystrom model-security rule-instances list 020d546d-3920-4ef3-9183-00f37f33f566 --state BLOCKING
+airs model-security rule-instances list 020d546d-3920-4ef3-9183-00f37f33f566 --state BLOCKING
 ```
 
 ```
@@ -220,7 +220,7 @@ daystrom model-security rule-instances list 020d546d-3920-4ef3-9183-00f37f33f566
 ### Get rule instance details
 
 ```bash
-daystrom model-security rule-instances get 020d546d-3920-4ef3-9183-00f37f33f566 67185c67-020a-4625-816f-9a2137e3d6b3
+airs model-security rule-instances get 020d546d-3920-4ef3-9183-00f37f33f566 67185c67-020a-4625-816f-9a2137e3d6b3
 ```
 
 ```
@@ -247,7 +247,7 @@ daystrom model-security rule-instances get 020d546d-3920-4ef3-9183-00f37f33f566 
 ```
 
 ```bash
-daystrom model-security rule-instances update <groupUuid> <instanceUuid> --config rule-instance-update.json
+airs model-security rule-instances update <groupUuid> <instanceUuid> --config rule-instance-update.json
 ```
 
 ---
@@ -257,7 +257,7 @@ daystrom model-security rule-instances update <groupUuid> <instanceUuid> --confi
 ### List scans
 
 ```bash
-daystrom model-security scans list --limit 3
+airs model-security scans list --limit 3
 ```
 
 ```
@@ -281,16 +281,16 @@ daystrom model-security scans list --limit 3
 
 ```bash
 # By evaluation outcome
-daystrom model-security scans list --eval-outcome BLOCKED
+airs model-security scans list --eval-outcome BLOCKED
 
 # By source type
-daystrom model-security scans list --source-type HUGGING_FACE
+airs model-security scans list --source-type HUGGING_FACE
 ```
 
 ### Get scan details
 
 ```bash
-daystrom model-security scans get 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
+airs model-security scans get 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
 ```
 
 ```
@@ -310,7 +310,7 @@ daystrom model-security scans get 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
 ### View scan evaluations
 
 ```bash
-daystrom model-security scans evaluations 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
+airs model-security scans evaluations 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
 ```
 
 ```
@@ -343,7 +343,7 @@ daystrom model-security scans evaluations 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
 ### View violations
 
 ```bash
-daystrom model-security scans violations 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
+airs model-security scans violations 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
 ```
 
 ```
@@ -374,7 +374,7 @@ daystrom model-security scans violations 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
 ### View scanned files
 
 ```bash
-daystrom model-security scans files 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
+airs model-security scans files 7a7e1cdf-a6b1-4743-a5f2-a7bd96ec7bab
 ```
 
 ```
@@ -403,7 +403,7 @@ Labels help organize and categorize scans with key-value metadata.
 ### Browse label taxonomy
 
 ```bash
-daystrom model-security labels keys
+airs model-security labels keys
 ```
 
 ```
@@ -416,7 +416,7 @@ daystrom model-security labels keys
 ```
 
 ```bash
-daystrom model-security labels values env
+airs model-security labels values env
 ```
 
 ```
@@ -429,19 +429,19 @@ daystrom model-security labels values env
 ### Add labels
 
 ```bash
-daystrom model-security labels add <scanUuid> --labels '[{"key":"env","value":"prod"}]'
+airs model-security labels add <scanUuid> --labels '[{"key":"env","value":"prod"}]'
 ```
 
 ### Set labels (replace all)
 
 ```bash
-daystrom model-security labels set <scanUuid> --labels '[{"key":"env","value":"staging"},{"key":"team","value":"ml"}]'
+airs model-security labels set <scanUuid> --labels '[{"key":"env","value":"staging"},{"key":"team","value":"ml"}]'
 ```
 
 ### Delete labels
 
 ```bash
-daystrom model-security labels delete <scanUuid> --keys env,team
+airs model-security labels delete <scanUuid> --keys env,team
 ```
 
 ---
@@ -451,7 +451,7 @@ daystrom model-security labels delete <scanUuid> --keys env,team
 Get authentication URL for Google Artifact Registry (used for model scanning tools).
 
 ```bash
-daystrom model-security pypi-auth
+airs model-security pypi-auth
 ```
 
 ---
@@ -462,38 +462,38 @@ daystrom model-security pypi-auth
 
 1. Find blocked scans:
    ```bash
-   daystrom model-security scans list --eval-outcome BLOCKED
+   airs model-security scans list --eval-outcome BLOCKED
    ```
 
 2. View evaluations to find which rule failed:
    ```bash
-   daystrom model-security scans evaluations <scanUuid>
+   airs model-security scans evaluations <scanUuid>
    ```
 
 3. View specific violations:
    ```bash
-   daystrom model-security scans violations <scanUuid>
+   airs model-security scans violations <scanUuid>
    ```
 
 4. Check the scanned files:
    ```bash
-   daystrom model-security scans files <scanUuid>
+   airs model-security scans files <scanUuid>
    ```
 
 5. Look up remediation steps for the failed rule:
    ```bash
-   daystrom model-security rules get <ruleUuid>
+   airs model-security rules get <ruleUuid>
    ```
 
 ### Customize rule enforcement
 
 1. List rule instances in a group:
    ```bash
-   daystrom model-security rule-instances list <groupUuid>
+   airs model-security rule-instances list <groupUuid>
    ```
 
 2. Change a rule from ALLOWING to BLOCKING:
    ```bash
    echo '{"state": "BLOCKING"}' > update.json
-   daystrom model-security rule-instances update <groupUuid> <instanceUuid> --config update.json
+   airs model-security rule-instances update <groupUuid> <instanceUuid> --config update.json
    ```

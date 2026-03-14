@@ -6,11 +6,11 @@ title: Home
 
 ![Daystrom Logo](images/daystrom-logo.svg){ .hero-logo }
 
-# Daystrom
+# Prisma AIRS CLI
 
 **CLI and library for Palo Alto Prisma AIRS AI security**
 
-[![CI](https://github.com/cdot65/daystrom/actions/workflows/ci.yml/badge.svg)](https://github.com/cdot65/daystrom/actions/workflows/ci.yml)
+[![CI](https://github.com/cdot65/prisma-airs-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/cdot65/prisma-airs-cli/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node 20+](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6.svg)](https://www.typescriptlang.org/)
@@ -19,7 +19,7 @@ title: Home
 
 ---
 
-Daystrom is a CLI tool that provides full operational coverage over **Palo Alto Prisma AIRS** AI security capabilities — runtime prompt scanning and configuration management, LLM-driven guardrail generation, adversarial AI red teaming, ML model supply chain security, and multi-topic profile audits with conflict detection. Six LLM provider configurations are supported out of the box.
+Prisma AIRS CLI is a CLI tool that provides full operational coverage over **Palo Alto Prisma AIRS** AI security capabilities — runtime prompt scanning and configuration management, LLM-driven guardrail generation, adversarial AI red teaming, ML model supply chain security, and multi-topic profile audits with conflict detection. Six LLM provider configurations are supported out of the box.
 
 ---
 

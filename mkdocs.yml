@@ -1,8 +1,8 @@
-site_name: Daystrom
-site_url: https://cdot65.github.io/daystrom/
+site_name: Prisma AIRS CLI
+site_url: https://cdot65.github.io/prisma-airs-cli/
 site_description: CLI and library for Palo Alto Prisma AIRS — guardrail refinement, AI red teaming, model security scanning, profile audits
-repo_name: cdot65/daystrom
-repo_url: https://github.com/cdot65/daystrom
+repo_name: cdot65/prisma-airs-cli
+repo_url: https://github.com/cdot65/prisma-airs-cli
 
 theme:
   name: material

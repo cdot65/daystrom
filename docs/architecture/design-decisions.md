@@ -1,6 +1,6 @@
 # Design Decisions
 
-The "why" behind Daystrom's architecture. Each decision below was made deliberately — this page explains the trade-offs.
+The "why" behind Prisma AIRS CLI's architecture. Each decision below was made deliberately — this page explains the trade-offs.
 
 ## 1. Async Generator Loop
 
@@ -42,13 +42,13 @@ Learnings are sorted by corroboration count (descending) before budget allocatio
 Configuration resolves through a strict priority chain:
 
 ```
-CLI flags  >  Environment variables  >  Config file (~/.daystrom/config.json)  >  Zod defaults
+CLI flags  >  Environment variables  >  Config file (~/.prisma-airs/config.json)  >  Zod defaults
 ```
 
 **Rationale:** A single `ConfigSchema.parse()` call handles validation, coercion, and defaults. No separate validation layer. Users can override any setting at any level without ambiguity about precedence.
 
 !!! tip "Home Directory Expansion"
-    Paths containing `~` are expanded via `expandHome()` during config loading, so `~/.daystrom/config.json` works on all platforms.
+    Paths containing `~` are expanded via `expandHome()` during config loading, so `~/.prisma-airs/config.json` works on all platforms.
 
 ## 5. Post-LLM Clamping
 
@@ -160,7 +160,7 @@ When `accumulateTests` is enabled, test prompts carry forward across iterations 
 
 When `--create-prompt-set` is passed, the loop auto-creates a custom prompt set in AI Runtime Security's Red Team module using the best iteration's test cases.
 
-**Rationale:** The test prompts generated during refinement are high-quality, topic-specific attack and benign prompts. Exporting them as a reusable prompt set closes the loop — Daystrom generates guardrails AND the test assets to validate them in production. This also validates the Management SDK's `RedTeamClient.customAttacks` API end-to-end.
+**Rationale:** The test prompts generated during refinement are high-quality, topic-specific attack and benign prompts. Exporting them as a reusable prompt set closes the loop — Prisma AIRS CLI generates guardrails AND the test assets to validate them in production. This also validates the Management SDK's `RedTeamClient.customAttacks` API end-to-end.
 
 **Implementation:** After `loop:complete` is determined but before the event is yielded, the loop creates a prompt set via `PromptSetService.createPromptSet()`, then adds each test case as a prompt with a goal indicating whether it should trigger the guardrail.
 

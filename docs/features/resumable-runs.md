@@ -29,7 +29,7 @@ stateDiagram-v2
 
 ## What Gets Saved
 
-Full run state is written to disk after each iteration at `~/.daystrom/runs/{runId}.json`:
+Full run state is written to disk after each iteration at `~/.prisma-airs/runs/{runId}.json`:
 
 | Field | What it is |
 |-------|-----------|
@@ -49,7 +49,7 @@ Full run state is written to disk after each iteration at `~/.daystrom/runs/{run
 ## Resuming
 
 ```bash
-daystrom resume <runId>
+airs resume <runId>
 ```
 
 The resumed run continues with:
@@ -63,7 +63,7 @@ The resumed run continues with:
 
 ```bash
 # Resume with up to 10 more iterations from current position
-daystrom resume abc123 --max-iterations 10
+airs resume abc123 --max-iterations 10
 ```
 
 ---
@@ -73,7 +73,7 @@ daystrom resume abc123 --max-iterations 10
 ### List All Runs
 
 ```bash
-daystrom list
+airs list
 ```
 
 Summary table with run ID, status, topic name, iterations completed, best coverage, and timestamps.
@@ -82,10 +82,10 @@ Summary table with run ID, status, topic name, iterations completed, best covera
 
 ```bash
 # Best iteration (highest coverage)
-daystrom report <runId>
+airs report <runId>
 
 # A specific iteration
-daystrom report <runId> --iteration 3
+airs report <runId> --iteration 3
 ```
 
 Shows topic definition, test results, metrics, and analysis for the selected iteration.

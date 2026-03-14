@@ -1,6 +1,6 @@
 # Architecture Overview
 
-Daystrom is a multi-capability CLI and library for Palo Alto Prisma AIRS. Each subsystem has a single responsibility and communicates through typed interfaces — the CLI layer orchestrates user interaction while service layers handle AIRS API communication.
+Prisma AIRS CLI is a multi-capability CLI tool and library for Palo Alto Prisma AIRS. Each subsystem has a single responsibility and communicates through typed interfaces — the CLI layer orchestrates user interaction while service layers handle AIRS API communication.
 
 ## Module Structure
 
@@ -20,7 +20,7 @@ src/
 
 ## Capability Domains
 
-Daystrom provides five capability domains, each backed by dedicated service and CLI layers:
+Prisma AIRS CLI provides five capability domains, each backed by dedicated service and CLI layers:
 
 ```mermaid
 graph LR
@@ -51,7 +51,7 @@ graph LR
 
 ## Guardrail Generation Data Flow
 
-The guardrail generation loop (`daystrom generate`) is the most complex flow:
+The guardrail generation loop (`airs generate`) is the most complex flow:
 
 ```mermaid
 graph TD
@@ -73,7 +73,7 @@ graph TD
 ```
 
 !!! info "Propagation delay"
-    After deploying a topic, Daystrom waits a configurable delay (default 10s) before scanning. AIRS needs this time to propagate changes.
+    After deploying a topic, Prisma AIRS CLI waits a configurable delay (default 10s) before scanning. AIRS needs this time to propagate changes.
 
 ## Runtime Security Data Flow
 
@@ -98,7 +98,7 @@ graph TD
 | **`llm/`** | Factory for 6 LangChain providers, structured output with Zod schemas, and prompt templates for all 4 LLM calls |
 | **`airs/`** | Scanner (sync scan + batched concurrency), Runtime (sync + async bulk scan with polling), Management (topic CRUD, profile CRUD, API keys, customer apps, deployment/DLP profiles, scan logs), Red Team (scan CRUD/polling/reports), Prompt Sets (custom prompt set management), Model Security (groups/rules/scans) |
 | **`memory/`** | File-based learning store, LLM-driven extraction after each run, and budget-aware injection into future prompts |
-| **`persistence/`** | `JsonFileStore` serializes `RunState` to `~/.daystrom/runs/` for pause/resume support |
+| **`persistence/`** | `JsonFileStore` serializes `RunState` to `~/.prisma-airs/runs/` for pause/resume support |
 | **`audit/`** | Profile-level multi-topic evaluation — generates tests per topic, computes per-topic and composite metrics, detects cross-topic conflicts |
 | **`report/`** | Structured evaluation report generation — JSON and self-contained HTML output with iteration trends, metrics, and test details |
 

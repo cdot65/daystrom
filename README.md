@@ -1,17 +1,17 @@
-# Daystrom
+# Prisma AIRS CLI
 
-[![CI](https://github.com/cdot65/daystrom/actions/workflows/ci.yml/badge.svg)](https://github.com/cdot65/daystrom/actions/workflows/ci.yml)
+[![CI](https://github.com/cdot65/prisma-airs-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/cdot65/prisma-airs-cli/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node 20+](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org/)
 
 **Full operational coverage over Palo Alto Prisma AIRS AI security — guardrail refinement, runtime scanning, AI red teaming, model security, and profile audits.**
 
-> **[Read the full documentation](https://cdot65.github.io/daystrom/)** — installation, configuration, architecture, CLI reference, and examples.
+> **[Read the full documentation](https://cdot65.github.io/prisma-airs-cli/)** — installation, configuration, architecture, CLI reference, and examples.
 
 ## Install
 
 ```bash
-npm install -g @cdot65/daystrom
+npm install -g @cdot65/prisma-airs-cli
 ```
 
 Requires **Node.js >= 20**.
@@ -20,7 +20,7 @@ Requires **Node.js >= 20**.
 
 ```bash
 cp .env.example .env   # add your API keys
-daystrom runtime topics generate   # interactive guardrail generation
+airs runtime topics generate   # interactive guardrail generation
 ```
 
 ## Commands

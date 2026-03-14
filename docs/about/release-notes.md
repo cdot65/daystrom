@@ -12,7 +12,7 @@
 
 ### Features
 
-- **Runtime configuration management**: Full CRUD for AIRS runtime resources via `daystrom runtime` subcommand groups:
+- **Runtime configuration management**: Full CRUD for AIRS runtime resources via `airs runtime` subcommand groups:
   - `profiles` — security profile list/get/create/update/delete (with force delete)
   - `topics` — custom topic list/get/create/update/delete (with force delete)
   - `api-keys` — API key list/create/regenerate/delete
@@ -31,7 +31,7 @@
 
 ### Features
 
-- **`daystrom model-security` command group**: Full AI Model Security operations — security groups CRUD, rule browsing, rule instance configuration, scan operations (create/list/get), evaluations, violations, files, label management, and PyPI authentication.
+- **`airs model-security` command group**: Full AI Model Security operations — security groups CRUD, rule browsing, rule instance configuration, scan operations (create/list/get), evaluations, violations, files, label management, and PyPI authentication.
 - **`SdkModelSecurityService`**: New service wrapping `ModelSecurityClient` with camelCase normalization for all 23 SDK methods.
 - **5 subcommand groups**: `groups` (list/get/create/update/delete), `rules` (list/get), `rule-instances` (list/get/update), `scans` (list/get/create/evaluations/violations/files), `labels` (add/set/delete/keys/values), plus `pypi-auth`.
 - **SDK upgrade**: `@cdot65/prisma-airs-sdk` v0.6.0 → v0.6.1 — fixed list filter options for groups, rules, and rule instances.
@@ -44,14 +44,14 @@
 
 ### Features
 
-- **Red team target CRUD**: Full target lifecycle management — `create`, `get`, `update`, `delete` via CLI (`daystrom redteam targets <subcommand>`) and library API (`SdkRedTeamService`).
+- **Red team target CRUD**: Full target lifecycle management — `create`, `get`, `update`, `delete` via CLI (`airs redteam targets <subcommand>`) and library API (`SdkRedTeamService`).
 - **Target connection validation**: `--validate` flag on `targets create` and `targets update` validates connectivity before saving (SDK v0.6.0 `TargetOperationOptions`).
-- **Target probe**: `daystrom redteam targets probe --config conn.json` tests a target connection without persisting.
+- **Target probe**: `airs redteam targets probe --config conn.json` tests a target connection without persisting.
 - **Target profile management**: `targets profile <uuid>` and `targets update-profile <uuid>` for target profiling configuration.
-- **Prompt set full CRUD**: `get`, `update`, `archive`/unarchive, `version-info`, CSV template download via `daystrom redteam prompt-sets <subcommand>`.
-- **CSV prompt upload**: `daystrom redteam prompt-sets upload <uuid> file.csv` for bulk prompt ingestion (SDK v0.6.0 `uploadPromptsCsv()`).
-- **Individual prompt CRUD**: `list`, `get`, `add`, `update`, `delete` prompts within sets via `daystrom redteam prompts <subcommand>`.
-- **Property management**: `daystrom redteam properties {list,create,values,add-value}` for custom attack property names and values.
+- **Prompt set full CRUD**: `get`, `update`, `archive`/unarchive, `version-info`, CSV template download via `airs redteam prompt-sets <subcommand>`.
+- **CSV prompt upload**: `airs redteam prompt-sets upload <uuid> file.csv` for bulk prompt ingestion (SDK v0.6.0 `uploadPromptsCsv()`).
+- **Individual prompt CRUD**: `list`, `get`, `add`, `update`, `delete` prompts within sets via `airs redteam prompts <subcommand>`.
+- **Property management**: `airs redteam properties {list,create,values,add-value}` for custom attack property names and values.
 - **SDK upgrade**: `@cdot65/prisma-airs-sdk` v0.4.0 → v0.6.0 — fully typed target schemas (connection params, background, metadata, additional context), no breaking changes.
 
 ### CLI Changes
@@ -60,12 +60,12 @@ Existing flat commands refactored to subcommand groups:
 
 | Before (v1.6.0) | After (v1.7.0) |
 |-----------------|----------------|
-| `daystrom redteam targets` | `daystrom redteam targets list` |
-| `daystrom redteam prompt-sets` | `daystrom redteam prompt-sets list` |
-| — | `daystrom redteam targets {get,create,update,delete,probe,profile,update-profile}` |
-| — | `daystrom redteam prompt-sets {get,create,update,archive,download,upload}` |
-| — | `daystrom redteam prompts {list,get,add,update,delete}` |
-| — | `daystrom redteam properties {list,create,values,add-value}` |
+| `airs redteam targets` | `airs redteam targets list` |
+| `airs redteam prompt-sets` | `airs redteam prompt-sets list` |
+| — | `airs redteam targets {get,create,update,delete,probe,profile,update-profile}` |
+| — | `airs redteam prompt-sets {get,create,update,archive,download,upload}` |
+| — | `airs redteam prompts {list,get,add,update,delete}` |
+| — | `airs redteam properties {list,create,values,add-value}` |
 
 ### Tests
 
@@ -76,7 +76,7 @@ Existing flat commands refactored to subcommand groups:
 
 ### Features
 
-- **`daystrom audit <profileName>`**: New command evaluates all topics in an AIRS security profile. Generates tests per topic, scans them, computes per-topic and composite metrics (TPR, TNR, coverage, accuracy, F1), and detects cross-topic conflicts.
+- **`airs audit <profileName>`**: New command evaluates all topics in an AIRS security profile. Generates tests per topic, scans them, computes per-topic and composite metrics (TPR, TNR, coverage, accuracy, F1), and detects cross-topic conflicts.
 - **Per-topic metrics**: Each topic gets its own efficacy breakdown, enabling identification of weak guardrails within a profile.
 - **Conflict detection**: Identifies cross-topic interference — prompts that are false negatives for one topic and false positives for another.
 - **Audit reports**: `--format json` and `--format html` export audit results with per-topic metrics tables, conflict sections, and composite scores.
@@ -91,7 +91,7 @@ Existing flat commands refactored to subcommand groups:
 
 ### Features
 
-- **Structured evaluation reports**: `daystrom report` now supports `--format json` and `--format html` for machine-readable and shareable report export.
+- **Structured evaluation reports**: `airs report` now supports `--format json` and `--format html` for machine-readable and shareable report export.
 - **Per-test-case details**: `--tests` flag includes individual test results (prompt, expected/actual outcome, pass/fail, category, source) in all output formats.
 - **Run comparison**: `--diff <runId>` compares two runs side-by-side with metric deltas (coverage, TPR, TNR, accuracy, F1).
 - **Self-contained HTML reports**: HTML output includes embedded CSS with run summary, iteration trends, metrics tables, test result tables, and diff sections. No external dependencies.
@@ -134,7 +134,7 @@ Existing flat commands refactored to subcommand groups:
 
 ### Features
 
-- **Custom attack list in reports**: `daystrom redteam report <jobId> --attacks` now shows prompt-level results for CUSTOM scans — prompt text, goal, threat status, and per-prompt ASR.
+- **Custom attack list in reports**: `airs redteam report <jobId> --attacks` now shows prompt-level results for CUSTOM scans — prompt text, goal, threat status, and per-prompt ASR.
 
 ### Tests
 
@@ -149,7 +149,7 @@ Existing flat commands refactored to subcommand groups:
 
 ### Features
 
-- **`daystrom redteam` command group**: Full AI Red Team scan operations — launch static/dynamic/custom scans, poll for completion, view reports with severity breakdowns and attack details, list targets and categories, abort running scans.
+- **`airs redteam` command group**: Full AI Red Team scan operations — launch static/dynamic/custom scans, poll for completion, view reports with severity breakdowns and attack details, list targets and categories, abort running scans.
 - **`SdkRedTeamService`**: New service wrapping `RedTeamClient` for programmatic red team operations. Normalizes all SDK responses into clean TypeScript interfaces.
 - **7 subcommands**: `scan`, `status`, `report`, `list`, `targets`, `categories`, `abort`.
 
@@ -172,7 +172,7 @@ Existing flat commands refactored to subcommand groups:
 
 ### Features
 
-- **`--debug-scans` flag**: Dumps raw AIRS scan responses to a JSONL file (`~/.daystrom/debug-scans-*.jsonl`) for offline inspection. Available on both `generate` and `resume` commands.
+- **`--debug-scans` flag**: Dumps raw AIRS scan responses to a JSONL file (`~/.prisma-airs/debug-scans-*.jsonl`) for offline inspection. Available on both `generate` and `resume` commands.
 - **Scanner extracts `category`**: The `category` field from AIRS responses is now included in `ScanResult`.
 - **`--create-prompt-set` flag**: Auto-creates a custom prompt set in AI Runtime Security from the best iteration's test cases. Prompts include goals indicating expected guardrail behavior. Available on both `generate` and `resume` commands.
 - **`SdkPromptSetService`**: New service wrapping `RedTeamClient.customAttacks` for prompt set CRUD.
@@ -243,7 +243,7 @@ First stable release of Daystrom.
 - **Comprehensive metrics**: TPR, TNR, coverage, accuracy, F1
 - **Resumable runs** with full state persistence
 - **192 tests** across 17 spec files
-- **Full documentation site** at [cdot65.github.io/daystrom](https://cdot65.github.io/daystrom/)
+- **Full documentation site** at [cdot65.github.io/prisma-airs-cli](https://cdot65.github.io/prisma-airs-cli/)
 - **Docker support** with multi-arch images (amd64 + arm64)
 
 ## v0.1.0 -- Initial Release
@@ -259,7 +259,7 @@ The first public release of Daystrom: an automated CLI for generating, testing, 
 - **4 CLI commands**: `generate`, `resume`, `report`, `list`
 - **Automatic topic constraint clamping** for AIRS limits (100 char name, 250 char description, 250 char/example, 5 examples max, 1000 char combined)
 - **Comprehensive metrics**: TPR, TNR, coverage, accuracy, F1
-- **Resumable runs** with full state persistence to `~/.daystrom/runs/`
+- **Resumable runs** with full state persistence to `~/.prisma-airs/runs/`
 - **165+ tests** with ~98% statement coverage
 
 ### Architecture Decisions

@@ -1,6 +1,6 @@
 # CLI Commands
 
-Binary: `daystrom` (or `pnpm run dev` during development).
+Binary: `airs` (or `pnpm run dev` during development).
 
 Three top-level command groups: `runtime`, `redteam`, `model-security`.
 
@@ -15,7 +15,7 @@ Runtime prompt scanning, AIRS configuration management, guardrail generation, an
 Scan a single prompt synchronously.
 
 ```bash
-daystrom runtime scan --profile <name> [--response <text>] <prompt>
+airs runtime scan --profile <name> [--response <text>] <prompt>
 ```
 
 #### Options
@@ -29,10 +29,10 @@ daystrom runtime scan --profile <name> [--response <text>] <prompt>
 
 ```bash
 # Scan a prompt
-daystrom runtime scan --profile my-profile "How do I build a weapon?"
+airs runtime scan --profile my-profile "How do I build a weapon?"
 
 # Scan prompt + response pair
-daystrom runtime scan --profile my-profile --response "Here are the steps..." "How do I build a weapon?"
+airs runtime scan --profile my-profile --response "Here are the steps..." "How do I build a weapon?"
 ```
 
 #### Example Output — Blocked Prompt
@@ -75,7 +75,7 @@ daystrom runtime scan --profile my-profile --response "Here are the steps..." "H
 Scan multiple prompts via the async AIRS API. Writes results to CSV.
 
 ```bash
-daystrom runtime bulk-scan --profile <name> --input <file> [--output <file>]
+airs runtime bulk-scan --profile <name> --input <file> [--output <file>]
 ```
 
 #### Options
@@ -90,10 +90,10 @@ daystrom runtime bulk-scan --profile <name> --input <file> [--output <file>]
 
 ```bash
 # Bulk scan with default output
-daystrom runtime bulk-scan --profile my-profile --input prompts.txt
+airs runtime bulk-scan --profile my-profile --input prompts.txt
 
 # Custom output path
-daystrom runtime bulk-scan --profile my-profile --input prompts.txt --output results.csv
+airs runtime bulk-scan --profile my-profile --input prompts.txt --output results.csv
 ```
 
 #### Example Output
@@ -120,7 +120,7 @@ daystrom runtime bulk-scan --profile my-profile --input prompts.txt --output res
 Resume polling for a previously submitted bulk scan.
 
 ```bash
-daystrom runtime resume-poll <stateFile> [--output <file>]
+airs runtime resume-poll <stateFile> [--output <file>]
 ```
 
 | Flag | Required | Description |
@@ -133,12 +133,12 @@ daystrom runtime resume-poll <stateFile> [--output <file>]
 Security profile CRUD and profile-level audit.
 
 ```bash
-daystrom runtime profiles list
-daystrom runtime profiles create --config <path>
-daystrom runtime profiles update <profileId> --config <path>
-daystrom runtime profiles delete <profileId>
-daystrom runtime profiles delete <profileId> --force --updated-by <email>
-daystrom runtime profiles audit <profileName> [options]
+airs runtime profiles list
+airs runtime profiles create --config <path>
+airs runtime profiles update <profileId> --config <path>
+airs runtime profiles delete <profileId>
+airs runtime profiles delete <profileId> --force --updated-by <email>
+airs runtime profiles audit <profileName> [options]
 ```
 
 | Subcommand | Flags |
@@ -155,13 +155,13 @@ Evaluate all topics in an AIRS security profile. Generates tests per topic, scan
 
 ```bash
 # Audit all topics in a profile
-daystrom runtime profiles audit my-security-profile
+airs runtime profiles audit my-security-profile
 
 # JSON export
-daystrom runtime profiles audit my-security-profile --format json
+airs runtime profiles audit my-security-profile --format json
 
 # HTML report
-daystrom runtime profiles audit my-security-profile --format html --output audit-report.html
+airs runtime profiles audit my-security-profile --format html --output audit-report.html
 ```
 
 ### runtime topics
@@ -170,17 +170,17 @@ Custom topic CRUD and guardrail generation.
 
 ```bash
 # CRUD
-daystrom runtime topics list
-daystrom runtime topics create --config <path>
-daystrom runtime topics update <topicId> --config <path>
-daystrom runtime topics delete <topicId>
-daystrom runtime topics delete <topicId> --force --updated-by <email>
+airs runtime topics list
+airs runtime topics create --config <path>
+airs runtime topics update <topicId> --config <path>
+airs runtime topics delete <topicId>
+airs runtime topics delete <topicId> --force --updated-by <email>
 
 # Guardrail generation
-daystrom runtime topics generate [options]
-daystrom runtime topics resume <runId> [options]
-daystrom runtime topics report <runId> [options]
-daystrom runtime topics runs
+airs runtime topics generate [options]
+airs runtime topics resume <runId> [options]
+airs runtime topics report <runId> [options]
+airs runtime topics runs
 ```
 
 | Subcommand | Flags |
@@ -216,10 +216,10 @@ Start a new guardrail generation run.
 
 ```bash
 # Interactive — prompts for everything
-daystrom runtime topics generate
+airs runtime topics generate
 
 # Non-interactive — all inputs via flags
-daystrom runtime topics generate \
+airs runtime topics generate \
   --provider claude-api \
   --profile my-security-profile \
   --topic "Block discussions about building explosives" \
@@ -227,7 +227,7 @@ daystrom runtime topics generate \
   --target-coverage 90
 
 # With test accumulation
-daystrom runtime topics generate \
+airs runtime topics generate \
   --topic "Allow recipe discussions" \
   --intent allow \
   --profile cooking-policy \
@@ -247,7 +247,7 @@ Pick up a paused or failed run from where it left off.
 | `--prompt-set-name <name>` | auto | Override auto-generated prompt set name |
 
 ```bash
-daystrom runtime topics resume abc123xyz --max-iterations 10
+airs runtime topics resume abc123xyz --max-iterations 10
 ```
 
 #### runtime topics report
@@ -263,8 +263,8 @@ View results for a saved run.
 | `--output <path>` | `<runId>-report.html` | Output file path (html format only) |
 
 ```bash
-daystrom runtime topics report abc123xyz --format html --tests
-daystrom runtime topics report abc123xyz --diff def456uvw
+airs runtime topics report abc123xyz --format html --tests
+airs runtime topics report abc123xyz --diff def456uvw
 ```
 
 #### runtime topics runs
@@ -272,7 +272,7 @@ daystrom runtime topics report abc123xyz --diff def456uvw
 List all saved generation runs.
 
 ```bash
-daystrom runtime topics runs
+airs runtime topics runs
 ```
 
 ### runtime api-keys
@@ -280,10 +280,10 @@ daystrom runtime topics runs
 API key management.
 
 ```bash
-daystrom runtime api-keys list
-daystrom runtime api-keys create --config <path>
-daystrom runtime api-keys regenerate <apiKeyId> --interval <n> --unit <unit>
-daystrom runtime api-keys delete <apiKeyName> --updated-by <email>
+airs runtime api-keys list
+airs runtime api-keys create --config <path>
+airs runtime api-keys regenerate <apiKeyId> --interval <n> --unit <unit>
+airs runtime api-keys delete <apiKeyName> --updated-by <email>
 ```
 
 | Subcommand | Flags |
@@ -298,10 +298,10 @@ daystrom runtime api-keys delete <apiKeyName> --updated-by <email>
 Customer application management.
 
 ```bash
-daystrom runtime customer-apps list
-daystrom runtime customer-apps get <appName>
-daystrom runtime customer-apps update <appId> --config <path>
-daystrom runtime customer-apps delete <appName> --updated-by <email>
+airs runtime customer-apps list
+airs runtime customer-apps get <appName>
+airs runtime customer-apps update <appId> --config <path>
+airs runtime customer-apps delete <appName> --updated-by <email>
 ```
 
 | Subcommand | Flags |
@@ -316,8 +316,8 @@ daystrom runtime customer-apps delete <appName> --updated-by <email>
 Deployment profile listing (read-only).
 
 ```bash
-daystrom runtime deployment-profiles list
-daystrom runtime deployment-profiles list --unactivated
+airs runtime deployment-profiles list
+airs runtime deployment-profiles list --unactivated
 ```
 
 | Subcommand | Flags |
@@ -329,7 +329,7 @@ daystrom runtime deployment-profiles list --unactivated
 DLP profile listing (read-only).
 
 ```bash
-daystrom runtime dlp-profiles list
+airs runtime dlp-profiles list
 ```
 
 ### runtime scan-logs
@@ -337,7 +337,7 @@ daystrom runtime dlp-profiles list
 Scan log querying.
 
 ```bash
-daystrom runtime scan-logs query --interval <n> --unit <unit> [options]
+airs runtime scan-logs query --interval <n> --unit <unit> [options]
 ```
 
 | Subcommand | Flags |
@@ -352,11 +352,11 @@ The following top-level commands still work but print a deprecation warning. Use
 
 | Deprecated | New path |
 |-----------|----------|
-| `daystrom generate` | `daystrom runtime topics generate` |
-| `daystrom resume` | `daystrom runtime topics resume` |
-| `daystrom report` | `daystrom runtime topics report` |
-| `daystrom list` | `daystrom runtime topics runs` |
-| `daystrom audit` | `daystrom runtime profiles audit` |
+| `airs generate` | `airs runtime topics generate` |
+| `airs resume` | `airs runtime topics resume` |
+| `airs report` | `airs runtime topics report` |
+| `airs list` | `airs runtime topics runs` |
+| `airs audit` | `airs runtime profiles audit` |
 
 ---
 
@@ -369,7 +369,7 @@ AI Red Team scan operations. All subcommands share the `redteam` prefix.
 Execute a red team scan against a target.
 
 ```bash
-daystrom redteam scan [options]
+airs redteam scan [options]
 ```
 
 | Flag | Default | What it does |
@@ -383,10 +383,10 @@ daystrom redteam scan [options]
 
 ```bash
 # Static scan with all categories
-daystrom redteam scan --target <uuid> --name "Full Scan"
+airs redteam scan --target <uuid> --name "Full Scan"
 
-# Custom scan with a daystrom-generated prompt set
-daystrom redteam scan \
+# Custom scan with a CLI-generated prompt set
+airs redteam scan \
   --target <uuid> --name "Topic Validation" \
   --type CUSTOM --prompt-sets <uuid1>,<uuid2>
 ```
@@ -394,13 +394,13 @@ daystrom redteam scan \
 ### redteam status
 
 ```bash
-daystrom redteam status <jobId>
+airs redteam status <jobId>
 ```
 
 ### redteam report
 
 ```bash
-daystrom redteam report <jobId> [options]
+airs redteam report <jobId> [options]
 ```
 
 | Flag | Default | What it does |
@@ -412,7 +412,7 @@ daystrom redteam report <jobId> [options]
 ### redteam list
 
 ```bash
-daystrom redteam list [options]
+airs redteam list [options]
 ```
 
 | Flag | Default | What it does |
@@ -458,16 +458,16 @@ Manage red team targets — full CRUD with connection validation.
 ```
 
 ```bash
-daystrom redteam targets list                          # List all targets
-daystrom redteam targets get <uuid>                    # Get target details
-daystrom redteam targets create --config target.json   # Create from JSON file
-daystrom redteam targets create --config t.json --validate  # Create + validate connection
-daystrom redteam targets update <uuid> --config u.json # Update target
-daystrom redteam targets update <uuid> --config u.json --validate
-daystrom redteam targets delete <uuid>                 # Delete target
-daystrom redteam targets probe --config conn.json      # Test connection
-daystrom redteam targets profile <uuid>                # View target profile
-daystrom redteam targets update-profile <uuid> --config p.json
+airs redteam targets list                          # List all targets
+airs redteam targets get <uuid>                    # Get target details
+airs redteam targets create --config target.json   # Create from JSON file
+airs redteam targets create --config t.json --validate  # Create + validate connection
+airs redteam targets update <uuid> --config u.json # Update target
+airs redteam targets update <uuid> --config u.json --validate
+airs redteam targets delete <uuid>                 # Delete target
+airs redteam targets probe --config conn.json      # Test connection
+airs redteam targets profile <uuid>                # View target profile
+airs redteam targets update-profile <uuid> --config p.json
 ```
 
 | Subcommand | Flags |
@@ -499,14 +499,14 @@ daystrom redteam targets update-profile <uuid> --config p.json
 Manage custom prompt sets — CRUD, CSV upload/download, archive.
 
 ```bash
-daystrom redteam prompt-sets list                          # List all sets
-daystrom redteam prompt-sets get <uuid>                    # Details + version info
-daystrom redteam prompt-sets create --name "My Set"        # Create
-daystrom redteam prompt-sets update <uuid> --name "New"    # Update
-daystrom redteam prompt-sets archive <uuid>                # Archive
-daystrom redteam prompt-sets archive <uuid> --unarchive    # Unarchive
-daystrom redteam prompt-sets download <uuid>               # Download CSV template
-daystrom redteam prompt-sets upload <uuid> prompts.csv     # Upload CSV
+airs redteam prompt-sets list                          # List all sets
+airs redteam prompt-sets get <uuid>                    # Details + version info
+airs redteam prompt-sets create --name "My Set"        # Create
+airs redteam prompt-sets update <uuid> --name "New"    # Update
+airs redteam prompt-sets archive <uuid>                # Archive
+airs redteam prompt-sets archive <uuid> --unarchive    # Unarchive
+airs redteam prompt-sets download <uuid>               # Download CSV template
+airs redteam prompt-sets upload <uuid> prompts.csv     # Upload CSV
 ```
 
 | Subcommand | Flags |
@@ -524,11 +524,11 @@ daystrom redteam prompt-sets upload <uuid> prompts.csv     # Upload CSV
 Manage individual prompts within prompt sets.
 
 ```bash
-daystrom redteam prompts list <setUuid>                        # List prompts
-daystrom redteam prompts get <setUuid> <promptUuid>            # Get prompt
-daystrom redteam prompts add <setUuid> --prompt "text"         # Add prompt
-daystrom redteam prompts update <setUuid> <promptUuid> --prompt "new"  # Update
-daystrom redteam prompts delete <setUuid> <promptUuid>         # Delete
+airs redteam prompts list <setUuid>                        # List prompts
+airs redteam prompts get <setUuid> <promptUuid>            # Get prompt
+airs redteam prompts add <setUuid> --prompt "text"         # Add prompt
+airs redteam prompts update <setUuid> <promptUuid> --prompt "new"  # Update
+airs redteam prompts delete <setUuid> <promptUuid>         # Delete
 ```
 
 | Subcommand | Flags |
@@ -544,10 +544,10 @@ daystrom redteam prompts delete <setUuid> <promptUuid>         # Delete
 Manage custom attack property names and values.
 
 ```bash
-daystrom redteam properties list                               # List names
-daystrom redteam properties create --name "category"           # Create name
-daystrom redteam properties values category                    # List values
-daystrom redteam properties add-value --name cat --value sec   # Add value
+airs redteam properties list                               # List names
+airs redteam properties create --name "category"           # Create name
+airs redteam properties values category                    # List values
+airs redteam properties add-value --name cat --value sec   # Add value
 ```
 
 ### redteam categories
@@ -555,7 +555,7 @@ daystrom redteam properties add-value --name cat --value sec   # Add value
 List available attack categories grouped by domain.
 
 ```bash
-daystrom redteam categories
+airs redteam categories
 ```
 
 #### Example Output
@@ -593,7 +593,7 @@ daystrom redteam categories
 Abort a running scan.
 
 ```bash
-daystrom redteam abort <jobId>
+airs redteam abort <jobId>
 ```
 
 ---
@@ -607,11 +607,11 @@ AI Model Security operations — manage security groups, browse rules, and confi
 Manage security groups that define scanning policies for ML model sources.
 
 ```bash
-daystrom model-security groups list [options]
-daystrom model-security groups get <uuid>
-daystrom model-security groups create --config <path>
-daystrom model-security groups update <uuid> [options]
-daystrom model-security groups delete <uuid>
+airs model-security groups list [options]
+airs model-security groups get <uuid>
+airs model-security groups create --config <path>
+airs model-security groups update <uuid> [options]
+airs model-security groups delete <uuid>
 ```
 
 | Subcommand | Flags |
@@ -655,8 +655,8 @@ daystrom model-security groups delete <uuid>
 Browse available security rules (read-only).
 
 ```bash
-daystrom model-security rules list [options]
-daystrom model-security rules get <uuid>
+airs model-security rules list [options]
+airs model-security rules get <uuid>
 ```
 
 | Subcommand | Flags |
@@ -688,9 +688,9 @@ daystrom model-security rules get <uuid>
 Manage rule instances within security groups.
 
 ```bash
-daystrom model-security rule-instances list <groupUuid> [options]
-daystrom model-security rule-instances get <groupUuid> <instanceUuid>
-daystrom model-security rule-instances update <groupUuid> <instanceUuid> --config <path>
+airs model-security rule-instances list <groupUuid> [options]
+airs model-security rule-instances get <groupUuid> <instanceUuid>
+airs model-security rule-instances update <groupUuid> <instanceUuid> --config <path>
 ```
 
 | Subcommand | Flags |
@@ -730,14 +730,14 @@ daystrom model-security rule-instances update <groupUuid> <instanceUuid> --confi
 Model security scan operations — create, list, inspect scans and their results.
 
 ```bash
-daystrom model-security scans list [options]
-daystrom model-security scans get <uuid>
-daystrom model-security scans create --config <path>
-daystrom model-security scans evaluations <scanUuid> [--limit <n>]
-daystrom model-security scans evaluation <uuid>
-daystrom model-security scans violations <scanUuid> [--limit <n>]
-daystrom model-security scans violation <uuid>
-daystrom model-security scans files <scanUuid> [--type <type>] [--result <result>] [--limit <n>]
+airs model-security scans list [options]
+airs model-security scans get <uuid>
+airs model-security scans create --config <path>
+airs model-security scans evaluations <scanUuid> [--limit <n>]
+airs model-security scans evaluation <uuid>
+airs model-security scans violations <scanUuid> [--limit <n>]
+airs model-security scans violation <uuid>
+airs model-security scans files <scanUuid> [--type <type>] [--result <result>] [--limit <n>]
 ```
 
 | Subcommand | Flags |
@@ -771,11 +771,11 @@ daystrom model-security scans files <scanUuid> [--type <type>] [--result <result
 Manage labels on model security scans.
 
 ```bash
-daystrom model-security labels add <scanUuid> --labels '<json>'
-daystrom model-security labels set <scanUuid> --labels '<json>'
-daystrom model-security labels delete <scanUuid> --keys <key1,key2>
-daystrom model-security labels keys [--limit <n>]
-daystrom model-security labels values <key> [--limit <n>]
+airs model-security labels add <scanUuid> --labels '<json>'
+airs model-security labels set <scanUuid> --labels '<json>'
+airs model-security labels delete <scanUuid> --keys <key1,key2>
+airs model-security labels keys [--limit <n>]
+airs model-security labels values <key> [--limit <n>]
 ```
 
 | Subcommand | Flags |
@@ -791,4 +791,4 @@ daystrom model-security labels values <key> [--limit <n>]
 Get PyPI authentication URL for Google Artifact Registry.
 
 ```bash
-daystrom model-security pypi-auth
+airs model-security pypi-auth

@@ -1,6 +1,6 @@
 # Topic Constraints
 
-Prisma AIRS enforces hard limits on custom topic definitions. Daystrom handles these automatically so you don't have to worry about truncation or rejection.
+Prisma AIRS enforces hard limits on custom topic definitions. Prisma AIRS CLI handles these automatically so you don't have to worry about truncation or rejection.
 
 ## Limits
 
