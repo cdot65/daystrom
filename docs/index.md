@@ -19,94 +19,89 @@ title: Home
 
 ---
 
-Daystrom is a CLI tool that provides full operational coverage over **Palo Alto Prisma AIRS** AI security capabilities. Generate and iteratively refine custom topic guardrails with LLM-driven feedback loops, run adversarial red team scans against AI targets, manage ML model supply chain security, and audit entire security profiles for coverage gaps and cross-topic conflicts. Named after Star Trek's Dr. Richard Daystrom, it automates the tedious so you can focus on intent.
+Daystrom is a CLI tool that provides full operational coverage over **Palo Alto Prisma AIRS** AI security capabilities — runtime prompt scanning and configuration management, LLM-driven guardrail generation, adversarial AI red teaming, ML model supply chain security, and multi-topic profile audits with conflict detection. Six LLM provider configurations are supported out of the box.
+
+---
+
+## Capabilities
 
 <div class="grid cards" markdown>
-
--   :material-refresh-auto:{ .lg .middle } **Iterative Refinement**
-
-    ---
-
-    Analyzes false positives and negatives after each iteration, feeding structured feedback to the LLM until coverage meets your threshold.
-
--   :material-brain:{ .lg .middle } **Multi-Provider LLM**
-
-    ---
-
-    Six provider configs out of the box — Claude API, Claude Vertex, Claude Bedrock, Gemini API, Gemini Vertex, and Gemini Bedrock.
-
--   :material-memory:{ .lg .middle } **Cross-Run Memory**
-
-    ---
-
-    Persists learnings across runs so the LLM avoids repeating past mistakes. Budget-aware injection keeps prompts focused.
-
--   :material-play-pause:{ .lg .middle } **Resumable Runs**
-
-    ---
-
-    Every iteration checkpoints to disk. Resume failed or paused runs from exactly where they left off — no wasted API calls.
-
--   :material-shield-check:{ .lg .middle } **Block & Allow Intent**
-
-    ---
-
-    First-class support for both block (blacklist) and allow (whitelist) guardrails with intent-aware test generation and analysis.
-
--   :material-test-tube:{ .lg .middle } **Test Accumulation**
-
-    ---
-
-    Optionally carry forward test prompts across iterations with dedup, catching regressions that fresh tests might miss.
 
 -   :material-shield-search:{ .lg .middle } **Runtime Security**
 
     ---
 
-    Scan prompts against live security profiles and manage AIRS configuration — profiles, topics, API keys, customer apps, and scan logs via `daystrom runtime`.
+    Scan prompts against live AIRS security profiles (sync and async), and manage runtime configuration — profiles, topics, API keys, customer apps, deployment/DLP profiles, and scan logs.
 
     [:octicons-arrow-right-24: Runtime Security](features/runtime-security.md)
+
+-   :material-refresh-auto:{ .lg .middle } **Guardrail Generation**
+
+    ---
+
+    LLM-driven feedback loop that generates, deploys, tests, evaluates, and iteratively refines custom topic guardrails until coverage meets your target threshold.
+
+    [:octicons-arrow-right-24: Guardrail Generation](features/guardrail-generation.md)
 
 -   :material-sword:{ .lg .middle } **AI Red Teaming**
 
     ---
 
-    Launch static, dynamic, and custom adversarial scans against AI targets. Full CRUD on targets, prompt sets, and prompts via `daystrom redteam`.
+    Launch static, dynamic, and custom adversarial scans against AI targets. Full CRUD for targets, prompt sets, and individual prompts with attack category filtering.
 
-    [:octicons-arrow-right-24: Red Team](features/red-team.md)
-
--   :material-clipboard-check:{ .lg .middle } **Profile Audits**
-
-    ---
-
-    Evaluate all topics in a security profile at once. Per-topic metrics, composite scores, and cross-topic conflict detection via `daystrom audit`.
+    [:octicons-arrow-right-24: AI Red Teaming](features/red-team.md)
 
 -   :material-shield-lock:{ .lg .middle } **Model Security**
 
     ---
 
-    Manage ML model supply chain security — security groups, rules, scans, evaluations, violations, and labels via `daystrom model-security`.
+    ML model supply chain security — manage security groups, browse rules, configure rule instances, create scans, and review evaluations, violations, and file results.
 
     [:octicons-arrow-right-24: Model Security](features/model-security.md)
+
+-   :material-clipboard-check:{ .lg .middle } **Profile Audits**
+
+    ---
+
+    Evaluate all topics in a security profile at once. Per-topic and composite metrics, cross-topic conflict detection, with terminal, JSON, and HTML output formats.
+
+    [:octicons-arrow-right-24: Profile Audits](features/profile-audits.md)
 
 </div>
 
 ---
 
-## How It Works
+## Platform Features
 
-```mermaid
-flowchart LR
-    A["Describe\nwhat to block\nor allow"] --> B["LLM generates\ntopic definition"]
-    B --> C["Deploy\nto AIRS"]
-    C --> D["Generate\ntest prompts"]
-    D --> E["Scan against\nlive service"]
-    E --> F["Evaluate\nTPR · TNR · F1"]
-    F --> G{Coverage\nmet?}
-    G -->|No| H["Analyze\nFP / FN"]
-    H --> B
-    G -->|Yes| I["Done"]
-```
+<div class="grid cards" markdown>
+
+-   :material-brain:{ .lg .middle } **Multi-Provider LLM**
+
+    ---
+
+    Six provider configs — Claude API, Claude Vertex, Claude Bedrock, Gemini API, Gemini Vertex, Gemini Bedrock.
+
+    [:octicons-arrow-right-24: LLM Providers](providers/overview.md)
+
+-   :material-memory:{ .lg .middle } **Cross-Run Memory**
+
+    ---
+
+    Persists learnings across guardrail runs so the LLM avoids repeating past mistakes. Budget-aware injection keeps prompts focused.
+
+-   :material-play-pause:{ .lg .middle } **Resumable Runs**
+
+    ---
+
+    Every guardrail iteration checkpoints to disk. Resume failed or paused runs from exactly where they left off.
+
+-   :material-test-tube:{ .lg .middle } **Test Composition**
+
+    ---
+
+    Carried failures, regression tiers, and fresh LLM-generated tests are composed each iteration with weighted category generation.
+
+</div>
 
 ---
 
@@ -142,7 +137,7 @@ flowchart LR
 
     ---
 
-    Core loop, AIRS integration, memory system, and design decisions.
+    System overview, core loop, memory system, and design decisions.
 
     [:octicons-arrow-right-24: Architecture](architecture/overview.md)
 
