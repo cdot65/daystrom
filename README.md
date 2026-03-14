@@ -4,7 +4,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Node 20+](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org/)
 
-**CLI and library for Palo Alto Prisma AIRS — guardrail refinement, AI red teaming, model security scanning, and profile audits.**
+**Full operational coverage over Palo Alto Prisma AIRS AI security — guardrail refinement, runtime scanning, AI red teaming, model security, and profile audits.**
+
+> **[Read the full documentation](https://cdot65.github.io/daystrom/)** — installation, configuration, architecture, CLI reference, and examples.
 
 ## Install
 
@@ -21,24 +23,18 @@ cp .env.example .env   # add your API keys
 daystrom generate       # interactive guardrail generation
 ```
 
-## Documentation
-
-Full docs — installation, configuration, architecture, CLI reference, examples, and more:
-
-**[cdot65.github.io/daystrom](https://cdot65.github.io/daystrom/)**
-
 ## Commands
 
 | Command | Description |
 |---------|-------------|
 | `generate` | LLM-driven guardrail generation with iterative refinement |
 | `resume` | Resume a paused or failed generation run |
-| `report` | View results for a saved run |
+| `report` | View results for a saved run (terminal, JSON, HTML) |
 | `list` | List all saved runs |
-| `runtime` | Prompt scanning + AIRS config management (profiles, topics, API keys, apps) |
+| `runtime` | Prompt scanning + config management (profiles, topics, API keys, apps, scan logs) |
 | `audit` | Multi-topic profile evaluation with conflict detection |
-| `redteam` | Red team scanning — targets, prompt sets, scans, reports |
-| `model-security` | ML model supply chain security — groups, rules, scans |
+| `redteam` | Adversarial scanning — targets, prompt sets, scans, reports |
+| `model-security` | ML model supply chain security — groups, rules, scans, labels |
 
 ## License
 

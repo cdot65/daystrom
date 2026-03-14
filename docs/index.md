@@ -59,6 +59,14 @@ Daystrom is a CLI tool that provides full operational coverage over **Palo Alto 
 
     Optionally carry forward test prompts across iterations with dedup, catching regressions that fresh tests might miss.
 
+-   :material-shield-search:{ .lg .middle } **Runtime Security**
+
+    ---
+
+    Scan prompts against live security profiles and manage AIRS configuration — profiles, topics, API keys, customer apps, and scan logs via `daystrom runtime`.
+
+    [:octicons-arrow-right-24: Runtime Security](features/runtime-security.md)
+
 -   :material-sword:{ .lg .middle } **AI Red Teaming**
 
     ---

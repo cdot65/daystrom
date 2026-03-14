@@ -44,7 +44,7 @@ graph LR
 | Domain | CLI Commands | Service Layer |
 |--------|-------------|---------------|
 | **Guardrail Generation** | `generate`, `resume`, `report`, `list` | Core loop + LLM + Scanner + Management |
-| **Runtime Security** | `runtime scan`, `runtime bulk-scan` | `SdkRuntimeService` (sync + async scan) |
+| **Runtime Security** | `runtime scan`, `runtime bulk-scan`, `runtime profiles`, `runtime topics`, `runtime api-keys`, `runtime customer-apps`, `runtime deployment-profiles`, `runtime dlp-profiles`, `runtime scan-logs` | `SdkRuntimeService` (sync + async scan) + `SdkManagementService` (config CRUD) |
 | **AI Red Teaming** | `redteam scan`, `redteam targets`, `redteam prompt-sets`, `redteam prompts`, `redteam properties` | `SdkRedTeamService` + `SdkPromptSetService` |
 | **Model Security** | `model-security groups`, `model-security rules`, `model-security scans`, `model-security labels` | `SdkModelSecurityService` |
 | **Profile Audits** | `audit` | Audit runner + Scanner + LLM |
@@ -96,7 +96,7 @@ graph TD
 | **`config/`** | Zod schema with coercion and defaults; cascade loader merges CLI flags, env vars, config file, and defaults |
 | **`core/`** | AsyncGenerator loop that yields typed events, metric computation (TPR/TNR/F1), and AIRS constraint validation |
 | **`llm/`** | Factory for 6 LangChain providers, structured output with Zod schemas, and prompt templates for all 4 LLM calls |
-| **`airs/`** | Scanner (sync scan + batched concurrency), Runtime (sync + async bulk scan with polling), Management (topic CRUD + profile linking), Red Team (scan CRUD/polling/reports), Prompt Sets (custom prompt set management), Model Security (groups/rules/scans) |
+| **`airs/`** | Scanner (sync scan + batched concurrency), Runtime (sync + async bulk scan with polling), Management (topic CRUD, profile CRUD, API keys, customer apps, deployment/DLP profiles, scan logs), Red Team (scan CRUD/polling/reports), Prompt Sets (custom prompt set management), Model Security (groups/rules/scans) |
 | **`memory/`** | File-based learning store, LLM-driven extraction after each run, and budget-aware injection into future prompts |
 | **`persistence/`** | `JsonFileStore` serializes `RunState` to `~/.daystrom/runs/` for pause/resume support |
 | **`audit/`** | Profile-level multi-topic evaluation — generates tests per topic, computes per-topic and composite metrics, detects cross-topic conflicts |
