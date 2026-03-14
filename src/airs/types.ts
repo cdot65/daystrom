@@ -647,10 +647,43 @@ export interface ModelSecurityService {
 }
 
 // ---------------------------------------------------------------------------
+// Security profile types — normalized shapes for profile CRUD
+// ---------------------------------------------------------------------------
+
+/** Normalized security profile. */
+export interface SecurityProfileInfo {
+  profileId: string;
+  profileName: string;
+  revision?: number;
+  active?: boolean;
+  createdBy?: string;
+  updatedBy?: string;
+  lastModifiedTs?: string;
+  policy?: Record<string, unknown>;
+}
+
+/** Paginated profile list result. */
+export interface SecurityProfileListResult {
+  profiles: SecurityProfileInfo[];
+  nextOffset?: number;
+}
+
+/** Delete response from profile/topic deletion. */
+export interface DeleteResponse {
+  message: string;
+}
+
+/** Pagination options for list operations. */
+export interface PaginationOptions {
+  offset?: number;
+  limit?: number;
+}
+
+// ---------------------------------------------------------------------------
 // Management service interface
 // ---------------------------------------------------------------------------
 
-/** Contract for AIRS topic CRUD and profile linking operations. */
+/** Contract for AIRS topic CRUD, profile CRUD, and profile linking operations. */
 export interface ManagementService {
   /** Create a new custom topic. */
   createTopic(request: CreateCustomTopicRequest): Promise<SdkCustomTopic>;
@@ -675,4 +708,15 @@ export interface ManagementService {
   ): Promise<void>;
   /** List all topics configured in a profile with full details. */
   getProfileTopics(profileName: string): Promise<ProfileTopic[]>;
+
+  /** List security profiles. */
+  listProfiles(opts?: PaginationOptions): Promise<SecurityProfileListResult>;
+  /** Create a security profile. */
+  createProfile(request: Record<string, unknown>): Promise<SecurityProfileInfo>;
+  /** Update a security profile. */
+  updateProfile(profileId: string, request: Record<string, unknown>): Promise<SecurityProfileInfo>;
+  /** Delete a security profile. */
+  deleteProfile(profileId: string): Promise<DeleteResponse>;
+  /** Force-delete a security profile (removes from referencing policies). */
+  forceDeleteProfile(profileId: string, updatedBy: string): Promise<DeleteResponse>;
 }

@@ -5,7 +5,13 @@ import {
   type CustomTopic as SdkCustomTopic,
 } from '@cdot65/prisma-airs-sdk';
 import type { ProfileTopic } from '../audit/types.js';
-import type { ManagementService } from './types.js';
+import type {
+  DeleteResponse,
+  ManagementService,
+  PaginationOptions,
+  SecurityProfileInfo,
+  SecurityProfileListResult,
+} from './types.js';
 
 /**
  * Wraps the SDK's ManagementClient to implement our ManagementService interface.
@@ -190,5 +196,55 @@ export class SdkManagementService implements ManagementService {
         examples: full?.examples ?? [],
       };
     });
+  }
+
+  // -------------------------------------------------------------------------
+  // Profile CRUD
+  // -------------------------------------------------------------------------
+
+  private normalizeProfile(p: Record<string, unknown>): SecurityProfileInfo {
+    return {
+      profileId: p.profile_id as string,
+      profileName: p.profile_name as string,
+      revision: p.revision as number | undefined,
+      active: p.active as boolean | undefined,
+      createdBy: p.created_by as string | undefined,
+      updatedBy: p.updated_by as string | undefined,
+      lastModifiedTs: p.last_modified_ts as string | undefined,
+      policy: p.policy as Record<string, unknown> | undefined,
+    };
+  }
+
+  async listProfiles(opts?: PaginationOptions): Promise<SecurityProfileListResult> {
+    const response = await this.client.profiles.list(opts);
+    return {
+      profiles: (response.ai_profiles ?? []).map((p: Record<string, unknown>) =>
+        this.normalizeProfile(p),
+      ),
+      nextOffset: response.next_offset,
+    };
+  }
+
+  async createProfile(request: Record<string, unknown>): Promise<SecurityProfileInfo> {
+    const response = await this.client.profiles.create(request as never);
+    return this.normalizeProfile(response as unknown as Record<string, unknown>);
+  }
+
+  async updateProfile(
+    profileId: string,
+    request: Record<string, unknown>,
+  ): Promise<SecurityProfileInfo> {
+    const response = await this.client.profiles.update(profileId, request as never);
+    return this.normalizeProfile(response as unknown as Record<string, unknown>);
+  }
+
+  async deleteProfile(profileId: string): Promise<DeleteResponse> {
+    const response = await this.client.profiles.delete(profileId);
+    return { message: (response as unknown as Record<string, string>).message };
+  }
+
+  async forceDeleteProfile(profileId: string, updatedBy: string): Promise<DeleteResponse> {
+    const response = await this.client.profiles.forceDelete(profileId, updatedBy);
+    return { message: (response as unknown as Record<string, string>).message };
   }
 }

@@ -712,6 +712,67 @@ export function renderConflicts(conflicts: ConflictPair[]): void {
 }
 
 // ---------------------------------------------------------------------------
+// Runtime Config rendering — profiles, topics, api keys, etc.
+// ---------------------------------------------------------------------------
+
+/** Render the runtime config banner. */
+export function renderRuntimeConfigHeader(): void {
+  console.log(chalk.bold.cyan('\n  Prisma AIRS — Runtime Configuration'));
+  console.log(chalk.dim('  Security profile and topic management\n'));
+}
+
+/** Render security profile list. */
+export function renderProfileList(
+  profiles: Array<{
+    profileId: string;
+    profileName: string;
+    revision?: number;
+    active?: boolean;
+    lastModifiedTs?: string;
+  }>,
+): void {
+  if (profiles.length === 0) {
+    console.log(chalk.dim('  No profiles found.\n'));
+    return;
+  }
+  console.log(chalk.bold('\n  Security Profiles:\n'));
+  for (const p of profiles) {
+    console.log(`  ${chalk.dim(p.profileId)}`);
+    const status = p.active ? chalk.green('active') : chalk.yellow('inactive');
+    const rev = p.revision != null ? chalk.dim(` rev:${p.revision}`) : '';
+    console.log(`    ${p.profileName}  ${status}${rev}`);
+  }
+  console.log();
+}
+
+/** Render security profile detail. */
+export function renderProfileDetail(profile: {
+  profileId: string;
+  profileName: string;
+  revision?: number;
+  active?: boolean;
+  createdBy?: string;
+  updatedBy?: string;
+  lastModifiedTs?: string;
+  policy?: Record<string, unknown>;
+}): void {
+  console.log(chalk.bold('\n  Profile Detail:\n'));
+  console.log(`    ID:       ${chalk.dim(profile.profileId)}`);
+  console.log(`    Name:     ${profile.profileName}`);
+  console.log(`    Status:   ${profile.active ? chalk.green('active') : chalk.yellow('inactive')}`);
+  if (profile.revision != null) console.log(`    Revision: ${profile.revision}`);
+  if (profile.createdBy) console.log(`    Created:  ${chalk.dim(profile.createdBy)}`);
+  if (profile.updatedBy) console.log(`    Updated:  ${chalk.dim(profile.updatedBy)}`);
+  if (profile.lastModifiedTs) console.log(`    Modified: ${chalk.dim(profile.lastModifiedTs)}`);
+  if (profile.policy) {
+    console.log(
+      `    Policy:   ${chalk.dim(JSON.stringify(profile.policy, null, 2).slice(0, 500))}`,
+    );
+  }
+  console.log();
+}
+
+// ---------------------------------------------------------------------------
 // Model Security rendering
 // ---------------------------------------------------------------------------
 
