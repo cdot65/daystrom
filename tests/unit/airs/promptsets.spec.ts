@@ -61,7 +61,7 @@ describe('SdkPromptSetService', () => {
     it('creates a prompt set and returns uuid + name', async () => {
       mockCreatePromptSet.mockResolvedValue({
         uuid: 'ps-abc',
-        name: 'daystrom-weapons-abc1234',
+        name: 'prisma-airs-cli-weapons-abc1234',
         active: true,
         archive: false,
         status: 'active',
@@ -69,11 +69,11 @@ describe('SdkPromptSetService', () => {
         updated_at: '2026-03-08T00:00:00Z',
       });
 
-      const result = await service.createPromptSet('daystrom-weapons-abc1234', 'Test desc');
+      const result = await service.createPromptSet('prisma-airs-cli-weapons-abc1234', 'Test desc');
       expect(result.uuid).toBe('ps-abc');
-      expect(result.name).toBe('daystrom-weapons-abc1234');
+      expect(result.name).toBe('prisma-airs-cli-weapons-abc1234');
       expect(mockCreatePromptSet).toHaveBeenCalledWith({
-        name: 'daystrom-weapons-abc1234',
+        name: 'prisma-airs-cli-weapons-abc1234',
         description: 'Test desc',
       });
     });

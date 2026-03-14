@@ -1852,7 +1852,7 @@ describe('runLoop', () => {
       if (psEvent?.type === 'promptset:created') {
         expect(psEvent.promptSetId).toBe('ps-1');
         expect(psEvent.promptCount).toBe(4); // 2 positive + 2 negative from mock LLM
-        expect(psEvent.promptSetName).toContain('daystrom-');
+        expect(psEvent.promptSetName).toContain('prisma-airs-cli-');
       }
     });
 

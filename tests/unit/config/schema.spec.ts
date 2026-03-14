@@ -9,9 +9,9 @@ describe('ConfigSchema', () => {
     expect(config.awsRegion).toBe('us-east-1');
     expect(config.scanConcurrency).toBe(5);
     expect(config.propagationDelayMs).toBe(10000);
-    expect(config.dataDir).toBe('~/.daystrom/runs');
+    expect(config.dataDir).toBe('~/.prisma-airs/runs');
     expect(config.memoryEnabled).toBe(true);
-    expect(config.memoryDir).toBe('~/.daystrom/memory');
+    expect(config.memoryDir).toBe('~/.prisma-airs/memory');
     expect(config.maxMemoryChars).toBe(3000);
   });
 

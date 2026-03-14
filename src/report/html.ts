@@ -162,7 +162,7 @@ export function buildReportHtml(report: ReportOutput): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Daystrom Report — ${esc(report.run.id)}</title>
+  <title>Prisma AIRS CLI Report — ${esc(report.run.id)}</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 1200px; margin: 0 auto; padding: 2rem; background: #f8f9fa; color: #212529; }
@@ -196,7 +196,7 @@ export function buildReportHtml(report: ReportOutput): string {
 </head>
 <body>
   <div class="header">
-    <h1>Daystrom Evaluation Report</h1>
+    <h1>Prisma AIRS CLI Evaluation Report</h1>
     <p class="meta">Generated ${esc(report.generatedAt)} | Run ${esc(report.run.id)}</p>
   </div>
 

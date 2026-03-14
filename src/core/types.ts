@@ -1,5 +1,5 @@
 /**
- * Core domain types — shared across all Daystrom modules.
+ * Core domain types — shared across all Prisma AIRS CLI modules.
  */
 
 // ---------------------------------------------------------------------------

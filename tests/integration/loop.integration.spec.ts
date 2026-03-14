@@ -310,7 +310,7 @@ describe('Loop Integration', () => {
     if (psEvent?.type === 'promptset:created') {
       expect(psEvent.promptSetId).toBe('ps-1');
       expect(psEvent.promptCount).toBe(8); // 4 positive + 4 negative from deterministic LLM
-      expect(psEvent.promptSetName).toContain('daystrom-Weapons Discussion-');
+      expect(psEvent.promptSetName).toContain('prisma-airs-cli-Weapons Discussion-');
     }
 
     // Verify event ordering: promptset:created before loop:complete

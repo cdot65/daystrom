@@ -357,7 +357,7 @@ describe('SdkRedTeamService', () => {
         custom_attack_reports: [
           {
             prompt_set_id: 'ps-1',
-            prompt_set_name: 'daystrom-weapons',
+            prompt_set_name: 'prisma-airs-cli-weapons',
             total_prompts: 20,
             total_attacks: 20,
             total_threats: 5,
@@ -371,7 +371,7 @@ describe('SdkRedTeamService', () => {
       expect(result.score).toBe(80);
       expect(result.asr).toBe(0.2);
       expect(result.promptSets).toHaveLength(1);
-      expect(result.promptSets[0].promptSetName).toBe('daystrom-weapons');
+      expect(result.promptSets[0].promptSetName).toBe('prisma-airs-cli-weapons');
       expect(result.promptSets[0].threatRate).toBe(0.25);
     });
 
