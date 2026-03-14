@@ -1,0 +1,17 @@
+site_name: Daystrom (Archived)
+site_url: https://cdot65.github.io/daystrom/
+site_description: This project has moved to cdot65/prisma-airs-cli
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: amber
+
+markdown_extensions:
+  - admonition
+  - tables
+
+nav:
+  - Home: index.md
