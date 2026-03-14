@@ -13,6 +13,8 @@ import {
   renderProfileDetail,
   renderProfileList,
   renderRuntimeConfigHeader,
+  renderTopicDetail,
+  renderTopicList,
 } from '../renderer.js';
 
 function renderScanResult(result: RuntimeScanResult): void {
@@ -292,6 +294,93 @@ export function registerRuntimeCommand(program: Command): void {
         } else {
           const result = await service.deleteProfile(profileId);
           console.log(`  ${result.message}\n`);
+        }
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  // -----------------------------------------------------------------------
+  // runtime topics — custom topic CRUD subcommands
+  // -----------------------------------------------------------------------
+  const topics = runtime.command('topics').description('Manage AIRS custom topics');
+
+  topics
+    .command('list')
+    .description('List custom topics')
+    .option('--limit <n>', 'Max results', '100')
+    .option('--offset <n>', 'Starting offset', '0')
+    .action(async (opts) => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        const allTopics = await service.listTopics();
+        // Client-side pagination since SDK returns all
+        const offset = Number.parseInt(opts.offset, 10);
+        const limit = Number.parseInt(opts.limit, 10);
+        const page = allTopics.slice(offset, offset + limit);
+        renderTopicList(page);
+        if (offset + limit < allTopics.length) {
+          console.log(chalk.dim(`  Showing ${page.length} of ${allTopics.length} topics\n`));
+        }
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  topics
+    .command('create')
+    .description('Create a new custom topic')
+    .requiredOption('--config <path>', 'JSON file with topic configuration')
+    .action(async (opts) => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        const config = JSON.parse(fs.readFileSync(opts.config, 'utf-8'));
+        const topic = await service.createTopic(config);
+        console.log(`  Topic created: ${topic.topic_id}\n`);
+        renderTopicDetail(topic);
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  topics
+    .command('update <topicId>')
+    .description('Update a custom topic')
+    .requiredOption('--config <path>', 'JSON file with topic updates')
+    .action(async (topicId: string, opts) => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        const config = JSON.parse(fs.readFileSync(opts.config, 'utf-8'));
+        const topic = await service.updateTopic(topicId, config);
+        console.log(`  Topic updated: ${topic.topic_id}\n`);
+        renderTopicDetail(topic);
+      } catch (err) {
+        renderError(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+    });
+
+  topics
+    .command('delete <topicId>')
+    .description('Delete a custom topic')
+    .option('--force', 'Force delete (removes from all referencing profiles)')
+    .option('--updated-by <email>', 'Email of user performing force deletion')
+    .action(async (topicId: string, opts) => {
+      try {
+        renderRuntimeConfigHeader();
+        const service = await createMgmtService();
+        if (opts.force) {
+          const result = await service.forceDeleteTopic(topicId, opts.updatedBy);
+          console.log(`  ${result.message}\n`);
+        } else {
+          await service.deleteTopic(topicId);
+          console.log(`  Topic ${topicId} deleted.\n`);
         }
       } catch (err) {
         renderError(err instanceof Error ? err.message : String(err));

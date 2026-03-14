@@ -36,6 +36,11 @@ export class SdkManagementService implements ManagementService {
     await this.client.topics.delete(topicId);
   }
 
+  async forceDeleteTopic(topicId: string, updatedBy?: string): Promise<DeleteResponse> {
+    const response = await this.client.topics.forceDelete(topicId, updatedBy);
+    return { message: (response as unknown as Record<string, string>).message };
+  }
+
   async listTopics(): Promise<SdkCustomTopic[]> {
     const response = await this.client.topics.list();
     return response.custom_topics;
