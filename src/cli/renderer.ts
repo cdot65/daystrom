@@ -897,10 +897,13 @@ export function renderDeploymentProfileList(
   }
   console.log(chalk.bold('\n  Deployment Profiles:\n'));
   for (const p of profiles) {
-    const name = (p.raw.profile_name ?? p.raw.name ?? 'unknown') as string;
-    const id = (p.raw.profile_id ?? '') as string;
-    if (id) console.log(`  ${chalk.dim(id)}`);
-    console.log(`    ${name}`);
+    const name = (p.raw.dp_name ?? p.raw.profile_name ?? p.raw.name ?? 'unknown') as string;
+    const status = p.raw.status as string | undefined;
+    const authCode = p.raw.auth_code as string | undefined;
+    const statusColor = status === 'active' ? chalk.green : chalk.dim;
+    console.log(
+      `    ${name}${status ? `  ${statusColor(status)}` : ''}${authCode ? `  ${chalk.dim(authCode)}` : ''}`,
+    );
   }
   console.log();
 }
@@ -913,9 +916,9 @@ export function renderDlpProfileList(profiles: Array<{ raw: Record<string, unkno
   }
   console.log(chalk.bold('\n  DLP Profiles:\n'));
   for (const p of profiles) {
-    const name = (p.raw.profile_name ?? p.raw.name ?? 'unknown') as string;
-    const id = (p.raw.profile_id ?? '') as string;
-    if (id) console.log(`  ${chalk.dim(id)}`);
+    const name = (p.raw.name ?? p.raw.profile_name ?? 'unknown') as string;
+    const uuid = (p.raw.uuid ?? '') as string;
+    if (uuid) console.log(`  ${chalk.dim(uuid)}`);
     console.log(`    ${name}`);
   }
   console.log();
@@ -929,12 +932,15 @@ export function renderScanLogList(results: Record<string, unknown>[], pageToken?
   }
   console.log(chalk.bold(`\n  Scan Logs (${results.length} results):\n`));
   for (const r of results) {
-    const action = r.action as string | undefined;
-    const category = r.category as string | undefined;
-    const ts = r.timestamp as string | undefined;
+    const action = (r.action ?? r.verdict) as string | undefined;
+    const app = r.app_name as string | undefined;
+    const profile = r.profile_name as string | undefined;
+    const ts = (r.received_ts ?? r.timestamp) as string | undefined;
+    const scanId = r.scan_id as string | undefined;
     const actionColor = action === 'block' ? chalk.red : chalk.green;
+    if (scanId) console.log(`  ${chalk.dim(scanId)}`);
     console.log(
-      `  ${ts ? chalk.dim(ts) : ''}  ${action ? actionColor(action) : ''}  ${category ?? ''}`,
+      `    ${ts ? chalk.dim(ts) : ''}  ${action ? actionColor(action) : ''}  ${profile ? `[${profile}]` : ''}  ${app ?? ''}`,
     );
   }
   if (pageToken) {

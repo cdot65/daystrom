@@ -1066,7 +1066,9 @@ describe('SdkManagementService', () => {
   describe('queryScanLogs', () => {
     it('queries scan logs with correct params', async () => {
       mockScanLogsQuery.mockResolvedValue({
-        results: [{ action: 'block', category: 'weapons' }],
+        scan_result_for_dashboard: {
+          scan_result_entries: [{ action: 'block', app_name: 'test-app', profile_name: 'default' }],
+        },
         page_token: 'next-page',
       });
 

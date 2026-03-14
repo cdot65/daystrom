@@ -376,8 +376,13 @@ export class SdkManagementService implements ManagementService {
       page_token: opts.pageToken,
     });
     const raw = response as unknown as Record<string, unknown>;
+    const dashboard = (raw.scan_result_for_dashboard ?? {}) as Record<string, unknown>;
+    const entries = (dashboard.scan_result_entries ?? raw.results ?? []) as Record<
+      string,
+      unknown
+    >[];
     return {
-      results: (raw.results ?? []) as Record<string, unknown>[],
+      results: entries,
       pageToken: raw.page_token as string | undefined,
       raw,
     };
