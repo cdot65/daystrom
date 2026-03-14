@@ -439,13 +439,19 @@ export function registerRuntimeCommand(program: Command): void {
   apiKeys
     .command('regenerate <apiKeyId>')
     .description('Regenerate an API key')
-    .requiredOption('--config <path>', 'JSON file with regeneration config')
+    .requiredOption('--interval <n>', 'Rotation time interval')
+    .requiredOption('--unit <unit>', 'Rotation time unit (hours, days, months)')
+    .option('--updated-by <email>', 'Email of user performing regeneration')
     .action(async (apiKeyId: string, opts) => {
       try {
         renderRuntimeConfigHeader();
         const service = await createMgmtService();
-        const config = JSON.parse(fs.readFileSync(opts.config, 'utf-8'));
-        const key = await service.regenerateApiKey(apiKeyId, config);
+        const request: Record<string, unknown> = {
+          rotation_time_interval: Number.parseInt(opts.interval, 10),
+          rotation_time_unit: opts.unit,
+        };
+        if (opts.updatedBy) request.updated_by = opts.updatedBy;
+        const key = await service.regenerateApiKey(apiKeyId, request);
         console.log(`  API key regenerated: ${key.id}\n`);
         renderApiKeyDetail(key);
       } catch (err) {
