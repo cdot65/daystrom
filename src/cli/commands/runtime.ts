@@ -23,6 +23,11 @@ import {
   renderTopicDetail,
   renderTopicList,
 } from '../renderer/index.js';
+import { registerAuditCommand } from './audit.js';
+import { registerGenerateCommand } from './generate.js';
+import { registerListCommand } from './list.js';
+import { registerReportCommand } from './report.js';
+import { registerResumeCommand } from './resume.js';
 
 function renderScanResult(result: RuntimeScanResult): void {
   const actionColor = result.action === 'block' ? chalk.red : chalk.green;
@@ -308,10 +313,15 @@ export function registerRuntimeCommand(program: Command): void {
       }
     });
 
+  // Register audit under profiles
+  registerAuditCommand(profiles);
+
   // -----------------------------------------------------------------------
-  // runtime topics — custom topic CRUD subcommands
+  // runtime topics — custom topic CRUD + guardrail generation subcommands
   // -----------------------------------------------------------------------
-  const topics = runtime.command('topics').description('Manage AIRS custom topics');
+  const topics = runtime
+    .command('topics')
+    .description('Manage AIRS custom topics and guardrail generation');
 
   topics
     .command('list')
@@ -394,6 +404,12 @@ export function registerRuntimeCommand(program: Command): void {
         process.exit(1);
       }
     });
+
+  // Register guardrail generation commands under topics
+  registerGenerateCommand(topics);
+  registerResumeCommand(topics);
+  registerReportCommand(topics);
+  registerListCommand(topics, 'runs');
 
   // -----------------------------------------------------------------------
   // runtime api-keys — API key management subcommands

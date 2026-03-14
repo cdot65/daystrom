@@ -33,8 +33,8 @@ import {
 } from '../renderer/index.js';
 
 /** Register the `generate` command — starts a new guardrail generation loop. */
-export function registerGenerateCommand(program: Command): void {
-  program
+export function registerGenerateCommand(parent: Command): void {
+  parent
     .command('generate')
     .description('Start a new guardrail generation loop')
     .option('--provider <provider>', 'LLM provider')

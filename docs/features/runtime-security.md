@@ -157,25 +157,39 @@ prompt,action,category,triggered,scan_id,report_id
 
 Daystrom exposes full CRUD over AIRS runtime configuration resources via `daystrom runtime` subcommand groups. All config management commands require Management API credentials (`PANW_MGMT_CLIENT_ID`, `PANW_MGMT_CLIENT_SECRET`, `PANW_MGMT_TSG_ID`).
 
-### Security Profiles
+### Security Profiles & Profile Audit
 
 ```bash
+# CRUD
 daystrom runtime profiles list
 daystrom runtime profiles create --config profile.json
 daystrom runtime profiles update <profileId> --config profile.json
 daystrom runtime profiles delete <profileId>
 daystrom runtime profiles delete <profileId> --force --updated-by user@example.com
+
+# Audit all topics in a profile
+daystrom runtime profiles audit <profileName>
+daystrom runtime profiles audit <profileName> --format html --output audit.html
 ```
 
-### Custom Topics
+### Custom Topics & Guardrail Generation
 
 ```bash
+# CRUD
 daystrom runtime topics list
 daystrom runtime topics create --config topic.json
 daystrom runtime topics update <topicId> --config topic.json
 daystrom runtime topics delete <topicId>
 daystrom runtime topics delete <topicId> --force --updated-by user@example.com
+
+# Guardrail generation (LLM-driven iterative refinement)
+daystrom runtime topics generate
+daystrom runtime topics resume <runId>
+daystrom runtime topics report <runId>
+daystrom runtime topics runs
 ```
+
+See [Guardrail Generation](guardrail-generation.md) for details on the generation loop.
 
 ### API Keys
 
