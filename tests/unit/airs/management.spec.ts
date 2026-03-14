@@ -32,6 +32,9 @@ const mockList = vi.fn();
 const mockForceDelete = vi.fn();
 const mockProfileList = vi.fn();
 const mockProfileUpdate = vi.fn();
+const mockProfileCreate = vi.fn();
+const mockProfileDelete = vi.fn();
+const mockProfileForceDelete = vi.fn();
 
 vi.mock('@cdot65/prisma-airs-sdk', () => ({
   ManagementClient: vi.fn().mockImplementation(() => ({
@@ -45,6 +48,9 @@ vi.mock('@cdot65/prisma-airs-sdk', () => ({
     profiles: {
       list: mockProfileList,
       update: mockProfileUpdate,
+      create: mockProfileCreate,
+      delete: mockProfileDelete,
+      forceDelete: mockProfileForceDelete,
     },
   })),
 }));
@@ -736,6 +742,126 @@ describe('SdkManagementService', () => {
       expect(topics).toHaveLength(1);
       expect(topics[0].description).toBe('');
       expect(topics[0].examples).toEqual([]);
+    });
+  });
+
+  describe('listProfiles', () => {
+    it('lists profiles and returns normalized results', async () => {
+      mockProfileList.mockResolvedValue({
+        ai_profiles: [
+          {
+            profile_id: 'p-1',
+            profile_name: 'Profile One',
+            revision: 3,
+            active: true,
+            created_by: 'admin@example.com',
+            last_modified_ts: '2026-01-01T00:00:00Z',
+          },
+          {
+            profile_id: 'p-2',
+            profile_name: 'Profile Two',
+            revision: 1,
+            active: false,
+          },
+        ],
+        next_offset: 2,
+      });
+
+      const result = await service.listProfiles();
+      expect(result.profiles).toHaveLength(2);
+      expect(result.profiles[0].profileId).toBe('p-1');
+      expect(result.profiles[0].profileName).toBe('Profile One');
+      expect(result.profiles[0].revision).toBe(3);
+      expect(result.profiles[0].active).toBe(true);
+      expect(result.profiles[1].profileId).toBe('p-2');
+      expect(result.nextOffset).toBe(2);
+    });
+
+    it('passes pagination options', async () => {
+      mockProfileList.mockResolvedValue({ ai_profiles: [] });
+
+      await service.listProfiles({ limit: 10, offset: 5 });
+      expect(mockProfileList).toHaveBeenCalledWith({ limit: 10, offset: 5 });
+    });
+
+    it('returns empty array when no profiles', async () => {
+      mockProfileList.mockResolvedValue({ ai_profiles: [] });
+
+      const result = await service.listProfiles();
+      expect(result.profiles).toEqual([]);
+    });
+  });
+
+  describe('createProfile', () => {
+    it('creates a profile via SDK and returns normalized result', async () => {
+      mockProfileCreate.mockResolvedValue({
+        profile_id: 'p-new',
+        profile_name: 'New Profile',
+        revision: 0,
+        active: true,
+        policy: {},
+      });
+
+      const result = await service.createProfile({
+        profile_name: 'New Profile',
+        active: true,
+        policy: {},
+      });
+
+      expect(result.profileId).toBe('p-new');
+      expect(result.profileName).toBe('New Profile');
+      expect(mockProfileCreate).toHaveBeenCalledWith({
+        profile_name: 'New Profile',
+        active: true,
+        policy: {},
+      });
+    });
+  });
+
+  describe('updateProfile', () => {
+    it('updates a profile via SDK and returns normalized result', async () => {
+      mockProfileUpdate.mockResolvedValue({
+        profile_id: 'p-1',
+        profile_name: 'Updated Profile',
+        revision: 4,
+        active: true,
+        policy: {},
+      });
+
+      const result = await service.updateProfile('p-1', {
+        profile_name: 'Updated Profile',
+        active: true,
+        policy: {},
+      });
+
+      expect(result.profileId).toBe('p-1');
+      expect(result.profileName).toBe('Updated Profile');
+      expect(result.revision).toBe(4);
+      expect(mockProfileUpdate).toHaveBeenCalledWith('p-1', {
+        profile_name: 'Updated Profile',
+        active: true,
+        policy: {},
+      });
+    });
+  });
+
+  describe('deleteProfile', () => {
+    it('deletes a profile via SDK', async () => {
+      mockProfileDelete.mockResolvedValue({ message: 'deleted' });
+
+      const result = await service.deleteProfile('p-1');
+      expect(result.message).toBe('deleted');
+      expect(mockProfileDelete).toHaveBeenCalledWith('p-1');
+    });
+  });
+
+  describe('forceDeleteProfile', () => {
+    it('force-deletes a profile via SDK', async () => {
+      mockProfileForceDelete.mockResolvedValue({ message: 'force deleted' });
+
+      const result = await service.forceDeleteProfile('p-1', 'admin@example.com');
+      expect(result.message).toBe('force deleted');
+      expect(mockProfileForceDelete).toHaveBeenCalledWith('p-1', 'admin@example.com');
     });
   });
 });
