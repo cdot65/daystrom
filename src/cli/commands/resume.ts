@@ -22,7 +22,7 @@ import {
   renderTestsAccumulated,
   renderTestsComposed,
   renderTopic,
-} from '../renderer.js';
+} from '../renderer/index.js';
 
 /** Register the `resume` command — resumes a paused or failed run. */
 export function registerResumeCommand(program: Command): void {

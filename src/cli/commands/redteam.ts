@@ -23,7 +23,7 @@ import {
   renderTargetDetail,
   renderTargetList,
   renderVersionInfo,
-} from '../renderer.js';
+} from '../renderer/index.js';
 
 /** Create an SdkRedTeamService from config. */
 async function createService() {

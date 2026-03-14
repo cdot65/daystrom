@@ -30,7 +30,7 @@ import {
   renderTestsAccumulated,
   renderTestsComposed,
   renderTopic,
-} from '../renderer.js';
+} from '../renderer/index.js';
 
 /** Register the `generate` command — starts a new guardrail generation loop. */
 export function registerGenerateCommand(program: Command): void {

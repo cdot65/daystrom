@@ -14,7 +14,7 @@ import {
   renderConflicts,
   renderError,
   renderMetrics,
-} from '../renderer.js';
+} from '../renderer/index.js';
 
 /** Register the `audit` command — evaluate all topics in a profile. */
 export function registerAuditCommand(program: Command): void {

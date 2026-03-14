@@ -55,7 +55,14 @@ src/
 │   ├── bulk-scan-state.ts # Save/load bulk scan IDs for resume after poll failure
 │   ├── parse-input.ts     # Input file parsing — CSV (prompt column) or plain text (line-per-prompt)
 │   ├── prompts.ts         # Inquirer interactive input collection
-│   └── renderer.ts        # Terminal output (chalk)
+│   └── renderer/          # Terminal output (chalk), split by command group
+│       ├── index.ts       # Barrel re-exports
+│       ├── common.ts      # renderError
+│       ├── generate.ts    # Guardrail loop rendering (header, topic, metrics, analysis)
+│       ├── redteam.ts     # Red team scan/target/prompt-set rendering
+│       ├── runtime.ts     # Runtime scan + config management rendering
+│       ├── audit.ts       # Audit topics, results, conflicts
+│       └── modelsecurity.ts # Model security groups/rules/scans rendering
 ├── config/
 │   ├── schema.ts          # Zod ConfigSchema — all config fields w/ defaults
 │   └── loader.ts          # Config cascade: CLI > env > file > Zod defaults

@@ -12,7 +12,7 @@ import {
   renderMetrics,
   renderTestResults,
   renderTopic,
-} from '../renderer.js';
+} from '../renderer/index.js';
 
 /** Register the `report` command — view detailed results for a run. */
 export function registerReportCommand(program: Command): void {
