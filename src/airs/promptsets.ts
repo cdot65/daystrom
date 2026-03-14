@@ -104,9 +104,10 @@ export class SdkPromptSetService implements PromptSetService {
   }
 
   async downloadTemplate(uuid: string): Promise<string> {
-    // Bypass SDK's downloadTemplate — it routes through managementHttpRequest
-    // which unconditionally JSON.parse()s the response, but this endpoint
-    // returns text/csv. Make a raw fetch using the SDK's OAuth client instead.
+    // WORKAROUND: Bypass SDK's downloadTemplate — it routes through managementHttpRequest
+    // which unconditionally JSON.parse()s the response, but this endpoint returns text/csv.
+    // Make a raw fetch using the SDK's OAuth client instead.
+    // Tracked upstream: https://github.com/cdot65/prisma-airs-sdk/issues/77
     const internals = this.client.customAttacks as unknown as {
       baseUrl: string;
       oauthClient: { getToken(): Promise<string> };
